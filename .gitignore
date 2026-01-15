@@ -1,0 +1,33 @@
+
+CMakeLists.txt.user
+db/xxx.ddb
+db/urls.csv
+db/xxx.sql
+.gitignore~
+..gitignore.un~
+QtProjectsxxxapp-Debugdbxxx.db
+InstallationLog.txt
+db/diagrama.mwb
+db/publicuser.txt
+db/xxxdb.db
+db/xdatabase.db
+*.autosave
+.gitignore.swp
+tools/*
+CMakeLists.txt.user.c4fca1e
+CMakeLists.txt.user.bf1d6e7
+<<<<<<< HEAD
+<<<<<<< HEAD
+include/
+lib/
+build/
+=======
+build/
+lib/
+include/
+>>>>>>> dev_app
+=======
+build/
+lib/
+include/
+>>>>>>> dev_app

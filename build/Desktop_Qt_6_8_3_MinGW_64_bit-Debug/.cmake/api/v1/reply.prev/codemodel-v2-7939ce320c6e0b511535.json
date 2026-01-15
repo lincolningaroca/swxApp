@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-81130f826352c2c4f21d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "xxxApp",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "xxxApp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-xxxApp-Debug-38185a7834c28ce16cbe.json",
+					"name" : "xxxApp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "xxxApp_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-xxxApp_autogen-Debug-c15423e5999c982ff6fa.json",
+					"name" : "xxxApp_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "xxxApp_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-xxxApp_autogen_timestamp_deps-Debug-3b20b4242c1110a554a6.json",
+					"name" : "xxxApp_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/xxxapp/xxxApp/build/Desktop_Qt_6_8_3_MinGW_64_bit-Debug",
+		"source" : "D:/xxxapp/xxxApp"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
