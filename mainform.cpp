@@ -964,8 +964,6 @@ void MainForm::initFrm() noexcept{
                                     "esto es por la razón de que, al abrir la aplicación por primera vez, no existen usuarios,"
                                     " aparte del usario por defecto\"</cite></p>");
 
-  ui->tvUrl->setMouseTracking(true);
-
 }
 
 void MainForm::setUpTable(uint32_t categoryId) noexcept{
@@ -977,7 +975,7 @@ void MainForm::setUpTable(uint32_t categoryId) noexcept{
 
   ui->tvUrl->setModel(xxxModel_);
   setUpTableHeaders();
-
+  ui->tvUrl->setMouseTracking(true);
 
   QSqlQuery query(xxxModel_->query().lastQuery(), db_);
 
@@ -1335,5 +1333,5 @@ bool MainForm::eventFilter(QObject *watched, QEvent *event){
 
     }
   }
-  return QWidget::eventFilter(watched, event);
+  return QMainWindow::eventFilter(watched, event);
 }
