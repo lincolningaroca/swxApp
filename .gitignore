@@ -1,4 +1,3 @@
-
 CMakeLists.txt.user
 db/xxx.ddb
 db/urls.csv
@@ -16,18 +15,6 @@ db/xdatabase.db
 tools/*
 CMakeLists.txt.user.c4fca1e
 CMakeLists.txt.user.bf1d6e7
-<<<<<<< HEAD
-<<<<<<< HEAD
-include/
-lib/
-build/
-=======
 build/
 lib/
 include/
->>>>>>> dev_app
-=======
-build/
-lib/
-include/
->>>>>>> dev_app
