@@ -14,8 +14,8 @@ public:
 
 private:
   Ui::AcercaDeDialog *ui;
-  QFont customFont_;
   const Qt::ColorScheme colorMode_;
+  QFont customFont_;
 
   void writeSettings() const;
   void readSettings();
@@ -27,6 +27,9 @@ private:
   void setupUI();
   void setupConnections();
   void showLicense();
+
+
+
 
   // QWidget interface
 protected:
