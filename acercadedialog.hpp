@@ -2,12 +2,6 @@
 
 #include <QDialog>
 
-#include <QFontDataBase>
-
-#include "util/helper.hpp"
-
-
-
 namespace Ui { class AcercaDeDialog; }
 
 class AcercaDeDialog : public QDialog
@@ -20,22 +14,19 @@ public:
 
 private:
   Ui::AcercaDeDialog *ui;
-
+  QFont customFont_;
   const Qt::ColorScheme colorMode_;
 
   void writeSettings() const;
   void readSettings();
-
-
   void loadInfo_app() const noexcept;
   void setTextToAbout() const;
-
   void setImage(Qt::ColorScheme colorMode);
 
-  int id = QFontDatabase::addApplicationFont(":/font/FiraCode-Regular.ttf");
-  const QString family = QFontDatabase::applicationFontFamilies(id).at(0);
-  const QFont customFont{family, 10};
-
+  void setupCustomFont();
+  void setupUI();
+  void setupConnections();
+  void showLicense();
 
   // QWidget interface
 protected:

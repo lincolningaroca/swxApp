@@ -4,57 +4,25 @@
 #include <QMessageBox>
 #include <QFile>
 #include <QSettings>
+#include <QFontDataBase>
+
+#include "util/helper.hpp"
 
 AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
-  : QDialog(parent), ui(new Ui::AcercaDeDialog), colorMode_(colorMode)
+  : QDialog(parent),
+  ui(new Ui::AcercaDeDialog),
+  colorMode_(colorMode),
+  customFont_()
 {
   ui->setupUi(this);
 
-  readSettings();
-
   setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-  setTextToAbout();
 
-  ui->tabWidget->setCurrentIndex(0);
+  setupCustomFont();;
+  setupUI();
+  readSettings();
+  setupConnections();
 
-  loadInfo_app();
-
-  ui->lblLicencia->setText(QStringLiteral("<a href='message'>Ver licencia.</a>"));
-  ui->lblAcercaQt->setText(QStringLiteral("<a href='message'>Acerca de Qt.</a>"));
-  QObject::connect(ui->btnCerrar, &QPushButton::clicked, this, &AcercaDeDialog::close);
-
-  QObject::connect(ui->lblLicencia, &QLabel::linkActivated, this, [this](){
-    QDialog licenciaDlg(this);
-
-    QScopedPointer<QVBoxLayout> mainLayOut(new QVBoxLayout(&licenciaDlg));
-    QScopedPointer<QTextBrowser> teLicencia(new QTextBrowser(&licenciaDlg));
-
-    QFile fileName(QStringLiteral(":/licencia/licencia.txt"));
-    if (!fileName.open(QFile::ReadOnly | QFile::Text)) {
-      QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al abrir el archivo.\n%1").arg(
-                                                            fileName.errorString()));
-      return;
-    }
-
-
-    teLicencia->setFont(customFont);
-    teLicencia->setAcceptRichText(true);
-    teLicencia->setOpenExternalLinks(true);
-    teLicencia->setHtml(fileName.readAll());
-    teLicencia->setReadOnly(true);
-    mainLayOut->addWidget(teLicencia.data());
-    licenciaDlg.setLayout(mainLayOut.data());
-    licenciaDlg.setFixedSize(this->size());
-    licenciaDlg.setWindowTitle(SW::Helper_t::appName().append(" - licencia"));
-    licenciaDlg.exec();
-    fileName.close();
-  });
-
-  QObject::connect(ui->lblAcercaQt, &QLabel::linkActivated, this, [this](){
-    QMessageBox::aboutQt(this);
-  });
-
-  ui->tbLicencia->setFont(customFont);
 
 }
 
@@ -84,11 +52,12 @@ void AcercaDeDialog::readSettings()
 
 
 void AcercaDeDialog::loadInfo_app() const noexcept{
-  ui->tbLicencia->setFont(customFont);
+
+  ui->tbLicencia->setFont(customFont_);
   ui->tbLicencia->setAcceptRichText(true);
   ui->tbLicencia->setOpenExternalLinks(true);
   ui->tbLicencia->setHtml(QStringLiteral(
-    "<p>xxxApp:<br><br>Es software libre, puede "
+    "<p style='text-align: justify;'>xxxApp:<br><br>Es software libre, puede "
     "redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública "
     "General de GNU según se encuentra publicada por la <a "
     "href=\"https://www.fsf.org\">Free Software "
@@ -104,7 +73,8 @@ void AcercaDeDialog::loadInfo_app() const noexcept{
 }
 
 void AcercaDeDialog::setTextToAbout() const{
-  ui->tbAcercaDe->setFont(customFont);
+
+  ui->tbAcercaDe->setFont(customFont_);
   ui->tbAcercaDe->setOpenExternalLinks(true);
   ui->tbAcercaDe->setHtml(QStringLiteral(
     "<p>Powered by:"
@@ -162,14 +132,98 @@ void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
 
 }
 
+void AcercaDeDialog::setupCustomFont(){
+
+  // Cargar fuente personalizada
+  const int fontId = QFontDatabase::addApplicationFont(":/font/FiraCode-Regular.ttf");
+
+  if (fontId != -1) {
+    const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
+    if (!fontFamilies.isEmpty()) {
+      customFont_ = QFont(fontFamilies.at(0), 10);
+      qDebug() << "Fuente personalizada cargada:" << fontFamilies.at(0);
+    } else {
+      qWarning() << "No se pudo obtener la familia de la fuente personalizada";
+      customFont_ = QFont("Segoe UI", 10); // Fallback
+    }
+  } else {
+    qWarning() << "No se pudo cargar la fuente desde recursos";
+    customFont_ = QFont("Segoe UI", 10); // Fallback
+  }
+
+  // Aplicar fuente a los widgets
+  ui->tbAcercaDe->setFont(customFont_);
+  ui->tbLicencia->setFont(customFont_);
+
+}
+
+void AcercaDeDialog::setupUI(){
+
+  ui->tabWidget->setCurrentIndex(0);
+
+  setTextToAbout();
+  loadInfo_app();
+
+  // Configurar links
+  ui->lblLicencia->setText(QStringLiteral("<a href='license'>Ver licencia</a>"));
+  ui->lblAcercaQt->setText(QStringLiteral("<a href='qt'>Acerca de Qt</a>"));
+
+}
+
+void AcercaDeDialog::setupConnections(){
+
+  connect(ui->btnCerrar, &QPushButton::clicked, this, &AcercaDeDialog::close);
+  connect(ui->lblLicencia, &QLabel::linkActivated, this, &AcercaDeDialog::showLicense);
+  connect(ui->lblAcercaQt, &QLabel::linkActivated, this, [this]() {
+    QMessageBox::aboutQt(this, SW::Helper_t::appName());
+  });
+
+}
+
+void AcercaDeDialog::showLicense(){
+
+  QDialog licenciaDlg(this);
+  licenciaDlg.setWindowTitle(SW::Helper_t::appName() + " - Licencia");
+  licenciaDlg.setFixedSize(this->size());
+
+  auto* teLicencia = new QTextBrowser(&licenciaDlg);
+
+  teLicencia->setFont(customFont_);
+  teLicencia->setAcceptRichText(true);
+  teLicencia->setOpenExternalLinks(true);
+  teLicencia->setReadOnly(true);
+
+  QFile fileName(QStringLiteral(":/licencia/licencia.txt"));
+  if (!fileName.open(QFile::ReadOnly | QFile::Text)) {
+    QMessageBox::warning(this, SW::Helper_t::appName(),
+                         tr("Error al abrir el archivo de licencia:\n%1")
+                           .arg(fileName.errorString()));
+    return;
+  }
+
+  teLicencia->setHtml(fileName.readAll());
+  fileName.close();
+
+  // Crear layout SIN padre inicialmente
+  auto* mainLayout = new QVBoxLayout();
+  mainLayout->addWidget(teLicencia);
+  mainLayout->setContentsMargins(10, 10, 10, 10);
+
+  // Asignar el layout al diálogo (ahora Qt toma ownership)
+  licenciaDlg.setLayout(mainLayout);
+
+  licenciaDlg.exec();
+
+}
+
 
 void AcercaDeDialog::showEvent(QShowEvent *event){
 
   QDialog::showEvent(event);
 
   const auto scheme = (colorMode_ == Qt::ColorScheme::Unknown)
-                                   ? SW::Helper_t::detectSystemColorScheme()
-                                   : colorMode_;
+                        ? SW::Helper_t::detectSystemColorScheme()
+                        : colorMode_;
 
   setImage(scheme);
 
