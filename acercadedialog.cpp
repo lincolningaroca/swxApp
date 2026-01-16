@@ -18,6 +18,7 @@ AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
   ui->tabWidget->setCurrentIndex(0);
 
   loadInfo_app();
+
   ui->lblLicencia->setText(QStringLiteral("<a href='message'>Ver licencia.</a>"));
   ui->lblAcercaQt->setText(QStringLiteral("<a href='message'>Acerca de Qt.</a>"));
   QObject::connect(ui->btnCerrar, &QPushButton::clicked, this, &AcercaDeDialog::close);
@@ -43,7 +44,7 @@ AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
     teLicencia->setReadOnly(true);
     mainLayOut->addWidget(teLicencia.data());
     licenciaDlg.setLayout(mainLayOut.data());
-    licenciaDlg.setFixedSize(600, 477);
+    licenciaDlg.setFixedSize(this->size());
     licenciaDlg.setWindowTitle(SW::Helper_t::appName().append(" - licencia"));
     licenciaDlg.exec();
     fileName.close();
