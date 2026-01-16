@@ -9,6 +9,6 @@ QSize SWItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelI
 {
 
   auto size = QStyledItemDelegate::sizeHint(option, index);
-  size.setHeight(19);
+  size.setHeight(20);
   return size;
 }

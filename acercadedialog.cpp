@@ -3,26 +3,19 @@
 
 #include <QMessageBox>
 #include <QFile>
+#include <QSettings>
 
 AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
-  : QDialog(parent), ui(new Ui::AcercaDeDialog)
+  : QDialog(parent), ui(new Ui::AcercaDeDialog), colorMode_(colorMode)
 {
   ui->setupUi(this);
 
+  readSettings();
+
   setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
   setTextToAbout();
+
   ui->tabWidget->setCurrentIndex(0);
-
-  if(colorMode == Qt::ColorScheme::Unknown){
-
-    const auto retSyscolorScheme = SW::Helper_t::detectSystemColorScheme();
-
-    setImage(retSyscolorScheme);
-
-  }else{
-
-    setImage(colorMode);
-  }
 
   loadInfo_app();
   ui->lblLicencia->setText(QStringLiteral("<a href='message'>Ver licencia.</a>"));
@@ -69,61 +62,123 @@ AcercaDeDialog::~AcercaDeDialog()
   delete ui;
 }
 
+void AcercaDeDialog::writeSettings() const{
+
+  QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
+  settings.beginGroup("abaut_dialog");
+  settings.setValue("form_geometry", this->saveGeometry());
+
+  settings.endGroup();
+
+}
+
+void AcercaDeDialog::readSettings()
+{
+  QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
+  settings.beginGroup("abaut_dialog");
+  const auto formGeometry = settings.value("form_geometry", QByteArray()).toByteArray();
+  this->restoreGeometry(formGeometry);
+  settings.endGroup();
+}
+
 
 void AcercaDeDialog::loadInfo_app() const noexcept{
   ui->tbLicencia->setFont(customFont);
   ui->tbLicencia->setAcceptRichText(true);
   ui->tbLicencia->setOpenExternalLinks(true);
   ui->tbLicencia->setHtml(QStringLiteral(
-        "<p>xxxApp:<br><br>Es software libre, puede "
-        "redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública "
-        "General de GNU según se encuentra publicada por la <a "
-        "href=\"https://www.fsf.org\">Free Software "
-        "Foundation</a>, bien de la versión 3 de dicha Licencia o bien (según su "
-        "elección) de cualquier versión posterior.<br><br>"
-        "Este programa se distribuye con la esperanza de que sea útil, pero <strong>SIN "
-        "NINGUNA "
-        "GARANTÍA</strong>, incluso sin la garantía <strong>MERCANTIL</strong> implícita ni la de "
-        "garantizar la <strong>ADECUACIÓN A UN PROPÓSITO PARTICULAR.</strong> Véase la <a "
-        "href=\"https://www.gnu.org/licenses/\">Licencia "
-        "Pública General</a> de GNU para más detalles.</p>"));
+    "<p>xxxApp:<br><br>Es software libre, puede "
+    "redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública "
+    "General de GNU según se encuentra publicada por la <a "
+    "href=\"https://www.fsf.org\">Free Software "
+    "Foundation</a>, bien de la versión 3 de dicha Licencia o bien (según su "
+    "elección) de cualquier versión posterior.<br><br>"
+    "Este programa se distribuye con la esperanza de que sea útil, pero <strong>SIN "
+    "NINGUNA "
+    "GARANTÍA</strong>, incluso sin la garantía <strong>MERCANTIL</strong> implícita ni la de "
+    "garantizar la <strong>ADECUACIÓN A UN PROPÓSITO PARTICULAR.</strong> Véase la <a "
+    "href=\"https://www.gnu.org/licenses/\">Licencia "
+    "Pública General</a> de GNU para más detalles.</p>"));
 
 }
 
 void AcercaDeDialog::setTextToAbout() const{
   ui->tbAcercaDe->setFont(customFont);
   ui->tbAcercaDe->setOpenExternalLinks(true);
-  ui->tbAcercaDe->setHtml(QStringLiteral("<p>Powered by:"
-                          "<ul>"
-                          "<li>Lincoln Ingaroca De La Cruz.</li>"
-                          "<li>SWSystem's.</li>"
-                          "</ul>"
-                          "Contacto:"
-                          "<ul>"
-                          "<li>lincolningaroca@gmail.com</li>"
-                          "</ul>"
-                          "Lincoln Ingaroca:"
-                          "<ul>"
-                          "<li>Analista de sistemas informáticos.</li>"
-                          "<li>Software development.</li>"
-                          "</ul><br>"
-                          "Bibliotecas:"
-                          "<p>xxxApp incluye código fuente de los siguientes proyectos:</p>"
-                          "<ul>"
-                          "<li><a href=\"https://www.openssl.org/\">OpenSSL.</a></li>"
-                          "<li><a href=\"https://www.qt.io//\">QtFrameWork and QtWidgets.</a></li>"
-                          "<li><a href=\"https://www.sqlite.org/index.html\">SQLite.</a></li>"
-                          "</ul>"
-                          "</p>"
-                          "<p>Repositorio del programa:"
-                          "<ul><li><a href=\"https://github.com/lincolningaroca/xxxApp\">xxxApp</a></li></ul>"
-                          "</p>"));
+  ui->tbAcercaDe->setHtml(QStringLiteral(
+    "<p>Powered by:"
+    "<ul>"
+    "<li>Lincoln Ingaroca De La Cruz.</li>"
+    "<li>SWSystem's.</li>"
+    "</ul>"
+    "Contacto:"
+    "<ul>"
+    "<li>lincolningaroca@gmail.com</li>"
+    "</ul>"
+    "Lincoln Ingaroca:"
+    "<ul>"
+    "<li>Analista de sistemas informáticos.</li>"
+    "<li>Software development.</li>"
+    "</ul><br>"
+    "Bibliotecas:"
+    "<p>xxxApp incluye código fuente de los siguientes proyectos:</p>"
+    "<ul>"
+    "<li><a href=\"https://www.openssl.org/\">OpenSSL.</a></li>"
+    "<li><a href=\"https://www.qt.io//\">QtFrameWork and QtWidgets.</a></li>"
+    "<li><a href=\"https://www.sqlite.org/index.html\">SQLite.</a></li>"
+    "<li><a href=\"https://github.com/QtExcel/QXlsx\">QXlsx library.</a></li>"
+    "</ul>"
+    "</p>"
+    "<p>Repositorio del programa:"
+    "<ul><li><a href=\"https://github.com/lincolningaroca/xxxApp\">xxxApp</a></li></ul>"
+    "</p>"));
 
 }
 
 void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
 
-  (colorMode == Qt::ColorScheme::Dark) ? ui->lblLogo->setPixmap(QPixmap(":/img/logoEmpresa_1.png").scaled(490, 338))
-                                 : ui->lblLogo->setPixmap(QPixmap(":/img/logoEmpresa.png").scaled(490, 338));
+  const QString logoPath = (colorMode == Qt::ColorScheme::Dark)
+  ? ":/img/logoEmpresa_1.png"
+  : ":/img/logoEmpresa.png";
+
+  QPixmap logoSw(logoPath);
+
+  if(logoSw.isNull()){
+    qWarning() << "Logo no disponible para el tema actual: " << logoPath;
+    return;
+  }
+
+  const QSize labelSize = ui->lblLogo->size();      // 622x462
+  const QSize logoSize = logoSw.size();             // 478x471
+
+  if(logoSize.width() > labelSize.width() || logoSize.height() > labelSize.height()){
+    ui->lblLogo->setPixmap(logoSw.scaled(labelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  }else{
+    ui->lblLogo->setPixmap(logoSw);
+  }
+
+  ui->lblLogo->setAlignment(Qt::AlignCenter);
+
+}
+
+
+void AcercaDeDialog::showEvent(QShowEvent *event){
+
+  QDialog::showEvent(event);
+
+  const auto scheme = (colorMode_ == Qt::ColorScheme::Unknown)
+                                   ? SW::Helper_t::detectSystemColorScheme()
+                                   : colorMode_;
+
+  setImage(scheme);
+
+
+}
+
+
+void AcercaDeDialog::closeEvent(QCloseEvent *event){
+
+  writeSettings();
+  QDialog::closeEvent(event);
 
 }

@@ -357,7 +357,7 @@ void LogInDialog::writeSettings() const noexcept{
 void LogInDialog::readSettings(){
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
 
-  restoreGeometry(settings.value(QStringLiteral("pos_login_form")).toByteArray());
+  restoreGeometry(settings.value(QStringLiteral("pos_login_form"), QByteArray()).toByteArray());
 
 }
 

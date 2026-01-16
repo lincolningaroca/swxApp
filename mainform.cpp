@@ -996,7 +996,9 @@ void MainForm::setUpTableHeaders() const noexcept{
   ui->tvUrl->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
   ui->tvUrl->setSelectionMode(QAbstractItemView::SingleSelection);
   ui->tvUrl->setItemDelegate(new SWItemDelegate(ui->tvUrl));
-  ui->tvUrl->resizeRowsToContents();
+  // ui->tvUrl->resizeRowsToContents();
+  ui->tvUrl->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  ui->tvUrl->verticalHeader()->setDefaultSectionSize(20);
   ui->tvUrl->setAlternatingRowColors(true);
 
 }
@@ -1085,7 +1087,7 @@ void MainForm::readSettings() noexcept{
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
 
   restoreGeometry(settings.value("position", QByteArray()).toByteArray());
-  restoreState(settings.value("state").toByteArray());
+  restoreState(settings.value("state", QByteArray()).toByteArray());
 
   settings.beginGroup("TableView");
   auto headerState = settings.value("columnLayout", QByteArray()).toByteArray();
@@ -1114,7 +1116,7 @@ void MainForm::readSettings() noexcept{
 
   settings.beginGroup(QStringLiteral("Theme"));
   const auto theme = settings.value(QStringLiteral("theme Value")).toInt();
-  const auto colorData = settings.value(QStringLiteral("lblColor")).toByteArray();
+  const auto colorData = settings.value(QStringLiteral("lblColor"), QByteArray()).toByteArray();
 
   const auto lblColor = SW::Helper_t::getColorReg(colorData);
   setLabelInfo(SW::Helper_t::lblColorMode.key(lblColor));
@@ -1309,6 +1311,8 @@ void MainForm::closeEvent(QCloseEvent *event){
 
 
 void MainForm::showEvent(QShowEvent *event){
+
+  QMainWindow::showEvent(event);
   auto headerState = SW::Helper_t::nativeRegistryKeyExists("TableView/columnLayout");
 
   if(!headerState){
@@ -1317,7 +1321,7 @@ void MainForm::showEvent(QShowEvent *event){
     ui->tvUrl->setColumnWidth(1, tableWidth);
     ui->tvUrl->setColumnWidth(2, tableWidth);
   }
-  QMainWindow::showEvent(event);
+
 
 }
 

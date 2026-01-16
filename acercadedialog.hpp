@@ -21,6 +21,11 @@ public:
 private:
   Ui::AcercaDeDialog *ui;
 
+  const Qt::ColorScheme colorMode_;
+
+  void writeSettings() const;
+  void readSettings();
+
 
   void loadInfo_app() const noexcept;
   void setTextToAbout() const;
@@ -31,4 +36,9 @@ private:
   const QString family = QFontDatabase::applicationFontFamilies(id).at(0);
   const QFont customFont{family, 10};
 
+
+  // QWidget interface
+protected:
+  virtual void showEvent(QShowEvent *event) override;
+  virtual void closeEvent(QCloseEvent *event) override;
 };

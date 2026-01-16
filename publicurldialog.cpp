@@ -90,7 +90,8 @@ void PublicUrlDialog::loadDataTableView(){
   ui->urlTableView->model()->setHeaderData(1,Qt::Horizontal, "Dirección URL");
   ui->urlTableView->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
   ui->urlTableView->setItemDelegate(new SWItemDelegate(ui->urlTableView));
-  ui->urlTableView->resizeRowsToContents();
+  ui->urlTableView->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  ui->urlTableView->verticalHeader()->setDefaultSectionSize(20);
   ui->urlTableView->setAlternatingRowColors(true);
 
   ui->urlTableView->setMouseTracking(true);
@@ -101,6 +102,7 @@ void PublicUrlDialog::writeSettings(){
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
   settings.beginGroup("Public_url_dialog");
+  settings.setValue("form_geometry", this->saveGeometry());
   settings.setValue("Header_state", ui->urlTableView->horizontalHeader()->saveState());
   settings.endGroup();
 
@@ -110,9 +112,11 @@ void PublicUrlDialog::readSettings(){
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
   settings.beginGroup("Public_url_dialog");
+  const auto formGeometry = settings.value("form_geometry", QByteArray()).toByteArray();
   const auto headerState = settings.value("Header_state", QByteArray()).toByteArray();
   settings.endGroup();
 
+  this->restoreGeometry(formGeometry);
   ui->urlTableView->horizontalHeader()->restoreState(headerState);
 
 }
@@ -125,6 +129,7 @@ void PublicUrlDialog::closeEvent(QCloseEvent *event){
 
 void PublicUrlDialog::showEvent(QShowEvent *event){
 
+  QDialog::showEvent(event);
   auto headerState = SW::Helper_t::nativeRegistryKeyExists("Public_url_dialog/Header_state");
 
   if(!headerState){
@@ -133,5 +138,5 @@ void PublicUrlDialog::showEvent(QShowEvent *event){
     ui->urlTableView->setColumnWidth(1, headerWidth);
     ui->urlTableView->setColumnWidth(2, headerWidth);
   }
-  QDialog::showEvent(event);
+
 }
