@@ -13,13 +13,16 @@
 #include "swwidgets/switemdelegate.hpp"
 
 PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
-  QDialog(parent), ui(new Ui::PublicUrlDialog),
+  QDialog(parent),
+  ui(new Ui::PublicUrlDialog),
   db_{QSqlDatabase::database(QStringLiteral("xxxConection"))}{
+
   ui->setupUi(this);
+
   setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 
   loadDataComboBox();
-  loadDataTableView();
+  on_loadDataTableView();
 
   readSettings();
 
@@ -35,25 +38,10 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
       SW::Helper_t::applyManjaroDarkColor(ui->urlTableView);
   }
 
-  QObject::connect(ui->categoryComboBox, &QComboBox::currentTextChanged, this, &PublicUrlDialog::loadDataTableView);
+  QObject::connect(ui->categoryComboBox, &QComboBox::currentTextChanged, this, &PublicUrlDialog::on_loadDataTableView);
 
 
-  QObject::connect(ui->openPushButton, &QPushButton::clicked, this, [this](){
-
-      if(!ui->urlTableView->selectionModel()->hasSelection()){
-          QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("Seleccione una fila!\n"));
-          return;
-        }
-
-
-      const auto row_ = ui->urlTableView->currentIndex().row();
-      const auto url_ = ui->urlTableView->model()->index(row_, 1).data().toString();
-
-      if(!QDesktopServices::openUrl(QUrl(url_))){
-          QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al abrir la dirección url.\n"));
-          return;
-        }
-    });
+  QObject::connect(ui->openPushButton, &QPushButton::clicked, this, &PublicUrlDialog::on_openUrl);
 }
 
 PublicUrlDialog::~PublicUrlDialog(){
@@ -71,7 +59,7 @@ void PublicUrlDialog::loadDataComboBox(){
 
 }
 
-void PublicUrlDialog::loadDataTableView(){
+void PublicUrlDialog::on_loadDataTableView(){
 
   const auto categoryId_ = data_.key(ui->categoryComboBox->currentText());
   SWTableModel* xxxModel_ = new SWTableModel(this, db_);
@@ -118,6 +106,24 @@ void PublicUrlDialog::readSettings(){
 
   this->restoreGeometry(formGeometry);
   ui->urlTableView->horizontalHeader()->restoreState(headerState);
+
+}
+
+void PublicUrlDialog::on_openUrl(){
+
+  if(!ui->urlTableView->selectionModel()->hasSelection()){
+    QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("Seleccione una fila!\n"));
+    return;
+  }
+
+
+  const auto row_ = ui->urlTableView->currentIndex().row();
+  const auto url_ = ui->urlTableView->model()->index(row_, 1).data().toString();
+
+  if(!QDesktopServices::openUrl(QUrl(url_))){
+    QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al abrir la dirección url.\n"));
+    return;
+  }
 
 }
 

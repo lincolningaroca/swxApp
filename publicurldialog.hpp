@@ -21,11 +21,12 @@ private:
   const QSqlDatabase db_{};
 
   void loadDataComboBox();
-  void loadDataTableView();
-
   void writeSettings();
   void readSettings();
 
+private slots:
+  void on_openUrl();
+  void on_loadDataTableView();
 
   // QWidget interface
 protected:

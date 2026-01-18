@@ -61,6 +61,7 @@ private:
   void handleToggleAnimation(bool checked);
   void setupAnimation();
 
+
   // QWidget interface
 protected:
   void closeEvent(QCloseEvent *event) override;
