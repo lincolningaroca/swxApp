@@ -14,7 +14,14 @@ AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
   colorMode_(colorMode),
   customFont_()
 {
+
   ui->setupUi(this);
+
+  const auto scheme = (colorMode_ == Qt::ColorScheme::Unknown)
+                        ? SW::Helper_t::detectSystemColorScheme()
+                        : colorMode_;
+
+  setImage(scheme);
 
   setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 
@@ -22,7 +29,6 @@ AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
   setupUI();
   readSettings();
   setupConnections();
-
 
 }
 
@@ -35,8 +41,7 @@ void AcercaDeDialog::writeSettings() const{
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
   settings.beginGroup("abaut_dialog");
-  settings.setValue("form_geometry", this->saveGeometry());
-
+  settings.setValue("form_geometry", this->pos());
   settings.endGroup();
 
 }
@@ -45,8 +50,8 @@ void AcercaDeDialog::readSettings()
 {
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
   settings.beginGroup("abaut_dialog");
-  const auto formGeometry = settings.value("form_geometry", QByteArray()).toByteArray();
-  this->restoreGeometry(formGeometry);
+  const auto pos = settings.value("form_geometry").toPoint();
+  this->move(pos);
   settings.endGroup();
 }
 
@@ -119,15 +124,8 @@ void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
     return;
   }
 
-  const QSize labelSize = ui->lblLogo->size();      // 622x462
-  const QSize logoSize = logoSw.size();             // 478x471
-
-  if(logoSize.width() > labelSize.width() || logoSize.height() > labelSize.height()){
-    ui->lblLogo->setPixmap(logoSw.scaled(labelSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-  }else{
-    ui->lblLogo->setPixmap(logoSw);
-  }
-
+  ui->lblLogo->setPixmap(logoSw);
+  ui->lblLogo->setFixedSize(logoSw.size());
   ui->lblLogo->setAlignment(Qt::AlignCenter);
 
 }
@@ -193,7 +191,7 @@ void AcercaDeDialog::showLicense(){
   teLicencia->setOpenExternalLinks(true);
   teLicencia->setReadOnly(true);
 
-  QFile fileName(QStringLiteral(":/licencia/licencia.txt"));
+  QFile fileName(QStringLiteral(":/licencia/GNU General Public License v2.0 _ Choose a License.html"));
   if (!fileName.open(QFile::ReadOnly | QFile::Text)) {
     QMessageBox::warning(this, SW::Helper_t::appName(),
                          tr("Error al abrir el archivo de licencia:\n%1")
@@ -207,7 +205,7 @@ void AcercaDeDialog::showLicense(){
   // Crear layout SIN padre inicialmente
   auto* mainLayout = new QVBoxLayout();
   mainLayout->addWidget(teLicencia);
-  mainLayout->setContentsMargins(10, 10, 10, 10);
+  mainLayout->setContentsMargins(5,5,5,5);
 
   // Asignar el layout al diálogo (ahora Qt toma ownership)
   licenciaDlg.setLayout(mainLayout);
@@ -215,21 +213,6 @@ void AcercaDeDialog::showLicense(){
   licenciaDlg.exec();
 
 }
-
-
-void AcercaDeDialog::showEvent(QShowEvent *event){
-
-  QDialog::showEvent(event);
-
-  const auto scheme = (colorMode_ == Qt::ColorScheme::Unknown)
-                        ? SW::Helper_t::detectSystemColorScheme()
-                        : colorMode_;
-
-  setImage(scheme);
-
-
-}
-
 
 void AcercaDeDialog::closeEvent(QCloseEvent *event){
 
