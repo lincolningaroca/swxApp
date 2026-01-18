@@ -30,5 +30,6 @@
         <file>img/whitetheme.png</file>
         <file>font/FiraCode-Regular.ttf</file>
         <file>licencia/licencia.txt</file>
+        <file>licencia/gnu-gpl-v3-license.html</file>
     </qresource>
 </RCC>

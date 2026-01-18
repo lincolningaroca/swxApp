@@ -25,7 +25,7 @@ AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
 
   setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 
-  setupCustomFont();;
+  setupCustomFont();
   setupUI();
   readSettings();
   setupConnections();
@@ -138,7 +138,7 @@ void AcercaDeDialog::setupCustomFont(){
   if (fontId != -1) {
     const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
     if (!fontFamilies.isEmpty()) {
-      customFont_ = QFont(fontFamilies.at(0), 10);
+      customFont_ = QFont(fontFamilies.at(0), 9);
       qDebug() << "Fuente personalizada cargada:" << fontFamilies.at(0);
     } else {
       qWarning() << "No se pudo obtener la familia de la fuente personalizada";
@@ -182,6 +182,8 @@ void AcercaDeDialog::showLicense(){
 
   QDialog licenciaDlg(this);
   licenciaDlg.setWindowTitle(SW::Helper_t::appName() + " - Licencia");
+  // auto width = qRound(this->width() *1.1);
+  // licenciaDlg.setFixedSize(width, this->size().height());
   licenciaDlg.setFixedSize(this->size());
 
   auto* teLicencia = new QTextBrowser(&licenciaDlg);
@@ -191,7 +193,7 @@ void AcercaDeDialog::showLicense(){
   teLicencia->setOpenExternalLinks(true);
   teLicencia->setReadOnly(true);
 
-  QFile fileName(QStringLiteral(":/licencia/GNU General Public License v2.0 _ Choose a License.html"));
+  QFile fileName(QStringLiteral(":/licencia/gnu-gpl-v3-license.html"));
   if (!fileName.open(QFile::ReadOnly | QFile::Text)) {
     QMessageBox::warning(this, SW::Helper_t::appName(),
                          tr("Error al abrir el archivo de licencia:\n%1")
