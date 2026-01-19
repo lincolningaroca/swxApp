@@ -16,6 +16,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/appIcon.rc")
 
+include(cmake/ExternalLibraries.cmake)
+
 qt_add_executable(${PROJECT_NAME}
     WIN32 MACOSX_BUNDLE
     main.cpp
@@ -34,20 +36,15 @@ qt_add_executable(${PROJECT_NAME}
     ${APP_ICON}
 )
 
-
-
-target_include_directories(${PROJECT_NAME}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/QXlsx/QXlsxQt6)
-
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         Qt::Core
         Qt::Widgets
         Qt::Sql
         Qt::Network
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/libcrypto.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/libQXlsxQt6.a
+        QXlsx::QXlsx
+        Crypto::Crypto
+
 )
 
 include(GNUInstallDirs)
