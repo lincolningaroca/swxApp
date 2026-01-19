@@ -34,6 +34,7 @@ qt_add_executable(${PROJECT_NAME}
     publicurldialog.cpp publicurldialog.hpp publicurldialog.ui
     swwidgets/switemdelegate.cpp swwidgets/switemdelegate.hpp swwidgets/swlabel.cpp swwidgets/swlabel.hpp swwidgets/swtablemodel.cpp swwidgets/swtablemodel.hpp
     ${APP_ICON}
+    cmake/ExternalLibraries.cmake
 )
 
 target_link_libraries(${PROJECT_NAME}
