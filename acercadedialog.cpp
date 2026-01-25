@@ -62,7 +62,7 @@ void AcercaDeDialog::loadInfo_app() const noexcept{
   ui->tbLicencia->setAcceptRichText(true);
   ui->tbLicencia->setOpenExternalLinks(true);
   ui->tbLicencia->setHtml(QStringLiteral(
-    "<p style='text-align: justify;'>xxxApp:<br><br>Es software libre, puede "
+    "<p style='text-align: justify;'>SWUrlManager:<br><br>Es software libre, puede "
     "redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública "
     "General de GNU según se encuentra publicada por la <a "
     "href=\"https://www.fsf.org\">Free Software "
@@ -97,7 +97,7 @@ void AcercaDeDialog::setTextToAbout() const{
     "<li>Software development.</li>"
     "</ul><br>"
     "Bibliotecas:"
-    "<p>xxxApp incluye código fuente de los siguientes proyectos:</p>"
+    "<p>SWUrlManager incluye código fuente de los siguientes proyectos:</p>"
     "<ul>"
     "<li><a href=\"https://www.openssl.org/\">OpenSSL.</a></li>"
     "<li><a href=\"https://www.qt.io//\">QtFrameWork and QtWidgets.</a></li>"
@@ -106,7 +106,7 @@ void AcercaDeDialog::setTextToAbout() const{
     "</ul>"
     "</p>"
     "<p>Repositorio del programa:"
-    "<ul><li><a href=\"https://github.com/lincolningaroca/xxxApp\">xxxApp</a></li></ul>"
+    "<ul><li><a href=\"https://github.com/lincolningaroca/swxApp\">swxApp</a></li></ul>"
     "</p>"));
 
 }
