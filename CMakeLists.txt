@@ -14,7 +14,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/appIcon.rc")
+set(APP_ICON "${PROJECT_SOURCE_DIR}/appIcon.rc")
 
 include(cmake/ExternalLibraries.cmake)
 
@@ -34,48 +34,59 @@ qt_add_executable(${PROJECT_NAME}
     publicurldialog.cpp publicurldialog.hpp publicurldialog.ui
     swwidgets/switemdelegate.cpp swwidgets/switemdelegate.hpp swwidgets/swlabel.cpp swwidgets/swlabel.hpp swwidgets/swtablemodel.cpp swwidgets/swtablemodel.hpp
     ${APP_ICON}
-    cmake/ExternalLibraries.cmake
 )
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        Qt::Core
-        Qt::Widgets
-        Qt::Sql
-        Qt::Network
-        QXlsx::QXlsx
-        Crypto::Crypto
-
+    Qt::Core
+    Qt::Widgets
+    Qt::Sql
+    Qt::Network
+    QXlsx::QXlsx
+    OpenSSL::SSL    # Nombre oficial de CMake
+    OpenSSL::Crypto # Nombre oficial de CMake
 )
 
 include(GNUInstallDirs)
 
 
 target_compile_options(${PROJECT_NAME} PRIVATE
-  -Wall
-  -Wpedantic
-  -Wextra
-  -Wconversion
-  -Wshadow
-  -Wnon-virtual-dtor
-  -Wold-style-cast
-  -Wcast-align
-  -Wunused
-  -Woverloaded-virtual
-  -Wno-unused-parameter
+    -Wall
+    -Wpedantic
+    -Wextra
+    -Wconversion
+    -Wshadow
+    -Wnon-virtual-dtor
+    -Wold-style-cast
+    -Wcast-align
+    -Wunused
+    -Woverloaded-virtual
+    -Wno-unused-parameter
 
 )
 
 add_custom_command(
-  TARGET ${PROJECT_NAME}
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E make_directory
-  "$<TARGET_FILE_DIR:xxxApp>/tools/sqlite-tools-win-x64-3450100"
-  COMMAND
-  ${CMAKE_COMMAND} -E copy_directory
-  "${CMAKE_CURRENT_SOURCE_DIR}/tools/sqlite-tools-win-x64-3450100"
-  "$<TARGET_FILE_DIR:xxxApp>/tools/sqlite-tools-win-x64-3450100"
-  COMMENT "Copiando herramientas SQLite al directorio de salida")
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/tools/sqlite-tools-win-x64-3450100"
+    COMMAND
+    ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/sqlite-tools-win-x64-3450100"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/tools/sqlite-tools-win-x64-3450100"
+    COMMENT "Copiando herramientas SQLite al directorio de salida")
+
+if(WIN32 AND TARGET OpenSSL::SSL)
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:OpenSSL::Crypto>
+            $<TARGET_FILE:OpenSSL::SSL>
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copiando DLLs de OpenSSL al directorio de salida"
+    )
+endif()
 
 install(TARGETS ${PROJECT_NAME}
     BUNDLE  DESTINATION .
