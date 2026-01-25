@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 {
   QApplication a(argc, argv);
 
-  a.setApplicationName(QStringLiteral("xxxApp"));
+  a.setApplicationName(QStringLiteral("SWUrlManager"));
   a.setApplicationVersion(QStringLiteral("1.0"));
   a.setOrganizationName(QStringLiteral("SWSystem's"));
   // a.setStyle("Fusion");
