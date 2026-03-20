@@ -33,6 +33,7 @@ SWTextEdit::SWTextEdit(QWidget *parent):
 
   QObject::connect(editor_, &QTextEdit::textChanged, this, &SWTextEdit::textChanged);
   QObject::connect(editor_, &QTextEdit::cursorPositionChanged, this, &SWTextEdit::on_cursorPositionChanged);
+  QObject::connect(editor_, &QTextEdit::selectionChanged, this, &SWTextEdit::on_cursorPositionChanged);
 }
 
 void SWTextEdit::initToolBar()
@@ -169,13 +170,34 @@ void SWTextEdit::on_cursorPositionChanged(){
 }
 
 void SWTextEdit::updateToolBarState(){
+  // const auto fmt = editor_->currentCharFormat();
+  // boldAction_->setChecked(fmt.fontWeight() == QFont::Bold);
+  // italicAction_->setChecked(fmt.fontItalic());
+  // underlineAction_->setChecked(fmt.fontUnderline());
+
+  // QSignalBlocker blocker(fontSize_);
+  // fontSize_->setValue(static_cast<int>(fmt.fontPointSize() > 0 ? fmt.fontPointSize() : 10));
+
+  // const auto align = editor_->alignment();
+  // alignLeftAction_->setChecked(align == Qt::AlignLeft);
+  // alignCenterAction_->setChecked(align == Qt::AlignHCenter);
+  // alignRightAction_->setChecked(align == Qt::AlignRight);
   const auto fmt = editor_->currentCharFormat();
   boldAction_->setChecked(fmt.fontWeight() == QFont::Bold);
   italicAction_->setChecked(fmt.fontItalic());
   underlineAction_->setChecked(fmt.fontUnderline());
 
-  QSignalBlocker blocker(fontSize_);
-  fontSize_->setValue(static_cast<int>(fmt.fontPointSize() > 0 ? fmt.fontPointSize() : 10));
+  const auto size = fmt.fontPointSize();
+  if(size > 0){
+	QSignalBlocker blocker(fontSize_);
+	fontSize_->setValue(static_cast<int>(size));
+  }
+
+  // Verificar que fontFamilies no esté vacío antes de acceder
+  if(!fmt.fontFamilies().toStringList().isEmpty()){
+	QSignalBlocker blocker2(fontFamily_);
+	fontFamily_->setCurrentFont(QFont(fmt.fontFamilies().toStringList().constFirst()));
+  }
 
   const auto align = editor_->alignment();
   alignLeftAction_->setChecked(align == Qt::AlignLeft);
@@ -195,5 +217,9 @@ bool SWTextEdit::isReadOnly() const { return editor_->isReadOnly(); }
 void SWTextEdit::setHtml(const QString &html){
 
   editor_->setHtml(html);
+  // Mover cursor al final para que la toolbar lea el formato correcto
+  QTextCursor cursor = editor_->textCursor();
+  cursor.movePosition(QTextCursor::End);
+  editor_->setTextCursor(cursor);
 
 }
