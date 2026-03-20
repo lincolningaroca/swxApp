@@ -35,6 +35,7 @@ qt_add_executable(${PROJECT_NAME}
     swwidgets/switemdelegate.cpp swwidgets/switemdelegate.hpp swwidgets/swlabel.cpp swwidgets/swlabel.hpp swwidgets/swtablemodel.cpp swwidgets/swtablemodel.hpp
     ${APP_ICON}
     configdialog.hpp configdialog.cpp configdialog.ui
+    swwidgets/swtextedit.hpp swwidgets/swtextedit.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

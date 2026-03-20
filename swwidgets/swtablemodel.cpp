@@ -1,6 +1,7 @@
 #include "swtablemodel.hpp"
 
 #include <QSqlRecord>
+#include <QTextDocument>
 
 #include "util/helper.hpp"
 
@@ -13,12 +14,24 @@ SWTableModel::SWTableModel(QObject *parent, const QSqlDatabase &db)
 QVariant SWTableModel::data(const QModelIndex& index, int role) const{
 
 
-  if((role == Qt::DisplayRole || role == Qt::ToolTipRole) && (index.column() == 1 || index.column() == 2) ){
+  // if((role == Qt::DisplayRole || role == Qt::ToolTipRole) && (index.column() == 1 || index.column() == 2) ){
 
-    return SW::Helper_t::decrypt(QSqlTableModel::data(index, Qt::DisplayRole).toString());
+  //   return SW::Helper_t::decrypt(QSqlTableModel::data(index, Qt::DisplayRole).toString());
 
+  // }
+
+  // return QSqlTableModel::data(index, role);
+  if((role == Qt::DisplayRole || role == Qt::ToolTipRole) && (index.column() == 1 || index.column() == 2)){
+	const auto decrypted = SW::Helper_t::decrypt(QSqlTableModel::data(index, Qt::DisplayRole).toString());
+
+	if(index.column() == 2){  // tanto DisplayRole como ToolTipRole en columna 2
+	  QTextDocument doc;
+	  doc.setHtml(decrypted);
+	  return doc.toPlainText();
+	}
+
+	return decrypted;
   }
-
   return QSqlTableModel::data(index, role);
 
 }
@@ -29,12 +42,12 @@ QVariant SWTableModel::headerData(int section, Qt::Orientation orientation, int 
   // 1. Si piden el tamaño (SizeHint)
   if (orientation == Qt::Vertical && role == Qt::SizeHintRole) {
 
-    return QSize(0, 0); // Esto colapsa el ANCHO de la numeración lateral
+	return QSize(0, 0); // Esto colapsa el ANCHO de la numeración lateral
 
   }
 
   if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
-    return QVariant();
+	return QVariant();
   }
 
 

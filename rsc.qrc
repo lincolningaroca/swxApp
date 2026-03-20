@@ -32,5 +32,9 @@
         <file>licencia/licencia.txt</file>
         <file>licencia/gnu-gpl-v3-license.html</file>
         <file>img/palette.png</file>
+        <file>img/center.png</file>
+        <file>img/leftalign.png</file>
+        <file>img/rightalign.png</file>
+        <file>img/textcolor.png</file>
     </qresource>
 </RCC>

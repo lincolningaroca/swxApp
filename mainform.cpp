@@ -13,6 +13,7 @@
 #include <QStyleHints>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QTextEdit>
 
 #include "dlgnewcategory.hpp"
 #include "acercadedialog.hpp"
@@ -36,12 +37,12 @@ MainForm::MainForm(QWidget *parent)
 
   QObject::connect(ui->showHideDatabaseAction, &QAction::toggled, this, [this](bool checked = false){
 
-    ui->dataBasetoolBar->setVisible(checked);
+	ui->dataBasetoolBar->setVisible(checked);
   });
 
   QObject::connect(ui->showHideAction, &QAction::toggled, this, [this](bool checked = false){
 
-    ui->logIntoolBar->setVisible(checked);
+	ui->logIntoolBar->setVisible(checked);
   });
   QObject::connect(ui->actionPreferencias, &QAction::toggled, this, [this](bool checked = false){
 
@@ -68,6 +69,7 @@ MainForm::MainForm(QWidget *parent)
 
   // loadThemeComboBox();
   setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+  QObject::connect(ui->tvUrl, &QTableView::doubleClicked, this, &MainForm::on_showDescriptionDialog);
   canCreateBackUp();
   canStartSession();
 
@@ -126,7 +128,7 @@ MainForm::MainForm(QWidget *parent)
 
 
   QObject::connect(ui->txtUrl, &QLineEdit::textChanged, this, [this](const QString& text){
-    (!text.simplified().isEmpty()) ? ui->btnAdd->setEnabled(true) : ui->btnAdd->setDisabled(true);
+	(!text.simplified().isEmpty()) ? ui->btnAdd->setEnabled(true) : ui->btnAdd->setDisabled(true);
   });
 
   /**
@@ -155,17 +157,17 @@ MainForm::MainForm(QWidget *parent)
 
 
   QObject::connect(ui->btnopen, &QPushButton::clicked, this, [this](){
-    if(!validateSelectedRow()) return;
+	if(!validateSelectedRow()) return;
 
-    openUrl();
+	openUrl();
 
 
   });
 
   QObject::connect(openUrl_, &QAction::triggered, this, [this](){
-    if(!validateSelectedRow()) return;
+	if(!validateSelectedRow()) return;
 
-    openUrl();
+	openUrl();
   });
 
 
@@ -181,28 +183,28 @@ MainForm::MainForm(QWidget *parent)
 
   if(!SW::Helper_t::nativeRegistryKeyExists(R"(Theme)") && savedIndex == 0){
 
-    applyPreferredTheme(0);
-    setLabelInfo(SW::Helper_t::detectSystemColorScheme());
+	applyPreferredTheme(0);
+	setLabelInfo(SW::Helper_t::detectSystemColorScheme());
 
   }else if(savedIndex == 0){
 
-    readSettings();
-    setLabelInfo(SW::Helper_t::detectSystemColorScheme());
+	readSettings();
+	setLabelInfo(SW::Helper_t::detectSystemColorScheme());
 
   }else{
 
-    readSettings();
-    // setLabelInfo(themeType_.key(ui->cboTheme->currentText()));
-    verifyAppColorScheme();
+	readSettings();
+	// setLabelInfo(themeType_.key(ui->cboTheme->currentText()));
+	verifyAppColorScheme();
 
   }
 
   QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this, [this](){
 
-    auto ret = loadSchemePreference();
-    applyPreferredTheme(ret);
-    loadLblSchemePreference();
-    // writeSettings();
+	auto ret = loadSchemePreference();
+	applyPreferredTheme(ret);
+	loadLblSchemePreference();
+	// writeSettings();
 
   });
 
@@ -287,16 +289,16 @@ int MainForm::loadSchemePreference(){
 void MainForm::has_data() noexcept{
 
   if(categoryList_.isEmpty()){
-    ui->btnEditCategory->setDisabled(true);
-    ui->btnDeleteCategory->setDisabled(true);
-    ui->txtUrl->setDisabled(true);
-    ui->pteDesc->setDisabled(true);
+	ui->btnEditCategory->setDisabled(true);
+	ui->btnDeleteCategory->setDisabled(true);
+	ui->txtUrl->setDisabled(true);
+	ui->pteDesc->setDisabled(true);
 
   }else{
-    ui->btnEditCategory->setEnabled(true);
-    ui->btnDeleteCategory->setEnabled(true);
-    ui->txtUrl->setEnabled(true);
-    ui->pteDesc->setEnabled(true);
+	ui->btnEditCategory->setEnabled(true);
+	ui->btnDeleteCategory->setEnabled(true);
+	ui->txtUrl->setEnabled(true);
+	ui->pteDesc->setEnabled(true);
   }
 
 }
@@ -304,25 +306,25 @@ void MainForm::has_data() noexcept{
 void MainForm::hastvUrlData() noexcept{
 
   if(ui->tvUrl->model()->rowCount() == 0){
-    openUrl_->setDisabled(true);
-    ui->btnopen->setDisabled(true);
-    ui->btnEdit->setDisabled(true);
-    ui->btnQuit->setDisabled(true);
-    editUrl_->setDisabled(true);
-    quitUrl_->setDisabled(true);
-    moveUrl_->setVisible(false);
-    showDescDetail_->setVisible(false);
-    exportToExcelFile_->setVisible(false);
+	openUrl_->setDisabled(true);
+	ui->btnopen->setDisabled(true);
+	ui->btnEdit->setDisabled(true);
+	ui->btnQuit->setDisabled(true);
+	editUrl_->setDisabled(true);
+	quitUrl_->setDisabled(true);
+	moveUrl_->setVisible(false);
+	showDescDetail_->setVisible(false);
+	exportToExcelFile_->setVisible(false);
   }else{
-    openUrl_->setEnabled(true);
-    ui->btnopen->setEnabled(true);
-    ui->btnEdit->setEnabled(true);
-    ui->btnQuit->setEnabled(true);
-    editUrl_->setEnabled(true);
-    quitUrl_->setEnabled(true);
-    moveUrl_->setVisible(true);
-    showDescDetail_->setVisible(true);
-    exportToExcelFile_->setVisible(true);
+	openUrl_->setEnabled(true);
+	ui->btnopen->setEnabled(true);
+	ui->btnEdit->setEnabled(true);
+	ui->btnQuit->setEnabled(true);
+	editUrl_->setEnabled(true);
+	quitUrl_->setEnabled(true);
+	moveUrl_->setVisible(true);
+	showDescDetail_->setVisible(true);
+	exportToExcelFile_->setVisible(true);
   }
 
 }
@@ -332,11 +334,11 @@ void MainForm::on_showNewCategoryDialog(){
   dlgNewCategory newCategory(dlgNewCategory::OpenMode::New, QStringList(), this);
 
   if(newCategory.exec() == QDialog::Rejected)
-    return;
+	return;
 
   if(!helperdb_.saveCategoryData(newCategory.category(), newCategory.description(), userId_)){
-    QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n"));
-    return;
+	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n"));
+	return;
   }
   ui->cboCategory->clear();
   loadListCategory(userId_);
@@ -352,7 +354,7 @@ void MainForm::checkStatusContextMenu(){
   (static_cast<bool>(SW::Helper_t::sessionStatus_)) ? showPublicUrl_->setVisible(false) : showPublicUrl_->setVisible(true);
 
   (ui->cboCategory->model()->rowCount() > 1 && ui->tvUrl->model()->rowCount() > 0)
-    ? moveUrl_->setVisible(true) : moveUrl_->setVisible(false);
+	? moveUrl_->setVisible(true) : moveUrl_->setVisible(false);
 
 }
 
@@ -378,17 +380,17 @@ void MainForm::verifyAppColorScheme(){
   auto u_public = SW::Helper_t::currentUser_.value(SW::User::U_public);
 
   if(currentScheme_ == Qt::ColorScheme::Unknown){
-    setLabelInfo(SW::Helper_t::detectSystemColorScheme(),
-                 ((sessionStatus == SW::SessionStatus::Session_start)
-                    ? SW::Helper_t::current_user_ : u_public));
+	setLabelInfo(SW::Helper_t::detectSystemColorScheme(),
+				 ((sessionStatus == SW::SessionStatus::Session_start)
+					? SW::Helper_t::current_user_ : u_public));
   }else{
-    (currentScheme_ == Qt::ColorScheme::Dark)
-    ? setLabelInfo(Qt::ColorScheme::Dark,
-                   ((sessionStatus == SW::SessionStatus::Session_start)
-                      ? SW::Helper_t::current_user_ : u_public))
-    : setLabelInfo(Qt::ColorScheme::Light,
-                   ((sessionStatus == SW::SessionStatus::Session_start)
-                      ? SW::Helper_t::current_user_ : u_public));
+	(currentScheme_ == Qt::ColorScheme::Dark)
+	? setLabelInfo(Qt::ColorScheme::Dark,
+				   ((sessionStatus == SW::SessionStatus::Session_start)
+					  ? SW::Helper_t::current_user_ : u_public))
+	: setLabelInfo(Qt::ColorScheme::Light,
+				   ((sessionStatus == SW::SessionStatus::Session_start)
+					  ? SW::Helper_t::current_user_ : u_public));
   }
 
 }
@@ -396,13 +398,13 @@ void MainForm::verifyAppColorScheme(){
 void MainForm::setLabelInfo(Qt::ColorScheme color, const QString &userName) noexcept{
 
   lblInfo_->setText(QString("<span style='color:%1;'>"
-                            "<strong>SWSystem's - Lincoln Ingaroca"
-                            "</strong></span>").arg(SW::Helper_t::lblColorMode.value(color)));
+							"<strong>SWSystem's - Lincoln Ingaroca"
+							"</strong></span>").arg(SW::Helper_t::lblColorMode.value(color)));
 
 
   lblState_->setText(QString("<span style='color:%1;'>"
-                             "<strong>User: %2"
-                             "</strong></span>").arg(SW::Helper_t::lblColorMode.value(color), userName));
+							 "<strong>User: %2"
+							 "</strong></span>").arg(SW::Helper_t::lblColorMode.value(color), userName));
 
 
 }
@@ -418,25 +420,25 @@ void MainForm::applyPreferredTheme(int pref){
 
   Qt::ColorScheme scheme;
   switch (pref) {
-    case 1:{
-        scheme = Qt::ColorScheme::Light;
-        ui->tvUrl->setStyleSheet("");
-        break;
-      }
-    case 2:{
-        scheme = Qt::ColorScheme::Dark;
-        SW::Helper_t::applyManjaroDarkColor(ui->tvUrl);
-        break;
-      }
-    default:{
-        scheme = QGuiApplication::styleHints()->colorScheme();
-        if(scheme == Qt::ColorScheme::Dark){
-          SW::Helper_t::applyManjaroDarkColor(ui->tvUrl);
-        }else{
-          ui->tvUrl->setStyleSheet("");
-        }
-        break;
-      }
+	case 1:{
+		scheme = Qt::ColorScheme::Light;
+		ui->tvUrl->setStyleSheet("");
+		break;
+	  }
+	case 2:{
+		scheme = Qt::ColorScheme::Dark;
+		SW::Helper_t::applyManjaroDarkColor(ui->tvUrl);
+		break;
+	  }
+	default:{
+		scheme = QGuiApplication::styleHints()->colorScheme();
+		if(scheme == Qt::ColorScheme::Dark){
+		  SW::Helper_t::applyManjaroDarkColor(ui->tvUrl);
+		}else{
+		  ui->tvUrl->setStyleSheet("");
+		}
+		break;
+	  }
   }
 
   qApp->setPalette(SW::Helper_t::set_Theme(scheme));
@@ -451,30 +453,30 @@ void MainForm::on_loadLoginForm(){
   LogInDialog logDialog(this);
   if(logDialog.exec() == QDialog::Accepted){
 
-    SW::Helper_t::current_user_ = logDialog.userName();
+	SW::Helper_t::current_user_ = logDialog.userName();
 
-    const auto user = SW::Helper_t::hashGenerator(logDialog.userName().toLatin1());
-    userId_ = helperdb_.getUser_id(user, SW::User::U_user);
+	const auto user = SW::Helper_t::hashGenerator(logDialog.userName().toLatin1());
+	userId_ = helperdb_.getUser_id(user, SW::User::U_user);
 
-    ui->cboCategory->clear();
-    loadListCategory(userId_);
+	ui->cboCategory->clear();
+	loadListCategory(userId_);
 
-    ui->btnLogOut->setEnabled(true);
-    ui->btnLogIn->setDisabled(true);
-    ui->btnResetPassword->setVisible(false);
+	ui->btnLogOut->setEnabled(true);
+	ui->btnLogIn->setDisabled(true);
+	ui->btnResetPassword->setVisible(false);
 
-    const auto userDes = QString(" - Sesión inicada como: '%1'").arg(SW::Helper_t::current_user_);
-    setWindowTitle(QApplication::applicationName().append(userDes));
+	const auto userDes = QString(" - Sesión inicada como: '%1'").arg(SW::Helper_t::current_user_);
+	setWindowTitle(QApplication::applicationName().append(userDes));
 
 
-    lblIcon_->setPixmap(QPixmap(QStringLiteral(":/img/user.png")).scaled(16,16));
-    ui->statusbar->addWidget(lblIcon_);
+	lblIcon_->setPixmap(QPixmap(QStringLiteral(":/img/user.png")).scaled(16,16));
+	ui->statusbar->addWidget(lblIcon_);
 
-    SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
-    has_data();
-    checkStatusContextMenu();
-    canRestoreDataBase();
-    verifyAppColorScheme();
+	SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
+	has_data();
+	checkStatusContextMenu();
+	canRestoreDataBase();
+	verifyAppColorScheme();
   }
 
 }
@@ -492,12 +494,12 @@ void MainForm::on_exportToExcel(){
 
   const auto filePath = QFileDialog::getSaveFileName(this, "Guardar archivo excel", SW::Helper_t::getLastOpenedDirectory(), "Hojas de calculo (*.xlsx)" );
   if(filePath.isEmpty())
-    return;
+	return;
 
   if(!SW::ExcelExporter::exportTableView(ui->tvUrl, filePath)){
 
-    QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al exportar el archivo.\n").arg(SW::ExcelExporter::lastError()));
-    return;
+	QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al exportar el archivo.\n").arg(SW::ExcelExporter::lastError()));
+	return;
   }
 
   const QFileInfo fileInfo(filePath);
@@ -512,9 +514,9 @@ void MainForm::on_deleteCategory(){
   QMessageBox msgBox(this);
   msgBox.setWindowTitle(SW::Helper_t::appName().append(QStringLiteral(" - Advertencia")));
   msgBox.setText(QStringLiteral("<p style='color:#FB4934;'>"
-                                "<cite><strong>Esta a punto eliminar ésta categoría y todo su contenido.<br>"
-                                "Recuerde que al aceptar, eliminará de forma permanente estos datos.<br>"
-                                "Desea continuar y eliminar los datos?</strong></cite></p>"));
+								"<cite><strong>Esta a punto eliminar ésta categoría y todo su contenido.<br>"
+								"Recuerde que al aceptar, eliminará de forma permanente estos datos.<br>"
+								"Desea continuar y eliminar los datos?</strong></cite></p>"));
 
   msgBox.setIcon(QMessageBox::Warning);
 
@@ -523,13 +525,13 @@ void MainForm::on_deleteCategory(){
   msgBox.button(QMessageBox::No)->setText("Cancelar");
 
   if(msgBox.exec() == QMessageBox::No)
-    return;
+	return;
   if(deleteAll()){
-    QMessageBox::information(this, SW::Helper_t::appName(),QStringLiteral("Datos eliminados."));
-    ui->cboCategory->clear();
-    loadListCategory(userId_);
-    has_data();
-    checkStatusContextMenu();
+	QMessageBox::information(this, SW::Helper_t::appName(),QStringLiteral("Datos eliminados."));
+	ui->cboCategory->clear();
+	loadListCategory(userId_);
+	has_data();
+	checkStatusContextMenu();
   }
 
 }
@@ -537,91 +539,92 @@ void MainForm::on_deleteCategory(){
 void MainForm::on_addNewUrl(){
 
   const auto invalidUrlMsg = QString("<p>"
-                                     "<span>"
-                                     "La dirección: <strong>\"%1\"</strong>, no es válida!<br>"
-                                     "una dirección url válida debe tener una de las siguiente formas:"
-                                     "<ol>"
-                                     "<li><strong>(http://www.)url.dominio</strong></li>"
-                                     "<li><strong>(https://www.)url.dominio</strong></li>"
-                                     "<li><strong>(ftp://)url.dominio</strong></li>"
-                                     "<li><strong>(ftp://www.)url.dominio</strong></li>"
-                                     "</ol>"
-                                     "<br>Nota:<br>"
-                                     "Tenga en cuenta que "
-                                     "<strong>http://, https://, ftp://, www.</strong> son opcionales<br>"
-                                     "Lo mínimo que se espera es una direccón de la forma: <strong>\"url.domino\"</strong>"
-                                     "</span>"
-                                     "</p>").arg(ui->txtUrl->text());
+									 "<span>"
+									 "La dirección: <strong>\"%1\"</strong>, no es válida!<br>"
+									 "una dirección url válida debe tener una de las siguiente formas:"
+									 "<ol>"
+									 "<li><strong>(http://www.)url.dominio</strong></li>"
+									 "<li><strong>(https://www.)url.dominio</strong></li>"
+									 "<li><strong>(ftp://)url.dominio</strong></li>"
+									 "<li><strong>(ftp://www.)url.dominio</strong></li>"
+									 "</ol>"
+									 "<br>Nota:<br>"
+									 "Tenga en cuenta que "
+									 "<strong>http://, https://, ftp://, www.</strong> son opcionales<br>"
+									 "Lo mínimo que se espera es una direccón de la forma: <strong>\"url.domino\"</strong>"
+									 "</span>"
+									 "</p>").arg(ui->txtUrl->text());
 
   if(ui->btnAdd->text().compare("Agregar") == 0){
-    if(!SW::Helper_t::urlValidate(ui->txtUrl->text())){
-      QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
-      ui->txtUrl->selectAll();
-      ui->txtUrl->setFocus(Qt::OtherFocusReason);
-      return;
-    }
+	if(!SW::Helper_t::urlValidate(ui->txtUrl->text())){
+	  QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
+	  ui->txtUrl->selectAll();
+	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  return;
+	}
 
-    const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+	const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
 
-    if(helperdb_.urlExists(ui->txtUrl->text(), categoryId)){
+	if(helperdb_.urlExists(ui->txtUrl->text(), categoryId)){
 
-      auto warningMsg = QString("<p>La url: <cite><strong>%1</strong></cite></p> ya esta registrada!!").arg(ui->txtUrl->text());
-      QMessageBox::warning(this, SW::Helper_t::appName(), warningMsg);
-      ui->txtUrl->selectAll();
-      ui->txtUrl->setFocus(Qt::OtherFocusReason);
-      return;
-    }
-    //get the key from categoryList, with current selected text to cboCategory.
-    // auto categoryId = categoryList.key(ui->cboCategory->currentText());
-    if(helperdb_.saveData_url(ui->txtUrl->text(), ui->pteDesc->toPlainText(), categoryId)){
-      //              QMessageBox::information(this,SW::Helper_t::appName(),"Datos guardados!!");
-      ui->txtUrl->clear();
-      ui->pteDesc->clear();
-      ui->txtUrl->setFocus(Qt::OtherFocusReason);
-      setUpTable(categoryList_.key(ui->cboCategory->currentText()));
-      verifyContextMenu();
+	  auto warningMsg = QString("<p>La url: <cite><strong>%1</strong></cite></p> ya esta registrada!!").arg(ui->txtUrl->text());
+	  QMessageBox::warning(this, SW::Helper_t::appName(), warningMsg);
+	  ui->txtUrl->selectAll();
+	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  return;
+	}
+	//get the key from categoryList, with current selected text to cboCategory.
+	// auto categoryId = categoryList.key(ui->cboCategory->currentText());
+	if(helperdb_.saveData_url(ui->txtUrl->text(), ui->pteDesc->toHtml(), categoryId)){
+	  //              QMessageBox::information(this,SW::Helper_t::appName(),"Datos guardados!!");
+	  ui->txtUrl->clear();
+	  ui->pteDesc->clear();
+	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	  verifyContextMenu();
 
-      hastvUrlData();
-      checkStatusContextMenu();
-      canCreateBackUp();
-    }
+	  hastvUrlData();
+	  checkStatusContextMenu();
+	  canCreateBackUp();
+	}
   }else{
 
 
-    if(!SW::Helper_t::urlValidate(ui->txtUrl->text())){
-      QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
-      ui->txtUrl->selectAll();
-      ui->txtUrl->setFocus(Qt::OtherFocusReason);
-      return;
-    }
+	if(!SW::Helper_t::urlValidate(ui->txtUrl->text())){
+	  QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
+	  ui->txtUrl->selectAll();
+	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  return;
+	}
 
-    QSqlQuery qry(db_);
-    qry.prepare(R"(UPDATE  urls SET url=?, desc=? WHERE url_id=? AND categoryid=?)");
-    const auto encryptedData = SW::Helper_t::encrypt(ui->txtUrl->text());
-    qry.addBindValue(encryptedData, QSql::In);
-    const auto descData = SW::Helper_t::encrypt(ui->pteDesc->toPlainText().simplified().toUpper());
-    qry.addBindValue(descData, QSql::In);
-    auto currentRow = ui->tvUrl->currentIndex().row();
-    auto id = ui->tvUrl->model()->index(currentRow,0).data().toInt();
-    qry.addBindValue(id, QSql::In);
-    const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
-    qry.addBindValue(categoryId, QSql::In);
+	QSqlQuery qry(db_);
+	qry.prepare(R"(UPDATE  urls SET url=?, desc=? WHERE url_id=? AND categoryid=?)");
+	const auto encryptedData = SW::Helper_t::encrypt(ui->txtUrl->text());
+	qry.addBindValue(encryptedData, QSql::In);
+	// const auto descData = SW::Helper_t::encrypt(ui->pteDesc->toPlainText().simplified().toUpper());
+	const auto descData = SW::Helper_t::encrypt(ui->pteDesc->toHtml());
+	qry.addBindValue(descData, QSql::In);
+	auto currentRow = ui->tvUrl->currentIndex().row();
+	auto id = ui->tvUrl->model()->index(currentRow,0).data().toInt();
+	qry.addBindValue(id, QSql::In);
+	const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+	qry.addBindValue(categoryId, QSql::In);
 
-    if(!qry.exec()){
-      QMessageBox::critical(this, SW::Helper_t::appName(), tr("Fallo la ejecución de la sentencia!\n%1").arg(
-                                                             qry.lastError().text()));
-      return;
+	if(!qry.exec()){
+	  QMessageBox::critical(this, SW::Helper_t::appName(), tr("Fallo la ejecución de la sentencia!\n%1").arg(
+															 qry.lastError().text()));
+	  return;
 
-    }
+	}
 
-    setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	setUpTable(categoryList_.key(ui->cboCategory->currentText()));
 
-    ui->btnAdd->setText(QStringLiteral("Agregar"));
-    editAction(false);
+	ui->btnAdd->setText(QStringLiteral("Agregar"));
+	editAction(false);
 
-    ui->txtUrl->clear();
-    ui->pteDesc->clear();
-    ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	ui->txtUrl->clear();
+	ui->pteDesc->clear();
+	ui->txtUrl->setFocus(Qt::OtherFocusReason);
   }
 
 }
@@ -632,12 +635,12 @@ void MainForm::on_editCategory(){
   const QStringList dataLocal = helperdb_.dataCategory(id);
   dlgNewCategory editCategory(dlgNewCategory::OpenMode::Edit, dataLocal, this);
   if(editCategory.exec() == QDialog::Rejected){
-    return;
+	return;
   }
   if(helperdb_.updateCategory(editCategory.category(), editCategory.description(), id, userId_)){
-    QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("Datos actualizados!\n"));
-    ui->cboCategory->clear();
-    loadListCategory(userId_);
+	QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("Datos actualizados!\n"));
+	ui->cboCategory->clear();
+	loadListCategory(userId_);
   }
 
 }
@@ -652,18 +655,18 @@ void MainForm::on_quitUrl(){
 
   QMessageBox msgBox(this);
   msgBox.setText(QString("<span>Confirma que desea eliminar esta dirección:<br>"
-                         " <cite style='color:#ff0800;'><strong>%1</strong></cite></span>").arg(url));
+						 " <cite style='color:#ff0800;'><strong>%1</strong></cite></span>").arg(url));
   msgBox.setIcon(QMessageBox::Question);
   msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
   msgBox.button(QMessageBox::Yes)->setText("Eliminar");
   msgBox.button(QMessageBox::No)->setText("Cancelar");
 
   if(msgBox.exec() == QMessageBox::Yes){
-    const auto urlId=urlList_.key(url);
-    if(helperdb_.deleteUrls(2, 0, urlId)){
-      ui->tvUrl->model()->removeRow(ui->tvUrl->currentIndex().row());
-      setUpTable(categoryList_.key(ui->cboCategory->currentText()));
-    }
+	const auto urlId=urlList_.key(url);
+	if(helperdb_.deleteUrls(2, 0, urlId)){
+	  ui->tvUrl->model()->removeRow(ui->tvUrl->currentIndex().row());
+	  setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	}
 
   }
 
@@ -678,7 +681,17 @@ void MainForm::on_btnEdit(){
 
   auto currentRow = ui->tvUrl->currentIndex().row();
   ui->txtUrl->setText(ui->tvUrl->model()->index(currentRow,1).data().toString());
-  ui->pteDesc->setPlainText(ui->tvUrl->model()->index(currentRow,2).data().toString());
+  // ui->pteDesc->setPlainText(ui->tvUrl->model()->index(currentRow,2).data().toString());
+
+  const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
+  QSqlQuery query(db_);
+  query.prepare("SELECT desc FROM urls WHERE url_id = ?");
+  query.addBindValue(urlId);
+  if(query.exec() && query.next()){
+	ui->pteDesc->setHtml(SW::Helper_t::decrypt(query.value(0).toString()));
+  }
+
+
   editAction(true);
   ui->txtUrl->selectAll();
   ui->txtUrl->setFocus(Qt::OtherFocusReason);
@@ -736,15 +749,15 @@ void MainForm::on_makeBackup(){
 
   const auto databasePath = SW::Helper_t::AppLocalDataLocation().append("/xdatabase.db");
   const auto filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Crear una copia de seguridad"), SW::Helper_t::getLastOpenedDirectory(),
-                                                     QStringLiteral("Archivos de copia de seguridad (*.bak)"));
+													 QStringLiteral("Archivos de copia de seguridad (*.bak)"));
 
 
   if(filePath.isEmpty())
-    return;
+	return;
 
   if(filePath.contains(' ')){
-    QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("El nombre del archivo no puede contener espacios."));
-    return;
+	QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("El nombre del archivo no puede contener espacios."));
+	return;
   }
 
   const QFileInfo fileInfo(filePath);
@@ -760,8 +773,8 @@ void MainForm::on_makeBackup(){
 
   // Verificar si el ejecutable sqlite3 existe
   if(!QFile::exists(path_app)) {
-    QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("No se encontró el ejecutable sqlite3"));
-    return;
+	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("No se encontró el ejecutable sqlite3"));
+	return;
   }
 
   SW::Helper_t::setLastOpenedDirectory(absolutePath);
@@ -777,8 +790,8 @@ void MainForm::on_makeBackup(){
 
 
   if(!started || pid == 0) {
-    QMessageBox::critical(this, SW::Helper_t::appName(), tr("Error al crear la copia de seguridad.\n").arg(process.errorString()));
-    return;
+	QMessageBox::critical(this, SW::Helper_t::appName(), tr("Error al crear la copia de seguridad.\n").arg(process.errorString()));
+	return;
   }
 
   QMessageBox::information(this, SW::Helper_t::appName(), tr("La copia de seguridad fue creada en:\n%1").arg(filePath));
@@ -791,33 +804,33 @@ void MainForm::on_restoreDatabase(){
 
   if(!helperdb_.isDataBase_empty()){
 
-    QMessageBox msg{this};
-    msg.setWindowTitle(SW::Helper_t::appName());
-    msg.setIcon(QMessageBox::Warning);
-    msg.setText(QStringLiteral("<span>"
-                               "En éste momento hay una instancia de la base de datos en uso.<br/>"
-                               "<em>Tenga en cuenta que al restaurar la base de datos con una cópia de seguridad,<br/>"
-                               "se perderan todos los datos que tengan en éste momento, y seran reemplazados por los datos de la cópia.</em><br/><br/>"
-                               "<cite><strong>Consejo:</strong></cite>"
-                               "<ul><li>Tal vez antes de restaurar, una cópia de seguridad, quiera crear un backup, de la base de datos actual, para no perder los datos.</li></ul><br/>"
-                               "</span>"));
+	QMessageBox msg{this};
+	msg.setWindowTitle(SW::Helper_t::appName());
+	msg.setIcon(QMessageBox::Warning);
+	msg.setText(QStringLiteral("<span>"
+							   "En éste momento hay una instancia de la base de datos en uso.<br/>"
+							   "<em>Tenga en cuenta que al restaurar la base de datos con una cópia de seguridad,<br/>"
+							   "se perderan todos los datos que tengan en éste momento, y seran reemplazados por los datos de la cópia.</em><br/><br/>"
+							   "<cite><strong>Consejo:</strong></cite>"
+							   "<ul><li>Tal vez antes de restaurar, una cópia de seguridad, quiera crear un backup, de la base de datos actual, para no perder los datos.</li></ul><br/>"
+							   "</span>"));
 
-    msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    msg.button(QMessageBox::Yes)->setText("Restaurar la base de datos");
-    msg.button(QMessageBox::No)->setText("Cancelar");
-    if(msg.exec() == QMessageBox::No)
-      return;
+	msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	msg.button(QMessageBox::Yes)->setText("Restaurar la base de datos");
+	msg.button(QMessageBox::No)->setText("Cancelar");
+	if(msg.exec() == QMessageBox::No)
+	  return;
   }
 
   const auto pathBackup{QFileDialog::getOpenFileName(this, "Abrir archivo de respaldo", SW::Helper_t::getLastOpenedDirectory(),
-                                                     QStringLiteral("Archivo backup (*.bak)"))};
+													 QStringLiteral("Archivo backup (*.bak)"))};
   if(pathBackup.isEmpty())
-    return;
+	return;
 
   auto db{QSqlDatabase::database("xxxConection")};
 
   if(db.isOpen())
-    db.close();
+	db.close();
 
 
   QStringList args{};
@@ -833,8 +846,8 @@ void MainForm::on_restoreDatabase(){
   SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
 
   if(!process.startDetached(app, args)){
-    QMessageBox::critical(this, SW::Helper_t::appName(), tr("Error en la ejecución.\n%1").arg(process.errorString()));
-    return;
+	QMessageBox::critical(this, SW::Helper_t::appName(), tr("Error en la ejecución.\n%1").arg(process.errorString()));
+	return;
 
   }
   QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("La base de datos, fue restaurada"));
@@ -905,28 +918,28 @@ void MainForm::on_moveUrl(){
 
   if(cDialog.exec() == QDialog::Accepted){
 
-    auto categoryid = cDialog.getCategoryId();
-    if(helperdb_.urlExists(url_, categoryid)){
+	auto categoryid = cDialog.getCategoryId();
+	if(helperdb_.urlExists(url_, categoryid)){
 
-      auto warningMsg = QString("<p>"
-                                "La url: <cite>"
-                                "<strong>%1</strong>"
-                                "</cite>"
-                                "</p> ya esta registrada, en la categoría a la que desea mover!!").arg(url_);
+	  auto warningMsg = QString("<p>"
+								"La url: <cite>"
+								"<strong>%1</strong>"
+								"</cite>"
+								"</p> ya esta registrada, en la categoría a la que desea mover!!").arg(url_);
 
-      QMessageBox::warning(this, SW::Helper_t::appName(), warningMsg);
-      return;
+	  QMessageBox::warning(this, SW::Helper_t::appName(), warningMsg);
+	  return;
 
-    }
-    // qInfo() <<categoryid;
+	}
+	// qInfo() <<categoryid;
 
-    if(!helperdb_.moveUrlToOtherCategory(categoryid, urlid)){
-      QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al intentar actualizar.\n"));
-      return;
-    }
-    setUpTable(categoryList_.key(ui->cboCategory->currentText()));
-    verifyContextMenu();
-    hastvUrlData();
+	if(!helperdb_.moveUrlToOtherCategory(categoryid, urlid)){
+	  QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al intentar actualizar.\n"));
+	  return;
+	}
+	setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	verifyContextMenu();
+	hastvUrlData();
   }
 
 }
@@ -936,8 +949,8 @@ void MainForm::on_firstTimeLoginDialog(){
   LogInDialog login(this, LogInDialog::FIRST_TIME);
   login.setToggledToButton(true);
   if(login.exec() == QDialog::Accepted){
-    canStartSession();
-    ui->firstTimeLogInBtn->setVisible(false);
+	canStartSession();
+	ui->firstTimeLogInBtn->setVisible(false);
   }
 
 }
@@ -949,22 +962,64 @@ void MainForm::on_showSettingsDialog(){
 
   QObject::connect(&settings, &ConfigDialog::themeChanged, this, [this](Qt::ColorScheme scheme){
 
-    currentScheme_ = scheme;
-    applyPreferredTheme(static_cast<int>(currentScheme_));
-    checkStatusSessionColor(themeType_.value(currentScheme_));
-    verifyAppColorScheme();
+	currentScheme_ = scheme;
+	applyPreferredTheme(static_cast<int>(currentScheme_));
+	checkStatusSessionColor(themeType_.value(currentScheme_));
+	verifyAppColorScheme();
 
   });
 
   if(settings.exec() == QDialog::Accepted){
-    currentScheme_ = settings.selectedScheme();
-    const auto index = static_cast<int>(currentScheme_);
-    applyPreferredTheme(index);
-    checkStatusSessionColor(themeType_.value(currentScheme_)); // <-- actualiza labels
-    verifyAppColorScheme();                                     // <-- actualiza labels
-    writeSettings();
+	currentScheme_ = settings.selectedScheme();
+	const auto index = static_cast<int>(currentScheme_);
+	applyPreferredTheme(index);
+	checkStatusSessionColor(themeType_.value(currentScheme_)); // <-- actualiza labels
+	verifyAppColorScheme();                                     // <-- actualiza labels
+	writeSettings();
   }
 
+}
+
+void MainForm::on_showDescriptionDialog(const QModelIndex &index){
+
+  const auto urlId = ui->tvUrl->model()->index(index.row(), 0).data().toUInt();
+
+  // Traer directamente de la base de datos
+  QSqlQuery query(db_);
+  query.prepare("SELECT desc FROM urls WHERE url_id = ?");
+  query.addBindValue(urlId);
+
+  QString desc{};
+  if(query.exec() && query.next()){
+	desc = SW::Helper_t::decrypt(query.value(0).toString());
+  }
+
+  QDialog dlg(this);
+  dlg.setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
+  dlg.setWindowTitle(SW::Helper_t::appName().append(" - Descripción"));
+  dlg.resize(500, 300);
+
+  auto *layout = new QVBoxLayout(&dlg);
+
+  auto *textView = new QTextEdit(&dlg);
+  textView->setReadOnly(true);
+  textView->setHtml(desc);
+
+  auto *btnLayout = new QHBoxLayout();
+  // auto *spacerLeft = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+  auto *btnClose = new QPushButton("Cerrar", &dlg);
+
+  // btnLayout->addItem(spacerLeft);
+  btnLayout->addStretch();
+  btnLayout->addWidget(btnClose);
+  QObject::connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::accept);
+
+  layout->addWidget(textView);
+  layout->addLayout(btnLayout);
+
+  dlg.exec();
+
+  xxxModel_->select();
 }
 
 void MainForm::setUpShowMenuAction(){
@@ -980,8 +1035,8 @@ void MainForm::setUpShowMenuAction(){
   auto valueExists = SW::Helper_t::nativeRegistryKeyExists("state");
 
   if(!valueExists){
-    ui->showHideAction->setChecked(true);
-    ui->showHideDatabaseAction->setChecked(true);
+	ui->showHideAction->setChecked(true);
+	ui->showHideDatabaseAction->setChecked(true);
 	ui->actionPreferencias->setChecked(true);
   }
 
@@ -1016,9 +1071,9 @@ void MainForm::initFrm() noexcept{
   ui->btnResetPassword->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P));
 
   ui->firstTimeLogInBtn->setToolTip("<p>Crear un usuario: <br>"
-                                    "<cite>\"Este boton se muestra solo por una vez; "
-                                    "esto es por la razón de que, al abrir la aplicación por primera vez, no existen usuarios,"
-                                    " aparte del usario por defecto\"</cite></p>");
+									"<cite>\"Este boton se muestra solo por una vez; "
+									"esto es por la razón de que, al abrir la aplicación por primera vez, no existen usuarios,"
+									" aparte del usario por defecto\"</cite></p>");
 
 }
 
@@ -1037,9 +1092,9 @@ void MainForm::setUpTable(uint32_t categoryId) noexcept{
 
 
   if(query.exec()){
-    while(query.next()){
-      urlList_.insert(query.value(0).toUInt(),query.value(1).toString());
-    }
+	while(query.next()){
+	  urlList_.insert(query.value(0).toUInt(),query.value(1).toString());
+	}
   }
 
 }
@@ -1132,8 +1187,8 @@ void MainForm::openUrl() noexcept{
   auto currentRow = ui->tvUrl->currentIndex().row();
   const auto url = ui->tvUrl->model()->index(currentRow, 1).data().toString();
   if(!SW::Helper_t::open_Url(QUrl(url))){
-    QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Fallo al intentar abrir dirección url!\n"));
-    return;
+	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Fallo al intentar abrir dirección url!\n"));
+	return;
   }
 
 }
@@ -1148,7 +1203,7 @@ void MainForm::readSettings() noexcept{
   settings.beginGroup("TableView");
   auto headerState = settings.value("columnLayout", QByteArray()).toByteArray();
   if(!headerState.isEmpty()){
-    ui->tvUrl->horizontalHeader()->restoreState(headerState);
+	ui->tvUrl->horizontalHeader()->restoreState(headerState);
   }
   settings.endGroup();
 
@@ -1157,17 +1212,17 @@ void MainForm::readSettings() noexcept{
   QString categoryName{};
   if(ret && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_closed){
 
-    categoryName = settings.value("category name", QString()).toString();
+	categoryName = settings.value("category name", QString()).toString();
 
-    if(!categoryName.isEmpty() && ui->cboCategory->count() > 1){
+	if(!categoryName.isEmpty() && ui->cboCategory->count() > 1){
 
-      {
+	  {
 
-        QSignalBlocker signalBlocker(ui->cboCategory);
-        ui->cboCategory->setCurrentText(categoryName);
-      }
-      categorySelectedChanged(categoryName);
-    }
+		QSignalBlocker signalBlocker(ui->cboCategory);
+		ui->cboCategory->setCurrentText(categoryName);
+	  }
+	  categorySelectedChanged(categoryName);
+	}
   }
 
   settings.beginGroup(QStringLiteral("Theme"));
@@ -1205,14 +1260,14 @@ void MainForm::setCboCategoryToolTip() noexcept{
   const auto desc=categoryData.value(1);
   //  QString desc{};
   if(desc.isEmpty()){
-    ui->cboCategory->setToolTip(QStringLiteral("<p><cite><strong>Descripción de la categoría:</strong><br><br>"
-                                               "Esta categoría no cuenta con una descripción!</cite></p>"));
-    return;
+	ui->cboCategory->setToolTip(QStringLiteral("<p><cite><strong>Descripción de la categoría:</strong><br><br>"
+											   "Esta categoría no cuenta con una descripción!</cite></p>"));
+	return;
   }
 
   ui->cboCategory->setToolTip(QString("<p>"
-                                      "<cite><strong>Descripción de la categoría:</strong>"
-                                      "<br><br>%1</cite></p>").arg(desc));
+									  "<cite><strong>Descripción de la categoría:</strong>"
+									  "<br><br>%1</cite></p>").arg(desc));
 
 
 }
@@ -1221,14 +1276,14 @@ void MainForm::checkStatusSessionColor(const QString &text){
 
   if(!static_cast<bool>(SW::Helper_t::sessionStatus_)){
 
-    ( text == themeType_.value(Qt::ColorScheme::Dark) )
-    ? setLabelInfo(Qt::ColorScheme::Dark, SW::Helper_t::current_user_)
-    : setLabelInfo(Qt::ColorScheme::Light, SW::Helper_t::current_user_);
+	( text == themeType_.value(Qt::ColorScheme::Dark) )
+	? setLabelInfo(Qt::ColorScheme::Dark, SW::Helper_t::current_user_)
+	: setLabelInfo(Qt::ColorScheme::Light, SW::Helper_t::current_user_);
   }else{
-    auto u_public = SW::Helper_t::currentUser_.value(SW::User::U_public);
-    ( text == themeType_.value(Qt::ColorScheme::Light) )
-      ? setLabelInfo(Qt::ColorScheme::Light, u_public)
-      : setLabelInfo(Qt::ColorScheme::Dark, u_public);
+	auto u_public = SW::Helper_t::currentUser_.value(SW::User::U_public);
+	( text == themeType_.value(Qt::ColorScheme::Light) )
+	  ? setLabelInfo(Qt::ColorScheme::Light, u_public)
+	  : setLabelInfo(Qt::ColorScheme::Dark, u_public);
 
   }
 
@@ -1240,23 +1295,23 @@ bool MainForm::hasValidTableData() const noexcept{
   const QStringList excludedTables{"users", "sqlite_sequence"};
 
   return std::any_of(tables.cbegin(), tables.cend(),
-                     [&excludedTables, this](const QString& tableName) -> bool {
-                       if (excludedTables.contains(tableName)) {
-                         return false;
-                       }
+					 [&excludedTables, this](const QString& tableName) -> bool {
+					   if (excludedTables.contains(tableName)) {
+						 return false;
+					   }
 
-                       QSqlQuery query(db_);
-                       return query.exec(QString("SELECT 1 FROM %1 LIMIT 1").arg(tableName)) &&
-                              query.next();
-                     });
+					   QSqlQuery query(db_);
+					   return query.exec(QString("SELECT 1 FROM %1 LIMIT 1").arg(tableName)) &&
+							  query.next();
+					 });
 
 }
 
 bool MainForm::validateSelectedRow() noexcept{
 
   if(!ui->tvUrl->selectionModel()->hasSelection()){
-    QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("Seleccione una fila!\n"));
-    return false;
+	QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("Seleccione una fila!\n"));
+	return false;
   }
   return true;
 
@@ -1266,8 +1321,8 @@ bool MainForm::deleteAll() noexcept{
 
   const auto categoryId=categoryList_.key(ui->cboCategory->currentText());
   if(helperdb_.deleteUrls(1, categoryId)){
-    if(helperdb_.deleteCategory(categoryId))
-      return true;
+	if(helperdb_.deleteCategory(categoryId))
+	  return true;
   }
   return false;
 
@@ -1334,7 +1389,7 @@ void MainForm::writeSettings() const noexcept{
   settings.endGroup();
 
   if(ui->cboCategory->count() > 1 && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_closed){
-    settings.setValue(QStringLiteral("category name"), ui->cboCategory->currentText());
+	settings.setValue(QStringLiteral("category name"), ui->cboCategory->currentText());
   }
 
   settings.beginGroup(QStringLiteral("Theme"));
@@ -1345,9 +1400,9 @@ void MainForm::writeSettings() const noexcept{
 
   QString lblColor_{};
   if(currentScheme_ == Qt::ColorScheme::Unknown){
-    lblColor_ = SW::Helper_t::lblColorMode.value(SW::Helper_t::detectSystemColorScheme());
+	lblColor_ = SW::Helper_t::lblColorMode.value(SW::Helper_t::detectSystemColorScheme());
   }else{
-    lblColor_ = SW::Helper_t::lblColorMode.value(currentScheme_);
+	lblColor_ = SW::Helper_t::lblColorMode.value(currentScheme_);
   }
 
   settings.setValue(QStringLiteral("lblColor"), SW::Helper_t::setColorReg(lblColor_));
@@ -1381,14 +1436,14 @@ void MainForm::on_showAboutDialog(){
 void MainForm::closeEvent(QCloseEvent *event){
 
   if(SW::Helper_t::sessionStatus_ != SW::SessionStatus::Session_closed){
-    QMessageBox::warning(this, SW::Helper_t::appName(),
-                         QStringLiteral("<cite>Hay una sesión activa en este momento.<br>"
-                                        "Necesita cerrar sesión primero antes de salir, "
-                                        "haciendo click en el boton:<br>"
-                                        "<cite><strong style='background:#FFFF00;color:#FF5500;'>Cerrar sesión</strong></cite><br>"
-                                        "O presionando la combinación de teclas Ctrl+Q.</cite>"));
-    event->ignore();
-    return;
+	QMessageBox::warning(this, SW::Helper_t::appName(),
+						 QStringLiteral("<cite>Hay una sesión activa en este momento.<br>"
+										"Necesita cerrar sesión primero antes de salir, "
+										"haciendo click en el boton:<br>"
+										"<cite><strong style='background:#FFFF00;color:#FF5500;'>Cerrar sesión</strong></cite><br>"
+										"O presionando la combinación de teclas Ctrl+Q.</cite>"));
+	event->ignore();
+	return;
   }
 
   writeSettings();
@@ -1403,10 +1458,10 @@ void MainForm::showEvent(QShowEvent *event){
   auto headerState = SW::Helper_t::nativeRegistryKeyExists("TableView/columnLayout");
 
   if(!headerState){
-    auto availableWidth = ui->tvUrl->viewport()->width();
-    auto tableWidth = availableWidth/2;
-    ui->tvUrl->setColumnWidth(1, tableWidth);
-    ui->tvUrl->setColumnWidth(2, tableWidth);
+	auto availableWidth = ui->tvUrl->viewport()->width();
+	auto tableWidth = availableWidth/2;
+	ui->tvUrl->setColumnWidth(1, tableWidth);
+	ui->tvUrl->setColumnWidth(2, tableWidth);
   }
 
 
@@ -1416,13 +1471,13 @@ void MainForm::showEvent(QShowEvent *event){
 bool MainForm::eventFilter(QObject *watched, QEvent *event){
 
   if(watched == ui->tvUrl && event->type() == QEvent::ContextMenu){
-    QContextMenuEvent* contextMenuEvent = dynamic_cast<QContextMenuEvent*>(event);
-    if(contextMenuEvent){
-      contextMenu->exec(contextMenuEvent->globalPos());
+	QContextMenuEvent* contextMenuEvent = dynamic_cast<QContextMenuEvent*>(event);
+	if(contextMenuEvent){
+	  contextMenu->exec(contextMenuEvent->globalPos());
 
-      return true;
+	  return true;
 
-    }
+	}
   }
   return QMainWindow::eventFilter(watched, event);
 }

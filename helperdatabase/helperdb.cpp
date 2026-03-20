@@ -120,7 +120,7 @@ namespace SW {
     qry_.prepare(R"(INSERT INTO urls(url,desc,categoryid) VALUES(?,?,?))");
     auto encryptData = SW::Helper_t::encrypt(url.toString().simplified());
     qry_.addBindValue(encryptData, QSql::In);
-    auto descData = SW::Helper_t::encrypt(desc.toString().simplified().toUpper());
+	auto descData = SW::Helper_t::encrypt(desc.toString());
     qry_.addBindValue(descData, QSql::In);
     qry_.addBindValue(id, QSql::In);
     return qry_.exec();
