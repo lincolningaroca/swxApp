@@ -24,6 +24,7 @@
 #include "util/excelexporter.hpp"
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
+#include "configdialog.hpp"
 
 
 MainForm::MainForm(QWidget *parent)
@@ -42,7 +43,13 @@ MainForm::MainForm(QWidget *parent)
 
     ui->logIntoolBar->setVisible(checked);
   });
+  QObject::connect(ui->actionPreferencias, &QAction::toggled, this, [this](bool checked = false){
+
+	ui->preferenceToolBar->setVisible(checked);
+  });
   setUpShowMenuAction();
+
+  QObject::connect(ui->actionPreference, &QAction::triggered, this, &MainForm::on_showSettingsDialog);
 
   lblIcon_ = new QLabel(this);
   ui->statusbar->addWidget(lblIcon_);
@@ -59,7 +66,7 @@ MainForm::MainForm(QWidget *parent)
 
   loadListCategory(userId_);
 
-  loadThemeComboBox();
+  // loadThemeComboBox();
   setUpTable(categoryList_.key(ui->cboCategory->currentText()));
   canCreateBackUp();
   canStartSession();
@@ -162,20 +169,22 @@ MainForm::MainForm(QWidget *parent)
   });
 
 
-  {
+  // {
 
-    QSignalBlocker bloquer(ui->cboTheme);
-    auto index = loadSchemePreference();
-    ui->cboTheme->setCurrentIndex(index);
+  //   QSignalBlocker bloquer(ui->cboTheme);
+  //   auto index = loadSchemePreference();
+  //   ui->cboTheme->setCurrentIndex(index);
 
-  }
+  // }
+  const auto savedIndex = loadSchemePreference();
+  currentScheme_ = static_cast<Qt::ColorScheme>(savedIndex);
 
-  if(!SW::Helper_t::nativeRegistryKeyExists(R"(Theme)") && ui->cboTheme->currentIndex() == 0){
+  if(!SW::Helper_t::nativeRegistryKeyExists(R"(Theme)") && savedIndex == 0){
 
     applyPreferredTheme(0);
     setLabelInfo(SW::Helper_t::detectSystemColorScheme());
 
-  }else if(ui->cboTheme->currentIndex() == 0){
+  }else if(savedIndex == 0){
 
     readSettings();
     setLabelInfo(SW::Helper_t::detectSystemColorScheme());
@@ -183,7 +192,8 @@ MainForm::MainForm(QWidget *parent)
   }else{
 
     readSettings();
-    setLabelInfo(themeType_.key(ui->cboTheme->currentText()));
+    // setLabelInfo(themeType_.key(ui->cboTheme->currentText()));
+    verifyAppColorScheme();
 
   }
 
@@ -199,7 +209,7 @@ MainForm::MainForm(QWidget *parent)
   /**
    * @brief QObject::connect
    */
-  QObject::connect(ui->cboTheme, &QComboBox::currentIndexChanged, this, &MainForm::on_themeSelectedChanged);
+  // QObject::connect(ui->cboTheme, &QComboBox::currentIndexChanged, this, &MainForm::on_themeSelectedChanged);
 
   /**
    * @brief QObject::connect
@@ -237,6 +247,7 @@ MainForm::MainForm(QWidget *parent)
 
   QObject::connect(ui->firstTimeLogInBtn, &QAction::triggered, this, &MainForm::on_firstTimeLoginDialog);
 
+  QObject::connect(ui->btnSettings, &QAction::triggered, this, &MainForm::on_showSettingsDialog);
 
 }
 
@@ -259,17 +270,17 @@ int MainForm::loadSchemePreference(){
 /**
  * @brief MainForm::loadThemeComboBox-load the items into the combobox
  */
-void MainForm::loadThemeComboBox() noexcept{
+// void MainForm::loadThemeComboBox() noexcept{
 
-  const auto unknownIcon = QIcon{QStringLiteral(":/img/flat_seo-47-64.png")};
-  const auto whiteIcon = QIcon{QStringLiteral(":/img/whitetheme.png")};
-  const auto darkIcon = QIcon{QStringLiteral(":/img/darktheme.png")};
+//   const auto unknownIcon = QIcon{QStringLiteral(":/img/flat_seo-47-64.png")};
+//   const auto whiteIcon = QIcon{QStringLiteral(":/img/whitetheme.png")};
+//   const auto darkIcon = QIcon{QStringLiteral(":/img/darktheme.png")};
 
-  ui->cboTheme->addItem(unknownIcon, themeType_.value(Qt::ColorScheme::Unknown));
-  ui->cboTheme->addItem(whiteIcon, themeType_.value(Qt::ColorScheme::Light));
-  ui->cboTheme->addItem(darkIcon, themeType_.value(Qt::ColorScheme::Dark));
+//   ui->cboTheme->addItem(unknownIcon, themeType_.value(Qt::ColorScheme::Unknown));
+//   ui->cboTheme->addItem(whiteIcon, themeType_.value(Qt::ColorScheme::Light));
+//   ui->cboTheme->addItem(darkIcon, themeType_.value(Qt::ColorScheme::Dark));
 
-}
+// }
 
 
 
@@ -349,19 +360,35 @@ void MainForm::checkStatusContextMenu(){
 
 void MainForm::verifyAppColorScheme(){
 
+  // auto sessionStatus = SW::Helper_t::sessionStatus_;
+  // auto u_public = SW::Helper_t::currentUser_.value(SW::User::U_public);
+
+  // if(ui->cboTheme->currentText() == themeType_.value(Qt::ColorScheme::Unknown)){
+
+  //   setLabelInfo(SW::Helper_t::detectSystemColorScheme(), ((sessionStatus == SW::SessionStatus::Session_start) ? SW::Helper_t::current_user_ : u_public ));
+
+  // }else{
+
+  //   (ui->cboTheme->currentText() == themeType_.value(Qt::ColorScheme::Dark))
+  //   ? setLabelInfo(Qt::ColorScheme::Dark, ((sessionStatus == SW::SessionStatus::Session_start) ? SW::Helper_t::current_user_ : u_public ))
+  //   : setLabelInfo(Qt::ColorScheme::Light, ((sessionStatus == SW::SessionStatus::Session_start) ? SW::Helper_t::current_user_ : u_public ));
+
+  // }
   auto sessionStatus = SW::Helper_t::sessionStatus_;
   auto u_public = SW::Helper_t::currentUser_.value(SW::User::U_public);
 
-  if(ui->cboTheme->currentText() == themeType_.value(Qt::ColorScheme::Unknown)){
-
-    setLabelInfo(SW::Helper_t::detectSystemColorScheme(), ((sessionStatus == SW::SessionStatus::Session_start) ? SW::Helper_t::current_user_ : u_public ));
-
+  if(currentScheme_ == Qt::ColorScheme::Unknown){
+    setLabelInfo(SW::Helper_t::detectSystemColorScheme(),
+                 ((sessionStatus == SW::SessionStatus::Session_start)
+                    ? SW::Helper_t::current_user_ : u_public));
   }else{
-
-    (ui->cboTheme->currentText() == themeType_.value(Qt::ColorScheme::Dark))
-    ? setLabelInfo(Qt::ColorScheme::Dark, ((sessionStatus == SW::SessionStatus::Session_start) ? SW::Helper_t::current_user_ : u_public ))
-    : setLabelInfo(Qt::ColorScheme::Light, ((sessionStatus == SW::SessionStatus::Session_start) ? SW::Helper_t::current_user_ : u_public ));
-
+    (currentScheme_ == Qt::ColorScheme::Dark)
+    ? setLabelInfo(Qt::ColorScheme::Dark,
+                   ((sessionStatus == SW::SessionStatus::Session_start)
+                      ? SW::Helper_t::current_user_ : u_public))
+    : setLabelInfo(Qt::ColorScheme::Light,
+                   ((sessionStatus == SW::SessionStatus::Session_start)
+                      ? SW::Helper_t::current_user_ : u_public));
   }
 
 }
@@ -661,9 +688,9 @@ void MainForm::on_btnEdit(){
 
 void MainForm::on_themeSelectedChanged(int index){
 
-  Qt::ColorScheme scheme = themeType_.key(ui->cboTheme->currentText());
+  // Qt::ColorScheme scheme = themeType_.key(ui->cboTheme->currentText());
   applyPreferredTheme(index);
-  checkStatusSessionColor(themeType_.value(scheme));
+  checkStatusSessionColor(themeType_.value(currentScheme_));
   verifyAppColorScheme();
   writeSettings();
 
@@ -855,7 +882,8 @@ void MainForm::on_showAllDescription(){
 
 void MainForm::on_showPublicUrlDialog(){
 
-  auto colorScheme = themeType_.key(ui->cboTheme->currentText());
+  // auto colorScheme = themeType_.key(ui->cboTheme->currentText());
+  auto colorScheme = currentScheme_;
   PublicUrlDialog publicDialog(colorScheme, this);
   publicDialog.setWindowTitle("Direcciones url públicas");
 
@@ -914,19 +942,47 @@ void MainForm::on_firstTimeLoginDialog(){
 
 }
 
+void MainForm::on_showSettingsDialog(){
+
+  ConfigDialog settings(currentScheme_, this);
+  settings.setWindowTitle(SW::Helper_t::appName().append(" - Configuración"));
+
+  QObject::connect(&settings, &ConfigDialog::themeChanged, this, [this](Qt::ColorScheme scheme){
+
+    currentScheme_ = scheme;
+    applyPreferredTheme(static_cast<int>(currentScheme_));
+    checkStatusSessionColor(themeType_.value(currentScheme_));
+    verifyAppColorScheme();
+
+  });
+
+  if(settings.exec() == QDialog::Accepted){
+    currentScheme_ = settings.selectedScheme();
+    const auto index = static_cast<int>(currentScheme_);
+    applyPreferredTheme(index);
+    checkStatusSessionColor(themeType_.value(currentScheme_)); // <-- actualiza labels
+    verifyAppColorScheme();                                     // <-- actualiza labels
+    writeSettings();
+  }
+
+}
+
 void MainForm::setUpShowMenuAction(){
 
   ui->showHideAction->setCheckable(true);
   ui->showHideDatabaseAction->setCheckable(true);
+  ui->actionPreferencias->setCheckable(true);
 
   QObject::connect(ui->logIntoolBar, &QToolBar::visibilityChanged, ui->showHideAction, &QAction::setChecked);
   QObject::connect(ui->dataBasetoolBar, &QToolBar::visibilityChanged, ui->showHideDatabaseAction, &QAction::setChecked);
+  QObject::connect(ui->preferenceToolBar, &QToolBar::visibilityChanged, ui->actionPreferencias, &QAction::setChecked);
 
   auto valueExists = SW::Helper_t::nativeRegistryKeyExists("state");
 
   if(!valueExists){
     ui->showHideAction->setChecked(true);
     ui->showHideDatabaseAction->setChecked(true);
+	ui->actionPreferencias->setChecked(true);
   }
 
 }
@@ -1119,13 +1175,15 @@ void MainForm::readSettings() noexcept{
   const auto colorData = settings.value(QStringLiteral("lblColor"), QByteArray()).toByteArray();
 
   const auto lblColor = SW::Helper_t::getColorReg(colorData);
+
+  currentScheme_ = static_cast<Qt::ColorScheme>(theme);
   setLabelInfo(SW::Helper_t::lblColorMode.key(lblColor));
 
-  {
-    QSignalBlocker signalblocker(ui->cboTheme);
-    ui->cboTheme->setCurrentIndex(theme);
+  // {
+  //   QSignalBlocker signalblocker(ui->cboTheme);
+  //   ui->cboTheme->setCurrentIndex(theme);
 
-  }
+  // }
 
   settings.endGroup();
 
@@ -1230,8 +1288,42 @@ void MainForm::editAction(bool op) noexcept{
 
 void MainForm::writeSettings() const noexcept{
 
-  const auto currentText = ui->cboTheme->currentText();
+  // const auto currentText = ui->cboTheme->currentText();
 
+  // QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
+
+  // settings.setValue(QStringLiteral("position"), saveGeometry());
+  // settings.setValue(QStringLiteral("state"), saveState());
+
+  // settings.beginGroup("TableView");
+  // settings.setValue("columnLayout", ui->tvUrl->horizontalHeader()->saveState());
+  // settings.endGroup();
+
+  // if(ui->cboCategory->count() > 1 && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_closed){
+
+  //   const auto categoryName = ui->cboCategory->currentText();
+  //   settings.setValue(QStringLiteral("category name"), categoryName);
+
+  // }
+
+  // settings.beginGroup(QStringLiteral("Theme"));
+
+  // settings.setValue(QStringLiteral("theme name"), themeType_.value(static_cast<Qt::ColorScheme>(ui->cboTheme->currentIndex())));
+  // settings.setValue(QStringLiteral("theme Value"), static_cast<uint32_t>(themeType_.key(currentText)));
+
+  // QString lblColor_{};
+
+  // if(currentText == themeType_.value(Qt::ColorScheme::Unknown)){
+  //   auto retSystemColorScheme = SW::Helper_t::detectSystemColorScheme();
+
+  //   lblColor_ = SW::Helper_t::lblColorMode.value(retSystemColorScheme);
+
+  // }else{
+  //   lblColor_ = SW::Helper_t::lblColorMode.value(themeType_.key(currentText));
+  // }
+
+  // settings.setValue(QStringLiteral("lblColor"), SW::Helper_t::setColorReg(lblColor_));
+  // settings.endGroup();
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
 
   settings.setValue(QStringLiteral("position"), saveGeometry());
@@ -1242,26 +1334,20 @@ void MainForm::writeSettings() const noexcept{
   settings.endGroup();
 
   if(ui->cboCategory->count() > 1 && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_closed){
-
-    const auto categoryName = ui->cboCategory->currentText();
-    settings.setValue(QStringLiteral("category name"), categoryName);
-
+    settings.setValue(QStringLiteral("category name"), ui->cboCategory->currentText());
   }
 
   settings.beginGroup(QStringLiteral("Theme"));
 
-  settings.setValue(QStringLiteral("theme name"), themeType_.value(static_cast<Qt::ColorScheme>(ui->cboTheme->currentIndex())));
-  settings.setValue(QStringLiteral("theme Value"), static_cast<uint32_t>(themeType_.key(currentText)));
+  // Ahora usa currentScheme_ directamente, sin cboTheme
+  settings.setValue(QStringLiteral("theme name"), themeType_.value(currentScheme_));
+  settings.setValue(QStringLiteral("theme Value"), static_cast<uint32_t>(currentScheme_));
 
   QString lblColor_{};
-
-  if(currentText == themeType_.value(Qt::ColorScheme::Unknown)){
-    auto retSystemColorScheme = SW::Helper_t::detectSystemColorScheme();
-
-    lblColor_ = SW::Helper_t::lblColorMode.value(retSystemColorScheme);
-
+  if(currentScheme_ == Qt::ColorScheme::Unknown){
+    lblColor_ = SW::Helper_t::lblColorMode.value(SW::Helper_t::detectSystemColorScheme());
   }else{
-    lblColor_ = SW::Helper_t::lblColorMode.value(themeType_.key(currentText));
+    lblColor_ = SW::Helper_t::lblColorMode.value(currentScheme_);
   }
 
   settings.setValue(QStringLiteral("lblColor"), SW::Helper_t::setColorReg(lblColor_));
@@ -1285,7 +1371,8 @@ void MainForm::categorySelectedChanged(const QString &text){
  */
 void MainForm::on_showAboutDialog(){
 
-  AcercaDeDialog acercaDe(themeType_.key(ui->cboTheme->currentText()), this);
+  // AcercaDeDialog acercaDe(themeType_.key(ui->cboTheme->currentText()), this);
+  AcercaDeDialog acercaDe(currentScheme_, this);
   acercaDe.setWindowTitle(SW::Helper_t::appName().append(" - Acerca de"));
   acercaDe.exec();
 

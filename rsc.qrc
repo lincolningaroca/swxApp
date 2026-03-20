@@ -31,5 +31,6 @@
         <file>font/FiraCode-Regular.ttf</file>
         <file>licencia/licencia.txt</file>
         <file>licencia/gnu-gpl-v3-license.html</file>
+        <file>img/palette.png</file>
     </qresource>
 </RCC>

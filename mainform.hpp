@@ -98,6 +98,7 @@ private:
   QLabel *lblIcon_{nullptr};
   QLabel *lblState_{nullptr};
   SWLabel *lblInfo_{nullptr};
+  Qt::ColorScheme currentScheme_{Qt::ColorScheme::Unknown};
 
 
 
@@ -123,6 +124,7 @@ private slots:
   void on_showPublicUrlDialog();
   void on_moveUrl();
   void on_firstTimeLoginDialog();
+  void on_showSettingsDialog();
 
 
 
