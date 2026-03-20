@@ -29,6 +29,10 @@ public:
   QTextEdit* editor() const { return editor_; }
   void setHtml(const QString &html);
 
+  QString currentFont() const;
+  int currentFontSize() const;
+  void restoreFont(const QString &family, int size) noexcept;
+
 
 signals:
   void textChanged();

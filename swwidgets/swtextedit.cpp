@@ -223,3 +223,29 @@ void SWTextEdit::setHtml(const QString &html){
   editor_->setTextCursor(cursor);
 
 }
+
+QString SWTextEdit::currentFont() const{
+
+  return fontFamily_->currentFont().family();
+
+}
+int SWTextEdit::currentFontSize() const{
+  return fontSize_->value();
+}
+
+void SWTextEdit::restoreFont(const QString &family, int size) noexcept{
+  QSignalBlocker b1(fontFamily_);
+  QSignalBlocker b2(fontSize_);
+  fontFamily_->setCurrentFont(QFont(family));
+  fontSize_->setValue(size);
+
+  QTextCharFormat fmt;
+  fmt.setFontFamilies({family});
+  fmt.setFontPointSize(size);
+  editor_->setCurrentCharFormat(fmt);
+
+  // Establecer como fuente por defecto del documento
+  QFont font(family, size);
+  editor_->document()->setDefaultFont(font);
+
+}

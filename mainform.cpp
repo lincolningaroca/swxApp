@@ -1207,6 +1207,13 @@ void MainForm::readSettings() noexcept{
   }
   settings.endGroup();
 
+  settings.beginGroup(QStringLiteral("Editor"));
+  const auto fontFamily = settings.value(QStringLiteral("fontFamily"), "Arial").toString();
+  const auto fontSize = settings.value(QStringLiteral("fontSize"), 10).toInt();
+  settings.endGroup();
+
+  ui->pteDesc->restoreFont(fontFamily, fontSize);
+
   auto ret = SW::Helper_t::nativeRegistryKeyExists("category name");
 
   QString categoryName{};
@@ -1406,6 +1413,11 @@ void MainForm::writeSettings() const noexcept{
   }
 
   settings.setValue(QStringLiteral("lblColor"), SW::Helper_t::setColorReg(lblColor_));
+  settings.endGroup();
+
+  settings.beginGroup(QStringLiteral("Editor"));
+  settings.setValue(QStringLiteral("fontFamily"), ui->pteDesc->currentFont());
+  settings.setValue(QStringLiteral("fontSize"), ui->pteDesc->currentFontSize());
   settings.endGroup();
 
 }
