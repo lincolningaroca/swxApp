@@ -127,7 +127,7 @@ void SWTextEdit::initToolBar()
   fontSize_ = new QSpinBox(toolBar_);
   fontSize_->setRange(6, 72);
   fontSize_->setValue(10);
-  fontSize_->setFixedWidth(50);
+  fontSize_->setFixedWidth(80);
   fontSize_->setToolTip("Tamaño de fuente");
   toolBar_->addWidget(fontSize_);
   QObject::connect(fontSize_, &QSpinBox::valueChanged, this, &SWTextEdit::on_fontSizeChanged);
@@ -170,18 +170,7 @@ void SWTextEdit::on_cursorPositionChanged(){
 }
 
 void SWTextEdit::updateToolBarState(){
-  // const auto fmt = editor_->currentCharFormat();
-  // boldAction_->setChecked(fmt.fontWeight() == QFont::Bold);
-  // italicAction_->setChecked(fmt.fontItalic());
-  // underlineAction_->setChecked(fmt.fontUnderline());
 
-  // QSignalBlocker blocker(fontSize_);
-  // fontSize_->setValue(static_cast<int>(fmt.fontPointSize() > 0 ? fmt.fontPointSize() : 10));
-
-  // const auto align = editor_->alignment();
-  // alignLeftAction_->setChecked(align == Qt::AlignLeft);
-  // alignCenterAction_->setChecked(align == Qt::AlignHCenter);
-  // alignRightAction_->setChecked(align == Qt::AlignRight);
   const auto fmt = editor_->currentCharFormat();
   boldAction_->setChecked(fmt.fontWeight() == QFont::Bold);
   italicAction_->setChecked(fmt.fontItalic());

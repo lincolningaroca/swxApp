@@ -41,21 +41,12 @@ struct Helper_t{
 
   [[nodiscard]]static QString hashGenerator(const QByteArray&) noexcept;
 
-  [[nodiscard]]static QPalette set_Theme(Qt::ColorScheme theme) noexcept;
+  static void set_Theme(Qt::ColorScheme theme) noexcept;
 
   // [[nodiscard]]static Qt::ColorScheme checkSystemColorScheme() noexcept;
   [[nodiscard]]static Qt::ColorScheme detectSystemColorScheme();
-  static void applyManjaroDarkColor(QTableView* table);
+  // static void applyManjaroDarkColor(QTableView* table);
 
-
-
-  //var member
-
-  inline static const QHash<Qt::ColorScheme, QString> lblColorMode{
-
-    {Qt::ColorScheme::Light, "#008cf9"},
-      {Qt::ColorScheme::Dark, "#16A085"}
-  };
 
   [[nodiscard]]static QString AppLocalDataLocation(){return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).append(dbDir_name);}
   [[nodiscard]]static QString app_pathLocation(){return QApplication::applicationDirPath();}

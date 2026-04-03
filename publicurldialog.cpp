@@ -27,17 +27,6 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   readSettings();
 
 
-  if(colorScheme == Qt::ColorScheme::Dark){
-
-    SW::Helper_t::applyManjaroDarkColor(ui->urlTableView);
-  }
-  if(colorScheme == Qt::ColorScheme::Unknown){
-
-    auto colorSch = SW::Helper_t::detectSystemColorScheme();
-    if(colorSch == Qt::ColorScheme::Dark)
-      SW::Helper_t::applyManjaroDarkColor(ui->urlTableView);
-  }
-
   QObject::connect(ui->categoryComboBox, &QComboBox::currentTextChanged, this, &PublicUrlDialog::on_loadDataTableView);
 
 

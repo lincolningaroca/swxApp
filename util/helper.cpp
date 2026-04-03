@@ -106,71 +106,95 @@ bool Helper_t::isPasswordSecure(const QString &password) noexcept{
 
 }
 
-QPalette  Helper_t::set_Theme(Qt::ColorScheme theme) noexcept
-{
-  QPalette mPalette{};
+void  Helper_t::set_Theme(Qt::ColorScheme theme) noexcept{
 
-  if(theme == Qt::ColorScheme::Light){
-    qApp->setStyle(QStyleFactory::create("Windowsvista"));
-    mPalette = QPalette();
-
-  }else{
-    qApp->setStyle(QStyleFactory::create("Fusion"));
-
-    // --- ROLES PRINCIPALES DE FONDO Y TEXTO ---
-    mPalette.setColor(QPalette::Window,          QColor(43, 48, 52));    // Gris oscuro azulado
-    mPalette.setColor(QPalette::WindowText,      QColor(252, 252, 252)); // Blanco puro para lectura
-    mPalette.setColor(QPalette::Base,            QColor(35, 38, 41));    // Fondo de tablas y editores
-    mPalette.setColor(QPalette::AlternateBase,   QColor(43, 48, 52));    // Filas alternas
-    mPalette.setColor(QPalette::ToolTipBase,     QColor(43, 48, 52));
-    mPalette.setColor(QPalette::ToolTipText,     QColor(252, 252, 252));
-    mPalette.setColor(QPalette::PlaceholderText, QColor(127, 140, 141)); // Gris medio
-    mPalette.setColor(QPalette::Text,            QColor(252, 252, 252));
-
-    // --- ROLES DE BOTONES ---
-    mPalette.setColor(QPalette::Button,          QColor(43, 48, 52));
-    mPalette.setColor(QPalette::ButtonText,      QColor(252, 252, 252));
-    mPalette.setColor(QPalette::BrightText,      QColor(255, 255, 255));
-
-    // --- SELECCIÓN Y ENLACES (Aquí brilla el verde Manjaro) ---
-    mPalette.setColor(QPalette::Highlight,       QColor(22, 160, 133));          // Resaltado verde
-    mPalette.setColor(QPalette::HighlightedText, QColor(255, 255, 255)); // Texto blanco sobre verde
-    mPalette.setColor(QPalette::Link,            QColor(29, 153, 243));  // Azul para links
-    mPalette.setColor(QPalette::LinkVisited,     QColor(155, 89, 182));  // Púrpura para visitados
-
-    // --- ROLES DE PROFUNDIDAD (Bordes y Sombreados) ---
-    mPalette.setColor(QPalette::Light,           QColor(65, 71, 77));    // Iluminación de bordes
-    mPalette.setColor(QPalette::Midlight,        QColor(55, 60, 65));
-    mPalette.setColor(QPalette::Mid,             QColor(40, 44, 48));
-    mPalette.setColor(QPalette::Dark,            QColor(25, 28, 31));    // Sombra fuerte
-    mPalette.setColor(QPalette::Shadow,          QColor(0, 0, 0));       // Negro absoluto
-
-    // --- ESTADO DESACTIVADO (DISABLED) ---
-    mPalette.setColor(QPalette::Disabled, QPalette::WindowText,    QColor(127, 140, 141));
-    mPalette.setColor(QPalette::Disabled, QPalette::Text,          QColor(127, 140, 141));
-    mPalette.setColor(QPalette::Disabled, QPalette::ButtonText,    QColor(127, 140, 141));
-    mPalette.setColor(QPalette::Disabled, QPalette::Base,          QColor(43, 48, 52));
-    mPalette.setColor(QPalette::Disabled, QPalette::Highlight,     QColor(65, 71, 77));
+#ifdef Q_OS_LINUX
+  if (qApp->style()->objectName().toLower() != "fusion") {
+	qApp->setStyle(QStyleFactory::create("Fusion"));
   }
+#endif
 
-  return mPalette;
+  auto *hints = QGuiApplication::styleHints();
+
+  switch (theme) {
+	case Qt::ColorScheme::Dark:
+	  hints->setColorScheme(Qt::ColorScheme::Dark);
+	  break;
+	case Qt::ColorScheme::Light:
+	  hints->setColorScheme(Qt::ColorScheme::Light);
+	  break;
+	case Qt::ColorScheme::Unknown:
+	default:
+	  hints->setColorScheme(Qt::ColorScheme::Unknown);
+	  break;
+  }
+  // this->update();
+
+  // QPalette mPalette{};
+
+  // if(theme == Qt::ColorScheme::Light){
+  //   qApp->setStyle(QStyleFactory::create("Windowsvista"));
+  //   mPalette = QPalette();
+
+  // }else{
+  //   qApp->setStyle(QStyleFactory::create("Fusion"));
+
+  //   // --- ROLES PRINCIPALES DE FONDO Y TEXTO ---
+  //   mPalette.setColor(QPalette::Window,          QColor(43, 48, 52));    // Gris oscuro azulado
+  //   mPalette.setColor(QPalette::WindowText,      QColor(252, 252, 252)); // Blanco puro para lectura
+  //   mPalette.setColor(QPalette::Base,            QColor(35, 38, 41));    // Fondo de tablas y editores
+  //   mPalette.setColor(QPalette::AlternateBase,   QColor(43, 48, 52));    // Filas alternas
+  //   mPalette.setColor(QPalette::ToolTipBase,     QColor(43, 48, 52));
+  //   mPalette.setColor(QPalette::ToolTipText,     QColor(252, 252, 252));
+  //   mPalette.setColor(QPalette::PlaceholderText, QColor(127, 140, 141)); // Gris medio
+  //   mPalette.setColor(QPalette::Text,            QColor(252, 252, 252));
+
+  //   // --- ROLES DE BOTONES ---
+  //   mPalette.setColor(QPalette::Button,          QColor(43, 48, 52));
+  //   mPalette.setColor(QPalette::ButtonText,      QColor(252, 252, 252));
+  //   mPalette.setColor(QPalette::BrightText,      QColor(255, 255, 255));
+
+  //   // --- SELECCIÓN Y ENLACES (Aquí brilla el verde Manjaro) ---
+  //   mPalette.setColor(QPalette::Highlight,       QColor(22, 160, 133));          // Resaltado verde
+  //   mPalette.setColor(QPalette::HighlightedText, QColor(255, 255, 255)); // Texto blanco sobre verde
+  //   mPalette.setColor(QPalette::Link,            QColor(29, 153, 243));  // Azul para links
+  //   mPalette.setColor(QPalette::LinkVisited,     QColor(155, 89, 182));  // Púrpura para visitados
+
+  //   // --- ROLES DE PROFUNDIDAD (Bordes y Sombreados) ---
+  //   mPalette.setColor(QPalette::Light,           QColor(65, 71, 77));    // Iluminación de bordes
+  //   mPalette.setColor(QPalette::Midlight,        QColor(55, 60, 65));
+  //   mPalette.setColor(QPalette::Mid,             QColor(40, 44, 48));
+  //   mPalette.setColor(QPalette::Dark,            QColor(25, 28, 31));    // Sombra fuerte
+  //   mPalette.setColor(QPalette::Shadow,          QColor(0, 0, 0));       // Negro absoluto
+
+  //   // --- ESTADO DESACTIVADO (DISABLED) ---
+  //   mPalette.setColor(QPalette::Disabled, QPalette::WindowText,    QColor(127, 140, 141));
+  //   mPalette.setColor(QPalette::Disabled, QPalette::Text,          QColor(127, 140, 141));
+  //   mPalette.setColor(QPalette::Disabled, QPalette::ButtonText,    QColor(127, 140, 141));
+  //   mPalette.setColor(QPalette::Disabled, QPalette::Base,          QColor(43, 48, 52));
+  //   mPalette.setColor(QPalette::Disabled, QPalette::Highlight,     QColor(65, 71, 77));
+  // }
+
+  // return mPalette;
+
+
 
 }
 
-void Helper_t::applyManjaroDarkColor(QTableView *table){
+// void Helper_t::applyManjaroDarkColor(QTableView *table){
 
-  if(!table) return;
+//   if(!table) return;
 
-  table->setStyleSheet(
+//   table->setStyleSheet(
 
-    "QTableView::item:hover {"
-    "    background-color: rgba(22, 160, 133, 50);" /* Verde suave al pasar el mouse */
-    "}"
+//     "QTableView::item:hover {"
+//     "    background-color: rgba(22, 160, 133, 50);" /* Verde suave al pasar el mouse */
+//     "}"
 
-    );
+//     );
 
 
-}
+// }
 
 QString Helper_t::encrypt(const QString& plainText, const QByteArray& key, const QByteArray& iv){
 

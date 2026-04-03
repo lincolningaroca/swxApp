@@ -32,15 +32,14 @@ private:
 
   int loadSchemePreference();
 
-  void loadThemeComboBox() noexcept;
   void loadListCategory(uint32_t user_id) noexcept;
-  void applyPreferredTheme(int pref);
+  void applyPreferredTheme(Qt::ColorScheme scheme);
   void has_data() noexcept;
   void hastvUrlData() noexcept;
   void checkStatusContextMenu();
   void canRestoreDataBase() const noexcept;
   void verifyAppColorScheme();
-  void setLabelInfo(Qt::ColorScheme color, const QString& userName=SW::Helper_t::currentUser_.value(SW::User::U_public)) noexcept;
+  void setLabelInfo(const QString& userName=SW::Helper_t::currentUser_.value(SW::User::U_public)) noexcept;
   void initFrm() noexcept;
   void setUpTable(uint32_t categoryId = 1) noexcept;
   void setUpTableHeaders() const noexcept;
@@ -51,9 +50,7 @@ private:
   void verifyContextMenu() noexcept;
   void openUrl() noexcept;
   void readSettings() noexcept;
-  void loadLblSchemePreference();
   void setCboCategoryToolTip() noexcept;
-  void checkStatusSessionColor(const QString& text);
   void editAction(bool op) noexcept;
   void writeSettings() const noexcept;
   void categorySelectedChanged(const QString& text);
@@ -63,9 +60,6 @@ private:
   bool hasValidTableData() const noexcept;
   bool validateSelectedRow() noexcept;
   bool deleteAll() noexcept;
-
-
-
 
   //variables y estructuras privadas de la aplicacion
 
@@ -114,7 +108,6 @@ private slots:
   void on_editCategory();
   void on_quitUrl();
   void on_btnEdit();
-  void on_themeSelectedChanged(int index);
   void on_categorySelectedChanged(const QString& text);
   void on_callLogout();
   void on_makeBackup();

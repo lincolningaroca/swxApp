@@ -130,29 +130,32 @@ void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
 
 }
 
-void AcercaDeDialog::setupCustomFont(){
 
-  // Cargar fuente personalizada
+void AcercaDeDialog::setupCustomFont() {
+  bool fontLoaded = false;
+
   const int fontId = QFontDatabase::addApplicationFont(":/font/FiraCode-Regular.ttf");
-
   if (fontId != -1) {
-    const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
-    if (!fontFamilies.isEmpty()) {
-      customFont_ = QFont(fontFamilies.at(0), 9);
-      qDebug() << "Fuente personalizada cargada:" << fontFamilies.at(0);
-    } else {
-      qWarning() << "No se pudo obtener la familia de la fuente personalizada";
-      customFont_ = QFont("Segoe UI", 10); // Fallback
-    }
+	const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
+	if (!fontFamilies.isEmpty()) {
+	  customFont_ = QFont(fontFamilies.at(0), 9);
+	  qDebug() << "Fuente personalizada cargada:" << fontFamilies.at(0);
+	  fontLoaded = true;
+	} else {
+	  qWarning() << "No se pudo obtener la familia de la fuente personalizada";
+	}
   } else {
-    qWarning() << "No se pudo cargar la fuente desde recursos";
-    customFont_ = QFont("Segoe UI", 10); // Fallback
+	qWarning() << "No se pudo cargar la fuente desde recursos";
   }
 
-  // Aplicar fuente a los widgets
+  if (!fontLoaded) {
+	customFont_ = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+	customFont_.setPointSize(10);
+	customFont_.setStyleHint(QFont::Monospace);
+  }
+
   ui->tbAcercaDe->setFont(customFont_);
   ui->tbLicencia->setFont(customFont_);
-
 }
 
 void AcercaDeDialog::setupUI(){
