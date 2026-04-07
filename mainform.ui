@@ -54,6 +54,12 @@
             <iconset resource="rsc.qrc">
              <normaloff>:/img/2835260_control_more_options_menu select_list view_menu.png</normaloff>:/img/2835260_control_more_options_menu select_list view_menu.png</iconset>
            </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="autoRaise">
             <bool>true</bool>
            </property>
@@ -74,6 +80,12 @@
             <iconset resource="rsc.qrc">
              <normaloff>:/img/2835252_rewind_undo_loop_redo_arrow.png</normaloff>:/img/2835252_rewind_undo_loop_redo_arrow.png</iconset>
            </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
            <property name="autoRaise">
             <bool>true</bool>
            </property>
@@ -93,6 +105,12 @@
            <property name="icon">
             <iconset resource="rsc.qrc">
              <normaloff>:/img/118277.png</normaloff>:/img/118277.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
            </property>
            <property name="autoRaise">
             <bool>true</bool>
@@ -280,6 +298,9 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="logIntoolBar">
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -293,9 +314,13 @@
    <addaction name="btnLogOut"/>
    <addaction name="btnResetPassword"/>
    <addaction name="firstTimeLogInBtn"/>
+   <addaction name="actionActualizar_password"/>
    <addaction name="separator"/>
   </widget>
   <widget class="QToolBar" name="dataBasetoolBar">
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
    <property name="windowTitle">
     <string>toolBar_2</string>
    </property>
@@ -309,6 +334,9 @@
    <addaction name="btnBackUp"/>
   </widget>
   <widget class="QToolBar" name="preferenceToolBar">
+   <property name="cursor">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -442,6 +470,21 @@
   <action name="actionPreference">
    <property name="text">
     <string>Abrir dialogo de preferencias</string>
+   </property>
+  </action>
+  <action name="actionActualizar_password">
+   <property name="icon">
+    <iconset resource="rsc.qrc">
+     <normaloff>:/img/changePwd.png</normaloff>:/img/changePwd.png</iconset>
+   </property>
+   <property name="text">
+    <string>Actualizar password</string>
+   </property>
+   <property name="toolTip">
+    <string>Cambiar o actulaizar password</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>

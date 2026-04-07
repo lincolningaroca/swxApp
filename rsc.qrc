@@ -36,5 +36,6 @@
         <file>img/leftalign.png</file>
         <file>img/rightalign.png</file>
         <file>img/textcolor.png</file>
+        <file>img/changePwd.png</file>
     </qresource>
 </RCC>

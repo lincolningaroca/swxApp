@@ -36,6 +36,7 @@ qt_add_executable(${PROJECT_NAME}
     ${APP_ICON}
     configdialog.hpp configdialog.cpp configdialog.ui
     swwidgets/swtextedit.hpp swwidgets/swtextedit.cpp
+    changepwddialog.hpp changepwddialog.cpp changepwddialog.ui
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -119,6 +119,7 @@ private slots:
   void on_firstTimeLoginDialog();
   void on_showSettingsDialog();
   void on_showDescriptionDialog(const QModelIndex &index);
+  void on_showChangePasswordDialog();
 
 
 

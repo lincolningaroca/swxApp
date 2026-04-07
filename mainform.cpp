@@ -26,6 +26,7 @@
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
 #include "configdialog.hpp"
+#include "changepwddialog.hpp"
 
 
 MainForm::MainForm(QWidget *parent)
@@ -61,7 +62,8 @@ MainForm::MainForm(QWidget *parent)
   ui->statusbar->addPermanentWidget(lblInfo_);
 
   userId_ = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
-  lblIcon_->setPixmap(QPixmap(":/img/7278151.png").scaled(16,16));
+  lblIcon_->setPixmap(QPixmap(":/img/7278151.png").scaled(16,16,
+														  Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
   initFrm();
 
@@ -218,6 +220,10 @@ MainForm::MainForm(QWidget *parent)
 
   QObject::connect(ui->btnSettings, &QAction::triggered, this, &MainForm::on_showSettingsDialog);
 
+
+  QObject::connect(ui->actionActualizar_password, &QAction::triggered, this, &MainForm::on_showChangePasswordDialog);
+
+
 }
 
 MainForm::~MainForm()
@@ -354,7 +360,8 @@ void MainForm::on_loadLoginForm(){
 	setWindowTitle(QApplication::applicationName().append(userDes));
 
 
-	lblIcon_->setPixmap(QPixmap(QStringLiteral(":/img/user.png")).scaled(16,16));
+	lblIcon_->setPixmap(QPixmap(":/img/user.png").scaled(16,16,
+														 Qt::KeepAspectRatio, Qt::SmoothTransformation));
 	ui->statusbar->addWidget(lblIcon_);
 
 	SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
@@ -362,6 +369,7 @@ void MainForm::on_loadLoginForm(){
 	checkStatusContextMenu();
 	canRestoreDataBase();
 	verifyAppColorScheme();
+	ui->actionActualizar_password->setVisible(true);
   }
 
 }
@@ -606,7 +614,8 @@ void MainForm::on_callLogout(){
   setWindowTitle(QApplication::applicationName());
   ui->cboCategory->clear();
   loadListCategory(userId_);
-  lblIcon_->setPixmap(QPixmap(QStringLiteral(":/img/7278151.png")).scaled(16,16));
+  lblIcon_->setPixmap(QPixmap(":/img/7278151.png").scaled(16,16,
+														  Qt::KeepAspectRatio, Qt::SmoothTransformation));
   SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_closed;
   has_data();
   checkStatusContextMenu();
@@ -614,6 +623,8 @@ void MainForm::on_callLogout(){
   canRestoreDataBase();
 
   verifyAppColorScheme();
+
+  ui->actionActualizar_password->setVisible(false);
 
 }
 
@@ -898,6 +909,13 @@ void MainForm::on_showDescriptionDialog(const QModelIndex &index){
   xxxModel_->select();
 }
 
+void MainForm::on_showChangePasswordDialog(){
+
+  ChangePwdDialog chnDialog(SW::Helper_t::current_user_, this);
+  chnDialog.exec();
+
+}
+
 void MainForm::setUpShowMenuAction(){
 
   ui->showHideAction->setCheckable(true);
@@ -943,6 +961,8 @@ void MainForm::initFrm() noexcept{
   //set the focus to txturl control
   ui->txtUrl->setFocus(Qt::OtherFocusReason);
   lblInfo_->setCursor(Qt::PointingHandCursor);
+
+  ui->actionActualizar_password->setVisible(false);
 
   ui->btnResetPassword->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P));
 
