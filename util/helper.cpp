@@ -10,6 +10,10 @@
 #include <QStyleHints>
 #include <QTableView>
 
+#include <QSvgRenderer>
+#include <QPainter>
+#include <QPixmap>
+
 extern "C"{
 #include "openssl/rand.h"
 }
@@ -179,6 +183,34 @@ void  Helper_t::set_Theme(Qt::ColorScheme theme) noexcept{
 
 
 
+}
+
+QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
+							const QColor& color) noexcept {
+  return svgIcon(resourcePath, color, QSize(24, 24));
+}
+
+QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
+							const QColor& color,
+							const QSize& size) noexcept {
+  QFile file(resourcePath);
+  if (!file.open(QIODevice::ReadOnly))
+	return QIcon();
+
+  QString svgContent = QString::fromUtf8(file.readAll());
+  svgContent.replace(QLatin1String("currentColor"), color.name());
+
+  QSvgRenderer renderer(svgContent.toUtf8());
+  if (!renderer.isValid())
+	return QIcon();
+
+  QPixmap pixmap(size);
+  pixmap.fill(Qt::transparent);
+  QPainter painter(&pixmap);
+  renderer.render(&painter);
+  painter.end();
+
+  return QIcon(pixmap);
 }
 
 // void Helper_t::applyManjaroDarkColor(QTableView *table){

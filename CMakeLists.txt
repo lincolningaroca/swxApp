@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(xxxApp LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Sql Network)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Sql Network Svg)
 
 qt_standard_project_setup()
 
@@ -24,7 +24,7 @@ qt_add_executable(${PROJECT_NAME}
     mainform.cpp
     mainform.hpp
     mainform.ui
-    rsc.qrc
+rsc.qrc
     helperdatabase/helperdb.cpp helperdatabase/helperdb.hpp util/excelexporter.cpp util/excelexporter.hpp util/helper.cpp util/helper.hpp util/systemthemewatcher.cpp util/systemthemewatcher.hpp
     acercadedialog.hpp acercadedialog.cpp acercadedialog.ui
     categorydialog.cpp categorydialog.hpp categorydialog.ui
@@ -37,7 +37,7 @@ qt_add_executable(${PROJECT_NAME}
     configdialog.hpp configdialog.cpp configdialog.ui
     swwidgets/swtextedit.hpp swwidgets/swtextedit.cpp
     changepwddialog.hpp changepwddialog.cpp changepwddialog.ui
-)
+       )
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
@@ -45,6 +45,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt::Widgets
     Qt::Sql
     Qt::Network
+    Qt::Svg
     QXlsx::QXlsx
     OpenSSL::SSL    # Nombre oficial de CMake
     OpenSSL::Crypto # Nombre oficial de CMake

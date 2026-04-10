@@ -225,6 +225,8 @@ LogInDialog::LogInDialog(QWidget *parent, OpenMode op) :
     ui->txtRePassword->setText(password);
   });
 
+  applyIcons();
+
 }//end constructor
 
 LogInDialog::~LogInDialog()
@@ -256,7 +258,7 @@ void LogInDialog::setUp_Form() noexcept{
   ui->txtPassword->setPlaceholderText("Clave o password");
   ui->txtPassword->setClearButtonEnabled(true);
 
-  ui->btnOtherOptions->setIcon(QIcon(QStringLiteral(":/img/down.png")));
+  ui->btnOtherOptions->setIcon(QIcon(QStringLiteral(":/img/down.svg")));
   layout()->setSizeConstraint(QLayout::SetFixedSize);
 
   ui->btnOtherOptions->setToolTip("<p>"
@@ -290,8 +292,8 @@ void LogInDialog::setUp_Form() noexcept{
   ui->txtConfirmValue->setEchoMode(QLineEdit::Password);
 
   //set the combo box options
-  ui->cboRestoreType->addItem(QIcon(QStringLiteral(":/img/paper_pin.png")), authType.value(SW::AuthType::Secret_Question));
-  ui->cboRestoreType->addItem(QIcon(QStringLiteral(":/img/paper_pin.png")), authType.value(SW::AuthType::Numeric_pin));
+  ui->cboRestoreType->addItem(QIcon(QStringLiteral(":/img/paper_pin.svg")), authType.value(SW::AuthType::Secret_Question));
+  ui->cboRestoreType->addItem(QIcon(QStringLiteral(":/img/paper_pin.svg")), authType.value(SW::AuthType::Numeric_pin));
   ui->checkBox->setChecked(true);
   ui->checkBox->setDisabled(true);
 
@@ -304,6 +306,34 @@ void LogInDialog::setStateControls(bool op) noexcept{
   ui->pbCancel->setDisabled(op);
   ui->pbLogIn->setDisabled(op);
 
+}
+
+void LogInDialog::applyIcons() noexcept {
+
+  const QColor windowColor = qApp->palette().color(QPalette::Window);
+  const bool isDark = (windowColor.lightness() < 128);
+  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+
+  // Botón expandir/colapsar — depende del estado actual
+  const QString arrowIcon = isExpanded_ ? ":/img/up.svg" : ":/img/down.svg";
+  ui->btnOtherOptions->setIcon(SW::Helper_t::svgIcon(arrowIcon, iconColor));
+
+  // Mostrar/ocultar password — depende del estado de cada checkbox
+  const QString eyeOpen   = ":/img/open.svg";
+  const QString eyeClosed = ":/img/close.svg";
+
+  ui->checkBox_2->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_2->isChecked() ? eyeOpen : eyeClosed, iconColor));
+  ui->checkBox_3->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_3->isChecked() ? eyeOpen : eyeClosed, iconColor));
+  ui->checkBox_4->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_4->isChecked() ? eyeOpen : eyeClosed, iconColor));
+  ui->checkBox_5->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_5->isChecked() ? eyeOpen : eyeClosed, iconColor));
+
+  // Combo box autenticación
+  ui->cboRestoreType->setItemIcon(0, SW::Helper_t::svgIcon(":/img/paper_pin.svg", iconColor));
+  ui->cboRestoreType->setItemIcon(1, SW::Helper_t::svgIcon(":/img/paper_pin.svg", iconColor));
 }
 
 void LogInDialog::setOptionsToComboBox(int index) noexcept{
@@ -374,12 +404,12 @@ void LogInDialog::setFeatures(QLineEdit *lineEdit, QCheckBox *checkBox, bool che
 
   if(checked){
     lineEdit->setEchoMode(QLineEdit::Normal);
-    checkBox->setIcon(QIcon(QStringLiteral(":/img/open.png")));
+	checkBox->setIcon(QIcon(QStringLiteral(":/img/open.svg")));
     checkBox->setToolTip("Ocultar los caracteres.");
   }
   else{
     lineEdit->setEchoMode(QLineEdit::Password);
-    checkBox->setIcon(QIcon(QStringLiteral(":/img/close.png")));
+	checkBox->setIcon(QIcon(QStringLiteral(":/img/close.svg")));
     checkBox->setToolTip("Mostrar los caracteres.");
 
   }
@@ -390,7 +420,7 @@ void LogInDialog::handleToggleAnimation(bool checked){
 
   if(checked){
 
-    ui->btnOtherOptions->setIcon(QIcon(":/img/up.png"));
+	ui->btnOtherOptions->setIcon(QIcon(":/img/up.svg"));
     ui->btnOtherOptions->setToolTip("<span>Volver a Inicio de sesión!</span>");
 
     ui->widget->setMaximumHeight(QWIDGETSIZE_MAX);
@@ -412,7 +442,7 @@ void LogInDialog::handleToggleAnimation(bool checked){
   }else{
 
     // Cambiar icono a "abajo" para indicar que puede expandirse
-    ui->btnOtherOptions->setIcon(QIcon(":/img/down.png"));
+	ui->btnOtherOptions->setIcon(QIcon(":/img/down.svg"));
 
     // Actualizar tooltip
     ui->btnOtherOptions->setToolTip("<span>"

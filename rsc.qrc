@@ -1,41 +1,39 @@
 <RCC>
     <qresource prefix="/">
-        <file>img/118277.png</file>
-        <file>img/15514 - editdelete.png</file>
-        <file>img/2835252_rewind_undo_loop_redo_arrow.png</file>
-        <file>img/2835258_long arrow_down_arrow_down arrow_downward.png</file>
-        <file>img/2835260_control_more_options_menu select_list view_menu.png</file>
-        <file>img/7278151.png</file>
-        <file>img/Add_User.png</file>
-        <file>img/backup.png</file>
-        <file>img/Change_password-256.png</file>
-        <file>img/close.png</file>
-        <file>img/darktheme.png</file>
-        <file>img/desc.png</file>
-        <file>img/down.png</file>
-        <file>img/editurl.png</file>
         <file>img/excelDocument.png</file>
-        <file>img/flat_seo-47-64.png</file>
-        <file>img/login.png</file>
-        <file>img/logoEmpresa.png</file>
-        <file>img/logoEmpresa_1.png</file>
-        <file>img/logout.png</file>
-        <file>img/open.png</file>
-        <file>img/openurl.png</file>
-        <file>img/paper_pin.png</file>
-        <file>img/quiturl.png</file>
-        <file>img/server-database-restore-64.png</file>
-        <file>img/up.png</file>
-        <file>img/user.png</file>
-        <file>img/whitetheme.png</file>
         <file>font/FiraCode-Regular.ttf</file>
         <file>licencia/licencia.txt</file>
         <file>licencia/gnu-gpl-v3-license.html</file>
-        <file>img/palette.png</file>
-        <file>img/center.png</file>
-        <file>img/leftalign.png</file>
-        <file>img/rightalign.png</file>
-        <file>img/textcolor.png</file>
-        <file>img/changePwd.png</file>
+        <file>img/category-delete.svg</file>
+        <file>img/category-edit.svg</file>
+        <file>img/category-new.svg</file>
+        <file>img/change-password.svg</file>
+        <file>img/database-backup.svg</file>
+        <file>img/database-zap.svg</file>
+        <file>img/key-round.svg</file>
+        <file>img/link-delete.svg</file>
+        <file>img/link-edit.svg</file>
+        <file>img/link-open.svg</file>
+        <file>img/log-in.svg</file>
+        <file>img/log-out.svg</file>
+        <file>img/restore-password.svg</file>
+        <file>img/swatch-book.svg</file>
+        <file>img/text-align-center.svg</file>
+        <file>img/text-align-left.svg</file>
+        <file>img/text-align-rigth.svg</file>
+        <file>img/text-color.svg</file>
+        <file>img/user.svg</file>
+        <file>img/user-public.svg</file>
+        <file>img/settings.svg</file>
+        <file>img/user-cog.svg</file>
+        <file>img/user-log.png</file>
+        <file>img/user-public.png</file>
+        <file>img/logoSWSystems.svg</file>
+        <file>font/Delius-Regular.ttf</file>
+        <file>img/close.svg</file>
+        <file>img/down.svg</file>
+        <file>img/open.svg</file>
+        <file>img/paper_pin.svg</file>
+        <file>img/up.svg</file>
     </qresource>
 </RCC>

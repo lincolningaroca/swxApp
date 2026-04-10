@@ -50,10 +50,6 @@
            <property name="text">
             <string>...</string>
            </property>
-           <property name="icon">
-            <iconset resource="rsc.qrc">
-             <normaloff>:/img/2835260_control_more_options_menu select_list view_menu.png</normaloff>:/img/2835260_control_more_options_menu select_list view_menu.png</iconset>
-           </property>
            <property name="iconSize">
             <size>
              <width>24</width>
@@ -76,10 +72,6 @@
            <property name="text">
             <string>...</string>
            </property>
-           <property name="icon">
-            <iconset resource="rsc.qrc">
-             <normaloff>:/img/2835252_rewind_undo_loop_redo_arrow.png</normaloff>:/img/2835252_rewind_undo_loop_redo_arrow.png</iconset>
-           </property>
            <property name="iconSize">
             <size>
              <width>24</width>
@@ -101,10 +93,6 @@
            </property>
            <property name="text">
             <string>...</string>
-           </property>
-           <property name="icon">
-            <iconset resource="rsc.qrc">
-             <normaloff>:/img/118277.png</normaloff>:/img/118277.png</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -349,10 +337,6 @@
    <addaction name="btnSettings"/>
   </widget>
   <action name="btnLogIn">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/login.png</normaloff>:/img/login.png</iconset>
-   </property>
    <property name="text">
     <string>Login</string>
    </property>
@@ -367,10 +351,6 @@
    </property>
   </action>
   <action name="btnLogOut">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/logout.png</normaloff>:/img/logout.png</iconset>
-   </property>
    <property name="text">
     <string>logout</string>
    </property>
@@ -382,10 +362,6 @@
    </property>
   </action>
   <action name="btnResetPassword">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/Change_password-256.png</normaloff>:/img/Change_password-256.png</iconset>
-   </property>
    <property name="text">
     <string>resetpassword</string>
    </property>
@@ -400,10 +376,6 @@
    </property>
   </action>
   <action name="firstTimeLogInBtn">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/Add_User.png</normaloff>:/img/Add_User.png</iconset>
-   </property>
    <property name="text">
     <string>firtlogin</string>
    </property>
@@ -412,10 +384,6 @@
    </property>
   </action>
   <action name="btnRestore">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/server-database-restore-64.png</normaloff>:/img/server-database-restore-64.png</iconset>
-   </property>
    <property name="text">
     <string>restore</string>
    </property>
@@ -424,10 +392,6 @@
    </property>
   </action>
   <action name="btnBackUp">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/backup.png</normaloff>:/img/backup.png</iconset>
-   </property>
    <property name="text">
     <string>backup</string>
    </property>
@@ -451,10 +415,6 @@
    </property>
   </action>
   <action name="btnSettings">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/palette.png</normaloff>:/img/palette.png</iconset>
-   </property>
    <property name="text">
     <string>Settings</string>
    </property>
@@ -473,10 +433,6 @@
    </property>
   </action>
   <action name="actionActualizar_password">
-   <property name="icon">
-    <iconset resource="rsc.qrc">
-     <normaloff>:/img/changePwd.png</normaloff>:/img/changePwd.png</iconset>
-   </property>
    <property name="text">
     <string>Actualizar password</string>
    </property>
@@ -495,8 +451,6 @@
    <header location="global">swwidgets/swtextedit.hpp</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="rsc.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -62,7 +62,7 @@ MainForm::MainForm(QWidget *parent)
   ui->statusbar->addPermanentWidget(lblInfo_);
 
   userId_ = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
-  lblIcon_->setPixmap(QPixmap(":/img/7278151.png").scaled(16,16,
+  lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16,
 														  Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
   initFrm();
@@ -335,6 +335,7 @@ void MainForm::applyPreferredTheme(Qt::ColorScheme scheme){
   // Delega el esquema al sistema via Helper
   SW::Helper_t::set_Theme(scheme);
   qApp->setPalette(qApp->palette());
+  applyIcons(scheme);
   this->update();
 
 }
@@ -360,7 +361,7 @@ void MainForm::on_loadLoginForm(){
 	setWindowTitle(QApplication::applicationName().append(userDes));
 
 
-	lblIcon_->setPixmap(QPixmap(":/img/user.png").scaled(16,16,
+	lblIcon_->setPixmap(QPixmap(":/img/user-log.png").scaled(16,16,
 														 Qt::KeepAspectRatio, Qt::SmoothTransformation));
 	ui->statusbar->addWidget(lblIcon_);
 
@@ -614,7 +615,7 @@ void MainForm::on_callLogout(){
   setWindowTitle(QApplication::applicationName());
   ui->cboCategory->clear();
   loadListCategory(userId_);
-  lblIcon_->setPixmap(QPixmap(":/img/7278151.png").scaled(16,16,
+  lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16,
 														  Qt::KeepAspectRatio, Qt::SmoothTransformation));
   SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_closed;
   has_data();
@@ -933,6 +934,67 @@ void MainForm::setUpShowMenuAction(){
 	ui->showHideDatabaseAction->setChecked(true);
 	ui->actionPreferencias->setChecked(true);
   }
+
+}
+
+void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
+
+  bool isDark = false;
+
+  if (scheme == Qt::ColorScheme::Dark) {
+	isDark = true;
+  } else if (scheme == Qt::ColorScheme::Light) {
+	isDark = false;
+  } else {
+	// Unknown = seguir al SO → detectar por la paleta actual, que SÍ está actualizada
+	const QColor windowColor = qApp->palette().color(QPalette::Window);
+	isDark = (windowColor.lightness() < 128);
+  }
+
+  qDebug() << "applyIcons scheme:" << static_cast<int>(scheme)
+		   << "isDark:" << isDark
+		   << "palette window lightness:" << qApp->palette().color(QPalette::Window).lightness();
+
+  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+
+  // --- Toolbar: login/logout ---
+  ui->btnLogIn->setIcon(SW::Helper_t::svgIcon(":/img/log-in.svg", iconColor));
+  ui->btnLogOut->setIcon(SW::Helper_t::svgIcon(":/img/log-out.svg", iconColor));
+  ui->btnResetPassword->setIcon(SW::Helper_t::svgIcon(":/img/restore-password.svg", iconColor));
+  ui->firstTimeLogInBtn->setIcon(SW::Helper_t::svgIcon(":/img/user-cog.svg", iconColor));
+  ui->actionActualizar_password->setIcon(SW::Helper_t::svgIcon(":/img/key-round.svg", iconColor));
+
+  // --- Toolbar: base de datos ---
+  ui->btnBackUp->setIcon(SW::Helper_t::svgIcon(":/img/database-backup.svg", iconColor));
+  ui->btnRestore->setIcon(SW::Helper_t::svgIcon(":/img/database-zap.svg", iconColor));
+
+  // --- Toolbar: preferencias ---
+  ui->btnSettings->setIcon(SW::Helper_t::svgIcon(":/img/settings.svg", iconColor));
+  // ui->actionPreference->setIcon(SW::Helper_t::svgIcon(":/img/sliders.svg", iconColor));
+
+  // --- Botones principales ---
+  // ui->btnAdd->setIcon(SW::Helper_t::svgIcon(":/img/.svg", iconColor));
+  // ui->btnEdit->setIcon(SW::Helper_t::svgIcon(":/img/pencil.svg", iconColor));
+  // ui->btnQuit->setIcon(SW::Helper_t::svgIcon(":/img/trash-2.svg", iconColor));
+  // ui->btnopen->setIcon(SW::Helper_t::svgIcon(":/img/external-link.svg", iconColor));
+  // ui->btnCancel->setIcon(SW::Helper_t::svgIcon(":/img/x-circle.svg", iconColor));
+  ui->btnNewCategory->setIcon(SW::Helper_t::svgIcon(":/img/category-new.svg", iconColor));
+  ui->btnEditCategory->setIcon(SW::Helper_t::svgIcon(":/img/category-edit.svg", iconColor));
+  ui->btnDeleteCategory->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
+
+  // --- Context menu (también cambian) ---
+  if (openUrl_)      openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
+  if (editUrl_)      editUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
+  if (quitUrl_)      quitUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
+  // if (moveUrl_)      moveUrl_->setIcon(SW::Helper_t::svgIcon(":/img/move-right.svg", iconColor));
+  if (delCategory_)  delCategory_->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
+  // if (showDescDetail_) showDescDetail_->setIcon(SW::Helper_t::svgIcon(":/img/align-left.svg", iconColor));
+  // if (showPublicUrl_)  showPublicUrl_->setIcon(SW::Helper_t::svgIcon(":/img/globe.svg", iconColor));
+
+  // Excel: este puede quedar con su ícono de color fijo (verde), o también adaptarlo
+  // if (exportToExcelFile_) exportToExcelFile_->setIcon(...);
+
+  ui->pteDesc->applyIcons(scheme);
 
 }
 

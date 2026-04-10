@@ -13,6 +13,8 @@
 #include <QAction>
 #include <QFontComboBox>
 
+#include "util/helper.hpp" // para svgIcon
+
 SWTextEdit::SWTextEdit(QWidget *parent):
   QWidget(parent){
 
@@ -71,7 +73,7 @@ void SWTextEdit::initToolBar()
   toolBar_->addSeparator();
 
   // --- Alineación con iconos estándar de Qt ---
-  alignLeftAction_ = toolBar_->addAction(QIcon(":/img/leftalign.png"), "");
+  alignLeftAction_ = toolBar_->addAction("");
   alignLeftAction_->setCheckable(true);
   alignLeftAction_->setChecked(true);
   alignLeftAction_->setToolTip("Alinear izquierda");
@@ -82,7 +84,7 @@ void SWTextEdit::initToolBar()
 	alignRightAction_->setChecked(false);
   });
 
-  alignCenterAction_ = toolBar_->addAction(QIcon(":/img/center.png"), "");
+  alignCenterAction_ = toolBar_->addAction("");
   alignCenterAction_->setCheckable(true);
   alignCenterAction_->setToolTip("Centrar");
   QObject::connect(alignCenterAction_, &QAction::triggered, this, [this](){
@@ -92,7 +94,7 @@ void SWTextEdit::initToolBar()
 	alignRightAction_->setChecked(false);
   });
 
-  alignRightAction_ = toolBar_->addAction(QIcon(":/img/rightalign.png"), "");
+  alignRightAction_ = toolBar_->addAction("");
   alignRightAction_->setCheckable(true);
   alignRightAction_->setToolTip("Alinear derecha");
   QObject::connect(alignRightAction_, &QAction::triggered, this, [this](){
@@ -105,7 +107,7 @@ void SWTextEdit::initToolBar()
   toolBar_->addSeparator();
 
   // --- Color de texto con icono estándar ---
-  colorAction_ = toolBar_->addAction(QIcon(":/img/textcolor.png"), "");
+  colorAction_ = toolBar_->addAction("");
   colorAction_->setToolTip("Color de texto");
   QObject::connect(colorAction_, &QAction::triggered, this, &SWTextEdit::on_colorAction);
 
@@ -237,4 +239,26 @@ void SWTextEdit::restoreFont(const QString &family, int size) noexcept{
   QFont font(family, size);
   editor_->document()->setDefaultFont(font);
 
+}
+
+
+
+void SWTextEdit::applyIcons(Qt::ColorScheme scheme) noexcept {
+
+  bool isDark = false;
+  if (scheme == Qt::ColorScheme::Dark) {
+	isDark = true;
+  } else if (scheme == Qt::ColorScheme::Light) {
+	isDark = false;
+  } else {
+	const QColor windowColor = qApp->palette().color(QPalette::Window);
+	isDark = (windowColor.lightness() < 128);
+  }
+
+  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+
+  alignLeftAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-left.svg",   iconColor));
+  alignCenterAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-center.svg", iconColor));
+  alignRightAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-rigth.svg",  iconColor));
+  colorAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-color.svg",   iconColor));
 }

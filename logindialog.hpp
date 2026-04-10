@@ -61,6 +61,8 @@ private:
   void handleToggleAnimation(bool checked);
   void setupAnimation();
 
+  void applyIcons() noexcept;
+
 
   // QWidget interface
 protected:

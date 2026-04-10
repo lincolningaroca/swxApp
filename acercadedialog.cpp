@@ -111,29 +111,45 @@ void AcercaDeDialog::setTextToAbout() const{
 
 }
 
-void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
+void AcercaDeDialog::setImage(Qt::ColorScheme colorMode) {
+  const bool isDark = (colorMode == Qt::ColorScheme::Dark);
+  const QColor logoColor = isDark ? QColor(220, 220, 220) : QColor(30, 30, 30);
 
-  const QString logoPath = (colorMode == Qt::ColorScheme::Dark)
-  ? ":/img/logoEmpresa_1.png"
-  : ":/img/logoEmpresa.png";
+  const QPixmap logoPix = SW::Helper_t::svgIcon(
+							":/img/logoSWSystems.svg",
+							logoColor,
+							QSize(400, 400)  // ajusta al tamaño del label
+							).pixmap(QSize(400, 400));
 
-  QPixmap logoSw(logoPath);
-
-  if(logoSw.isNull()){
-    qWarning() << "Logo no disponible para el tema actual: " << logoPath;
-    return;
-  }
-
-  ui->lblLogo->setPixmap(logoSw);
-  ui->lblLogo->setFixedSize(logoSw.size());
+  ui->lblLogo->setPixmap(logoPix);
   ui->lblLogo->setAlignment(Qt::AlignCenter);
-
 }
+
+// void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
+
+  // const QString logoPath = (colorMode == Qt::ColorScheme::Dark)
+  // ? ":/img/logoEmpresa_1.png"
+  // : ":/img/logoEmpresa.png";
+
+  // QPixmap logoSw(logoPath);
+
+  // if(logoSw.isNull()){
+  //   qWarning() << "Logo no disponible para el tema actual: " << logoPath;
+  //   return;
+  // }
+
+  // ui->lblLogo->setPixmap(logoSw);
+  // ui->lblLogo->setFixedSize(logoSw.size());
+  // ui->lblLogo->setAlignment(Qt::AlignCenter);
+
+// }
 
 
 void AcercaDeDialog::setupCustomFont() {
   bool fontLoaded = false;
 
+  [[maybe_unused]]const int deliusId = QFontDatabase::addApplicationFont(":/font/Delius-Regular.ttf");
+  // qDebug() << "Delius families:" << QFontDatabase::applicationFontFamilies(deliusId);
   const int fontId = QFontDatabase::addApplicationFont(":/font/FiraCode-Regular.ttf");
   if (fontId != -1) {
 	const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);

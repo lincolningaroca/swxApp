@@ -42,6 +42,12 @@ struct Helper_t{
   [[nodiscard]]static QString hashGenerator(const QByteArray&) noexcept;
 
   static void set_Theme(Qt::ColorScheme theme) noexcept;
+  [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
+									 const QColor& color) noexcept;
+
+  [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
+									 const QColor& color,
+									 const QSize& size) noexcept;
 
   // [[nodiscard]]static Qt::ColorScheme checkSystemColorScheme() noexcept;
   [[nodiscard]]static Qt::ColorScheme detectSystemColorScheme();

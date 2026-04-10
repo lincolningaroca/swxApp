@@ -56,6 +56,7 @@ private:
   void categorySelectedChanged(const QString& text);
   void setUpShowMenuAction();
 
+  void applyIcons(Qt::ColorScheme scheme) noexcept;
 
   bool hasValidTableData() const noexcept;
   bool validateSelectedRow() noexcept;

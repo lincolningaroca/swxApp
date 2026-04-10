@@ -60,7 +60,7 @@ void ChangePwdDialog::initDialog(){
 
   QObject::connect(ui->chkShowPwd, &QCheckBox::toggled, this, [this](bool state){
 
-	(state) ? ui->chkShowPwd->setIcon(QIcon(":/img/open.png")) : ui->chkShowPwd->setIcon(QIcon(":/img/close.png"));
+	// (state) ? ui->chkShowPwd->setIcon(QIcon(":/img/open.png")) : ui->chkShowPwd->setIcon(QIcon(":/img/close.png"));
 	if(state){
 	  ui->txtNewPassword->setEchoMode(QLineEdit::Normal);
 	  ui->txtRePassword->setEchoMode(QLineEdit::Normal);
