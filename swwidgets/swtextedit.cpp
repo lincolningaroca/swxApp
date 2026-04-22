@@ -159,6 +159,7 @@ void SWTextEdit::on_colorAction(){
 	fmt.setForeground(color);
 	editor_->mergeCurrentCharFormat(fmt);
   }
+
 }
 
 void SWTextEdit::on_fontSizeChanged(int size){
@@ -224,15 +225,18 @@ int SWTextEdit::currentFontSize() const{
   return fontSize_->value();
 }
 
-void SWTextEdit::restoreFont(const QString &family, int size) noexcept{
+void SWTextEdit::restoreFont(const QString &family, int size, const QColor& color) noexcept{
   QSignalBlocker b1(fontFamily_);
   QSignalBlocker b2(fontSize_);
+
   fontFamily_->setCurrentFont(QFont(family));
   fontSize_->setValue(size);
+
 
   QTextCharFormat fmt;
   fmt.setFontFamilies({family});
   fmt.setFontPointSize(size);
+  fmt.setForeground(color);
   editor_->setCurrentCharFormat(fmt);
 
   // Establecer como fuente por defecto del documento
@@ -240,8 +244,6 @@ void SWTextEdit::restoreFont(const QString &family, int size) noexcept{
   editor_->document()->setDefaultFont(font);
 
 }
-
-
 
 void SWTextEdit::applyIcons(Qt::ColorScheme scheme) noexcept {
 

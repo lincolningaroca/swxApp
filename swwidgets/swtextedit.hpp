@@ -31,7 +31,8 @@ public:
 
   QString currentFont() const;
   int currentFontSize() const;
-  void restoreFont(const QString &family, int size) noexcept;
+
+  void restoreFont(const QString &family, int size, const QColor &color) noexcept;
 
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 

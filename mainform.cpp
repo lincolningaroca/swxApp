@@ -63,7 +63,7 @@ MainForm::MainForm(QWidget *parent)
 
   userId_ = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
   lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16,
-														  Qt::KeepAspectRatio, Qt::SmoothTransformation));
+															  Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
   initFrm();
 
@@ -362,7 +362,7 @@ void MainForm::on_loadLoginForm(){
 
 
 	lblIcon_->setPixmap(QPixmap(":/img/user-log.png").scaled(16,16,
-														 Qt::KeepAspectRatio, Qt::SmoothTransformation));
+															 Qt::KeepAspectRatio, Qt::SmoothTransformation));
 	ui->statusbar->addWidget(lblIcon_);
 
 	SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
@@ -616,7 +616,7 @@ void MainForm::on_callLogout(){
   ui->cboCategory->clear();
   loadListCategory(userId_);
   lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16,
-														  Qt::KeepAspectRatio, Qt::SmoothTransformation));
+															  Qt::KeepAspectRatio, Qt::SmoothTransformation));
   SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_closed;
   has_data();
   checkStatusContextMenu();
@@ -970,14 +970,7 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
 
   // --- Toolbar: preferencias ---
   ui->btnSettings->setIcon(SW::Helper_t::svgIcon(":/img/settings.svg", iconColor));
-  // ui->actionPreference->setIcon(SW::Helper_t::svgIcon(":/img/sliders.svg", iconColor));
 
-  // --- Botones principales ---
-  // ui->btnAdd->setIcon(SW::Helper_t::svgIcon(":/img/.svg", iconColor));
-  // ui->btnEdit->setIcon(SW::Helper_t::svgIcon(":/img/pencil.svg", iconColor));
-  // ui->btnQuit->setIcon(SW::Helper_t::svgIcon(":/img/trash-2.svg", iconColor));
-  // ui->btnopen->setIcon(SW::Helper_t::svgIcon(":/img/external-link.svg", iconColor));
-  // ui->btnCancel->setIcon(SW::Helper_t::svgIcon(":/img/x-circle.svg", iconColor));
   ui->btnNewCategory->setIcon(SW::Helper_t::svgIcon(":/img/category-new.svg", iconColor));
   ui->btnEditCategory->setIcon(SW::Helper_t::svgIcon(":/img/category-edit.svg", iconColor));
   ui->btnDeleteCategory->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
@@ -988,11 +981,6 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   if (quitUrl_)      quitUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
   // if (moveUrl_)      moveUrl_->setIcon(SW::Helper_t::svgIcon(":/img/move-right.svg", iconColor));
   if (delCategory_)  delCategory_->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
-  // if (showDescDetail_) showDescDetail_->setIcon(SW::Helper_t::svgIcon(":/img/align-left.svg", iconColor));
-  // if (showPublicUrl_)  showPublicUrl_->setIcon(SW::Helper_t::svgIcon(":/img/globe.svg", iconColor));
-
-  // Excel: este puede quedar con su ícono de color fijo (verde), o también adaptarlo
-  // if (exportToExcelFile_) exportToExcelFile_->setIcon(...);
 
   ui->pteDesc->applyIcons(scheme);
 
@@ -1100,7 +1088,6 @@ void MainForm::setUpCboCategoryContextMenu() noexcept{
 
 void MainForm::setUptvUrlContextMenu() noexcept{
 
-  // ui->tvUrl->setContextMenuPolicy(Qt::ActionsContextMenu);
   contextMenu = new QMenu(this);
 
   const auto openUrlIcon = QIcon(QStringLiteral(":/img/openurl.png"));
@@ -1166,11 +1153,24 @@ void MainForm::readSettings() noexcept{
   settings.endGroup();
 
   settings.beginGroup(QStringLiteral("Editor"));
+
   const auto fontFamily = settings.value(QStringLiteral("fontFamily"), "Arial").toString();
   const auto fontSize = settings.value(QStringLiteral("fontSize"), 10).toInt();
+  const auto colorStr = settings.value(QStringLiteral("textColor"), "").toString();
+
+  QColor textColor{};
+
+  if (!colorStr.isEmpty() && QColor(colorStr).isValid()) {
+	// Ya existe un valor guardado, usarlo
+	textColor = QColor(colorStr);
+  } else {
+	// Primera vez: tomar el color de texto de la paleta activa
+	// igual que hace ConfigDialog con QPalette::ButtonText
+	textColor = qApp->palette().color(QPalette::Text);
+  }
   settings.endGroup();
 
-  ui->pteDesc->restoreFont(fontFamily, fontSize);
+  ui->pteDesc->restoreFont(fontFamily, fontSize, textColor);
 
   auto ret = SW::Helper_t::nativeRegistryKeyExists("category name");
 
@@ -1195,23 +1195,11 @@ void MainForm::readSettings() noexcept{
   currentScheme_ = static_cast<Qt::ColorScheme>(theme);
   verifyAppColorScheme();
 
-  // {
-  //   QSignalBlocker signalblocker(ui->cboTheme);
-  //   ui->cboTheme->setCurrentIndex(theme);
-
-  // }
-
   settings.endGroup();
 
   applyPreferredTheme(static_cast<Qt::ColorScheme>(theme));
 
 }
-
-// void MainForm::loadLblSchemePreference(){
-
-//   verifyAppColorScheme();
-
-// }
 
 void MainForm::setCboCategoryToolTip() noexcept{
 
@@ -1311,8 +1299,11 @@ void MainForm::writeSettings() const noexcept{
   settings.endGroup();
 
   settings.beginGroup(QStringLiteral("Editor"));
+
+  auto *editor = ui->pteDesc->editor();
   settings.setValue(QStringLiteral("fontFamily"), ui->pteDesc->currentFont());
   settings.setValue(QStringLiteral("fontSize"), ui->pteDesc->currentFontSize());
+  settings.setValue(QStringLiteral("textColor"), editor->textColor().name(QColor::HexRgb));
   settings.endGroup();
 
 }
@@ -1321,7 +1312,6 @@ void MainForm::categorySelectedChanged(const QString &text){
 
   setUpTable(categoryList_.key(text));
   verifyContextMenu();
-  // setUpCboCategoryContextMenu();
   setCboCategoryToolTip();
   hastvUrlData();
   checkStatusContextMenu();
@@ -1333,7 +1323,6 @@ void MainForm::categorySelectedChanged(const QString &text){
  */
 void MainForm::on_showAboutDialog(){
 
-  // AcercaDeDialog acercaDe(themeType_.key(ui->cboTheme->currentText()), this);
   AcercaDeDialog acercaDe(currentScheme_, this);
   acercaDe.setWindowTitle(SW::Helper_t::appName().append(" - Acerca de"));
   acercaDe.exec();
