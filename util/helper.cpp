@@ -190,9 +190,31 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
   return svgIcon(resourcePath, color, QSize(24, 24));
 }
 
+// QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
+// 							const QColor& color,
+// 							const QSize& size) noexcept {
+//   QFile file(resourcePath);
+//   if (!file.open(QIODevice::ReadOnly))
+// 	return QIcon();
+
+//   QString svgContent = QString::fromUtf8(file.readAll());
+//   svgContent.replace(QLatin1String("currentColor"), color.name());
+
+//   QSvgRenderer renderer(svgContent.toUtf8());
+//   if (!renderer.isValid())
+// 	return QIcon();
+
+//   QPixmap pixmap(size);
+//   pixmap.fill(Qt::transparent);
+//   QPainter painter(&pixmap);
+//   renderer.render(&painter);
+//   painter.end();
+
+//   return QIcon(pixmap);
+// }
 QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
 							const QColor& color,
-							const QSize& size) noexcept {
+							QSize size) noexcept {
   QFile file(resourcePath);
   if (!file.open(QIODevice::ReadOnly))
 	return QIcon();
@@ -210,7 +232,17 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
   renderer.render(&painter);
   painter.end();
 
-  return QIcon(pixmap);
+  QIcon icon;
+  icon.addPixmap(pixmap, QIcon::Normal,   QIcon::Off);
+  icon.addPixmap(pixmap, QIcon::Normal,   QIcon::On);
+  icon.addPixmap(pixmap, QIcon::Active,   QIcon::Off);
+  icon.addPixmap(pixmap, QIcon::Active,   QIcon::On);
+  icon.addPixmap(pixmap, QIcon::Selected, QIcon::Off);
+  icon.addPixmap(pixmap, QIcon::Selected, QIcon::On);
+  icon.addPixmap(pixmap, QIcon::Disabled, QIcon::Off);
+  icon.addPixmap(pixmap, QIcon::Disabled, QIcon::On);
+
+  return icon;
 }
 
 // void Helper_t::applyManjaroDarkColor(QTableView *table){

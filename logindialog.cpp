@@ -402,16 +402,18 @@ void LogInDialog::setFeatures(QLineEdit *lineEdit, QCheckBox *checkBox, bool che
     return;
   }
 
-  if(checked){
-    lineEdit->setEchoMode(QLineEdit::Normal);
-	checkBox->setIcon(QIcon(QStringLiteral(":/img/open.svg")));
-    checkBox->setToolTip("Ocultar los caracteres.");
-  }
-  else{
-    lineEdit->setEchoMode(QLineEdit::Password);
-	checkBox->setIcon(QIcon(QStringLiteral(":/img/close.svg")));
-    checkBox->setToolTip("Mostrar los caracteres.");
+  const QColor windowColor = qApp->palette().color(QPalette::Window);
+  const bool isDark = (windowColor.lightness() < 128);
+  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
 
+  if(checked){
+	lineEdit->setEchoMode(QLineEdit::Normal);
+	checkBox->setIcon(SW::Helper_t::svgIcon(":/img/open.svg", iconColor));
+	checkBox->setToolTip("Ocultar los caracteres.");
+  } else {
+	lineEdit->setEchoMode(QLineEdit::Password);
+	checkBox->setIcon(SW::Helper_t::svgIcon(":/img/close.svg", iconColor));
+	checkBox->setToolTip("Mostrar los caracteres.");
   }
 
 }
@@ -473,6 +475,7 @@ void LogInDialog::handleToggleAnimation(bool checked){
   }
 
   QTimer::singleShot(collapseAnimation_->duration(), this, &LogInDialog::adjustSize);
+  applyIcons();
 
 }
 
