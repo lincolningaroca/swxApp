@@ -49,8 +49,8 @@ struct Helper_t{
 		// 							 const QColor& color,
 		// 							 const QSize& size) noexcept;
   [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
-							  const QColor& color,
-							  QSize size) noexcept;
+									 const QColor& color,
+									 const QSize &size) noexcept;
 
   // [[nodiscard]]static Qt::ColorScheme checkSystemColorScheme() noexcept;
   [[nodiscard]]static Qt::ColorScheme detectSystemColorScheme();

@@ -57,31 +57,46 @@ void ConfigDialog::initDialog() noexcept{
   itemApariencia->setSizeHint(QSize(130, 40));
   ui->listMenu->addItem(itemApariencia);
 
+  // Iconos de los botones de tema
+  ui->btnSystem->setIcon(QIcon(":/img/system.png"));
+  ui->btnSystem->setIconSize(QSize(32, 32));
+
+  ui->btnLight->setIcon(QIcon(":/img/light.png"));
+  ui->btnLight->setIconSize(QSize(32, 32));
+
+  ui->btnDark->setIcon(QIcon(":/img/dark.png"));
+  ui->btnDark->setIconSize(QSize(32, 32));
 }
+
 
 void ConfigDialog::setCurrentTheme(Qt::ColorScheme scheme) noexcept{
 
   const QString selectedStyle = R"(
-		QPushButton {
-			border: 2px solid #4A90D9;
-			border-radius: 6px;
-			background-color: #2D5A8E;
-			color: white;
-			font-weight: bold;
-		}
-	)";
+	QPushButton {
+	  border: 2px solid #4A90D9;
+	  border-radius: 6px;
+	  background-color: #2D5A8E;
+	  color: white;
+	  font-weight: bold;
+	}
+  )";
 
-  // Leemos el color de texto real de la paleta en este momento,
-  // ya que "palette(text)" en stylesheet no se re-evalua cuando el tema cambia en vivo
   const QString textColor = qApp->palette().color(QPalette::ButtonText).name();
+  const QString hoverColor = qApp->palette().color(QPalette::Highlight).name();
+
   const QString normalStyle = QString(R"(
-		QPushButton {
-			border: 1px solid #555;
-			border-radius: 6px;
-			background-color: transparent;
-			color: %1;
-		}
-	)").arg(textColor);
+	QPushButton {
+	  border: 1px solid #555;
+	  border-radius: 6px;
+	  background-color: transparent;
+	  color: %1;
+	}
+	QPushButton:hover {
+	  border: 1px solid %2;
+	  background-color: %2;
+	  color: white;
+	}
+  )").arg(textColor, hoverColor);
 
   ui->btnSystem->setStyleSheet(normalStyle);
   ui->btnLight->setStyleSheet(normalStyle);

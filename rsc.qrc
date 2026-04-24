@@ -35,5 +35,9 @@
         <file>img/open.svg</file>
         <file>img/paper_pin.svg</file>
         <file>img/up.svg</file>
+        <file>img/palette.png</file>
+        <file>img/dark.png</file>
+        <file>img/light.png</file>
+        <file>img/system.png</file>
     </qresource>
 </RCC>
