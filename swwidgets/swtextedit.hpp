@@ -4,12 +4,39 @@
 #include <QWidget>
 
 // Forward declarations
-class QTextEdit;
+// class QTextEdit;
 class QToolBar;
 class QAction;
 class QSpinBox;
 class QTextCharFormat;
 class QFontComboBox;
+
+#include <QTextEdit>
+
+class SWInnerEdit : public QTextEdit {
+  Q_OBJECT
+public:
+  explicit SWInnerEdit(QWidget *parent = nullptr) : QTextEdit(parent) {}
+  void setDefaultColor(const QColor &color) { defaultColor_ = color; }
+
+protected:
+  void keyPressEvent(QKeyEvent *event) override {
+	QTextEdit::keyPressEvent(event);
+	// Después de procesar la tecla, si quedó vacío restaurar el color
+	if(document()->isEmpty()) {
+	  QTextCharFormat fmt;
+	  fmt.setForeground(defaultColor_);
+	  // Aplicar sin señales para no interferir con placeholder
+	  QTextCursor cursor = textCursor();
+	  cursor.select(QTextCursor::Document);
+	  cursor.setCharFormat(fmt);
+	  setTextCursor(cursor);
+	}
+  }
+
+private:
+  QColor defaultColor_{Qt::black};
+};
 
 class SWTextEdit : public QWidget
 {
@@ -26,7 +53,7 @@ public:
   void setPlaceholderText(const QString &text);
   void setReadOnly(bool ro);
   bool isReadOnly() const;
-  QTextEdit* editor() const { return editor_; }
+  SWInnerEdit* editor() const { return editor_; }
   void setHtml(const QString &html);
 
   QString currentFont() const;
@@ -53,7 +80,7 @@ private:
   void updateToolBarState();
 
   QToolBar    *toolBar_{nullptr};
-  QTextEdit   *editor_{nullptr};
+  SWInnerEdit   *editor_{nullptr};
 
   QAction     *boldAction_{nullptr};
   QAction     *italicAction_{nullptr};
@@ -64,6 +91,8 @@ private:
   QAction     *colorAction_{nullptr};
   QSpinBox    *fontSize_{nullptr};
   QFontComboBox *fontFamily_{nullptr};
+
+  QColor defaultColor_{Qt::black};
 
 
 
