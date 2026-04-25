@@ -10,7 +10,6 @@ class QLabel;
 class QAction;
 class QMenu;
 struct SWTableModel;
-class SWLabel;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainForm; }
@@ -38,8 +37,7 @@ private:
   void hastvUrlData() noexcept;
   void checkStatusContextMenu();
   void canRestoreDataBase() const noexcept;
-  void verifyAppColorScheme();
-  void setLabelInfo(const QString& userName=SW::Helper_t::currentUser_.value(SW::User::U_public)) noexcept;
+  void verifyUserState();
   void initFrm() noexcept;
   void setUpTable(uint32_t categoryId = 1) noexcept;
   void setUpTableHeaders() const noexcept;
@@ -55,6 +53,7 @@ private:
   void writeSettings() const noexcept;
   void categorySelectedChanged(const QString& text);
   void setUpShowMenuAction();
+  void setUpStatusBar();
 
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 
@@ -92,7 +91,7 @@ private:
 
   QLabel *lblIcon_{nullptr};
   QLabel *lblState_{nullptr};
-  SWLabel *lblInfo_{nullptr};
+  QLabel *lblInfo_{nullptr};
   Qt::ColorScheme currentScheme_{Qt::ColorScheme::Unknown};
 
 

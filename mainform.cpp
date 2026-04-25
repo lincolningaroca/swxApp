@@ -14,6 +14,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QTextEdit>
+#include <QLabel>
 
 #include "dlgnewcategory.hpp"
 #include "acercadedialog.hpp"
@@ -21,7 +22,7 @@
 #include "publicurldialog.hpp"
 #include "categorydialog.hpp"
 #include "swwidgets/swtablemodel.hpp"
-#include "swwidgets/swlabel.hpp"
+// #include "swwidgets/swlabel.hpp"
 #include "util/excelexporter.hpp"
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
@@ -53,19 +54,12 @@ MainForm::MainForm(QWidget *parent)
 
   QObject::connect(ui->actionPreference, &QAction::triggered, this, &MainForm::on_showSettingsDialog);
 
-  lblIcon_ = new QLabel(this);
-  ui->statusbar->addWidget(lblIcon_);
-  lblState_ = new QLabel(this);
-  ui->statusbar->addWidget(lblState_);
-
-  lblInfo_ = new SWLabel(this);
-  ui->statusbar->addPermanentWidget(lblInfo_);
 
   userId_ = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
-  lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16,
-															  Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
 
   initFrm();
+  setUpStatusBar();
 
   loadListCategory(userId_);
 
@@ -86,14 +80,6 @@ MainForm::MainForm(QWidget *parent)
 
   canRestoreDataBase();
 
-
-
-
-  /**
-   * @brief QObject::connect
-   * connect to lblInfo, an show abaout dialog
-   */
-  QObject::connect(lblInfo_, &SWLabel::clicked, this, &MainForm::on_showAboutDialog);
 
   /**
    * @brief QObject::connect
@@ -178,7 +164,7 @@ MainForm::MainForm(QWidget *parent)
 	// Si eligió Dark o Light fijo, ignoramos el cambio del SO
 	if(currentScheme_ == Qt::ColorScheme::Unknown){
 	  applyPreferredTheme(Qt::ColorScheme::Unknown);
-	  verifyAppColorScheme();
+	  // verifyAppColorScheme();
 	}
   });
 
@@ -305,21 +291,14 @@ void MainForm::checkStatusContextMenu(){
 
 
 
-void MainForm::verifyAppColorScheme(){
+void MainForm::verifyUserState(){
 
   const auto sessionStatus = SW::Helper_t::sessionStatus_;
   const auto u_public = SW::Helper_t::currentUser_.value(SW::User::U_public);
   const auto userName = (sessionStatus == SW::SessionStatus::Session_start)
 						  ? SW::Helper_t::current_user_ : u_public;
 
-  setLabelInfo(userName);
-
-}
-
-void MainForm::setLabelInfo(const QString &userName) noexcept{
-
-  lblInfo_->setText(QStringLiteral("<strong>SWSystem's - Lincoln Ingaroca</strong>"));
-  lblState_->setText(QString("<strong>User: %1</strong>").arg(userName));
+ lblState_->setText(QString("<strong>User: %1</strong>").arg(userName));
 
 }
 
@@ -361,15 +340,13 @@ void MainForm::on_loadLoginForm(){
 	setWindowTitle(QApplication::applicationName().append(userDes));
 
 
-	lblIcon_->setPixmap(QPixmap(":/img/user-log.png").scaled(16,16,
-															 Qt::KeepAspectRatio, Qt::SmoothTransformation));
-	ui->statusbar->addWidget(lblIcon_);
+	lblIcon_->setPixmap(QPixmap(":/img/user-log.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
 	SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
 	has_data();
 	checkStatusContextMenu();
 	canRestoreDataBase();
-	verifyAppColorScheme();
+	verifyUserState();
 	ui->actionActualizar_password->setVisible(true);
   }
 
@@ -575,7 +552,6 @@ void MainForm::on_btnEdit(){
 
   auto currentRow = ui->tvUrl->currentIndex().row();
   ui->txtUrl->setText(ui->tvUrl->model()->index(currentRow,1).data().toString());
-  // ui->pteDesc->setPlainText(ui->tvUrl->model()->index(currentRow,2).data().toString());
 
   const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
   QSqlQuery query(db_);
@@ -615,15 +591,14 @@ void MainForm::on_callLogout(){
   setWindowTitle(QApplication::applicationName());
   ui->cboCategory->clear();
   loadListCategory(userId_);
-  lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16,
-															  Qt::KeepAspectRatio, Qt::SmoothTransformation));
+  lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_closed;
   has_data();
   checkStatusContextMenu();
   SW::Helper_t::current_user_ = SW::Helper_t::defaultUser;
   canRestoreDataBase();
 
-  verifyAppColorScheme();
+  verifyUserState();
 
   ui->actionActualizar_password->setVisible(false);
 
@@ -852,8 +827,7 @@ void MainForm::on_showSettingsDialog(){
   QObject::connect(&settings, &ConfigDialog::themeChanged, this, [this](Qt::ColorScheme scheme){
 	currentScheme_ = scheme;
 	applyPreferredTheme(currentScheme_);
-	verifyAppColorScheme();
-	// writeSettings();
+
   });
 
   // Aceptar: aplica solo si no se había aplicado ya con Apply
@@ -861,7 +835,7 @@ void MainForm::on_showSettingsDialog(){
 	if(currentScheme_ != settings.selectedScheme()){
 	  currentScheme_ = settings.selectedScheme();
 	  applyPreferredTheme(currentScheme_);
-	  verifyAppColorScheme();
+
 	}
 	writeSettings();
   }
@@ -894,10 +868,8 @@ void MainForm::on_showDescriptionDialog(const QModelIndex &index){
   textView->setHtml(desc);
 
   auto *btnLayout = new QHBoxLayout();
-  // auto *spacerLeft = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
   auto *btnClose = new QPushButton("Cerrar", &dlg);
 
-  // btnLayout->addItem(spacerLeft);
   btnLayout->addStretch();
   btnLayout->addWidget(btnClose);
   QObject::connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::accept);
@@ -934,6 +906,32 @@ void MainForm::setUpShowMenuAction(){
 	ui->showHideDatabaseAction->setChecked(true);
 	ui->actionPreferencias->setChecked(true);
   }
+
+}
+
+void MainForm::setUpStatusBar(){
+
+  lblIcon_ = new QLabel(this);
+  ui->statusbar->addWidget(lblIcon_);
+  lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+  lblState_ = new QLabel(this);
+  ui->statusbar->addWidget(lblState_);
+  lblState_->setText(SW::Helper_t::currentUser_.value(SW::User::U_public));
+
+
+  lblInfo_ = new QLabel(this);
+  lblInfo_->setText(QStringLiteral("<a href='about dialog'>SWSystem's - Lincoln Ingaroca</a>"));
+  lblInfo_->setTextFormat(Qt::RichText);
+  lblInfo_->setTextInteractionFlags(Qt::TextBrowserInteraction);
+  lblInfo_->setCursor(Qt::PointingHandCursor);
+  ui->statusbar->addPermanentWidget(lblInfo_);
+
+  /**
+   * @brief QObject::connect
+   * connect to lblInfo, an show abaout dialog
+   */
+  QObject::connect(lblInfo_, &QLabel::linkActivated, this, &MainForm::on_showAboutDialog);
 
 }
 
@@ -1010,7 +1008,6 @@ void MainForm::initFrm() noexcept{
 
   //set the focus to txturl control
   ui->txtUrl->setFocus(Qt::OtherFocusReason);
-  lblInfo_->setCursor(Qt::PointingHandCursor);
 
   ui->actionActualizar_password->setVisible(false);
 
@@ -1020,6 +1017,9 @@ void MainForm::initFrm() noexcept{
 									"<cite>\"Este boton se muestra solo por una vez; "
 									"esto es por la razón de que, al abrir la aplicación por primera vez, no existen usuarios,"
 									" aparte del usario por defecto\"</cite></p>");
+
+
+
 
 }
 
@@ -1053,7 +1053,6 @@ void MainForm::setUpTableHeaders() const noexcept{
   ui->tvUrl->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
   ui->tvUrl->setSelectionMode(QAbstractItemView::SingleSelection);
   ui->tvUrl->setItemDelegate(new SWItemDelegate(ui->tvUrl));
-  // ui->tvUrl->resizeRowsToContents();
   ui->tvUrl->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   ui->tvUrl->verticalHeader()->setDefaultSectionSize(20);
   ui->tvUrl->setAlternatingRowColors(true);
@@ -1193,7 +1192,6 @@ void MainForm::readSettings() noexcept{
   settings.beginGroup(QStringLiteral("Theme"));
   const auto theme = settings.value(QStringLiteral("theme Value"), 0).toInt();
   currentScheme_ = static_cast<Qt::ColorScheme>(theme);
-  verifyAppColorScheme();
 
   settings.endGroup();
 
