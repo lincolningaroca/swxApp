@@ -385,7 +385,7 @@ void MainForm::on_deleteCategory(){
   QMessageBox msgBox(this);
   msgBox.setWindowTitle(SW::Helper_t::appName().append(QStringLiteral(" - Advertencia")));
   msgBox.setText(QStringLiteral("<p style='color:#FB4934;'>"
-								"<cite><strong>Esta a punto eliminar ésta categoría y todo su contenido.<br>"
+								"<cite><strong>Esta a punto de eliminar ésta categoría y todo su contenido.<br>"
 								"Recuerde que al aceptar, eliminará de forma permanente estos datos.<br>"
 								"Desea continuar y eliminar los datos?</strong></cite></p>"));
 
@@ -918,7 +918,13 @@ void MainForm::setUpStatusBar(){
   lblState_ = new QLabel(this);
   ui->statusbar->addWidget(lblState_);
   auto user = SW::Helper_t::currentUser_.value(SW::User::U_public);
-  lblState_->setText(QString("<p style=\"color:#0099bc\">%1</p>").arg(user));
+
+#if(QT_VERSION >= QT_VERSION_CHECK(6, 6, 0))
+  auto colorEnfasis = qApp->palette().color(QPalette::Active, QPalette::Accent);
+#else
+  auto colorEnfasis = qApp->palette().color(QPalette::Active, QPalette::Highlight);
+#endif
+  lblState_->setText(QString("<p style=\"color:%1\">%2</p>").arg(colorEnfasis.name(), user));
 
 
   lblInfo_ = new QLabel(this);
