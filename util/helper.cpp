@@ -184,12 +184,6 @@ void  Helper_t::set_Theme(Qt::ColorScheme theme) noexcept{
 
 
 }
-
-QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
-							const QColor& color) noexcept {
-  return svgIcon(resourcePath, color, QSize(24, 24));
-}
-
 QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
 							const QColor& color,
 							const QSize& size) noexcept {
@@ -204,24 +198,49 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
   if (!renderer.isValid())
 	return QIcon();
 
-  QPixmap pixmap(size);
-  pixmap.fill(Qt::transparent);
-  QPainter painter(&pixmap);
-  renderer.render(&painter);
-  painter.end();
+  // Pixmap normal (estado activo / On)
+  QPixmap pixmapOn(size);
+  pixmapOn.fill(Qt::transparent);
+  QPainter painterOn(&pixmapOn);
+  painterOn.setOpacity(1.0);
+  renderer.render(&painterOn);
+  painterOn.end();
+
+  // Pixmap inactivo (estado Off) - misma forma pero con opacidad reducida
+  QPixmap pixmapOff(size);
+  pixmapOff.fill(Qt::transparent);
+  QPainter painterOff(&pixmapOff);
+  painterOff.setOpacity(0.45);  // 35% de opacidad para estado Off
+  renderer.render(&painterOff);
+  painterOff.end();
+
+  // Pixmap deshabilitado - aún más tenue
+  QPixmap pixmapDisabled(size);
+  pixmapDisabled.fill(Qt::transparent);
+  QPainter painterDis(&pixmapDisabled);
+  painterDis.setOpacity(0.20);  // 20% para disabled
+  renderer.render(&painterDis);
+  painterDis.end();
 
   QIcon icon;
-  icon.addPixmap(pixmap, QIcon::Normal,   QIcon::Off);
-  icon.addPixmap(pixmap, QIcon::Normal,   QIcon::On);
-  icon.addPixmap(pixmap, QIcon::Active,   QIcon::Off);
-  icon.addPixmap(pixmap, QIcon::Active,   QIcon::On);
-  icon.addPixmap(pixmap, QIcon::Selected, QIcon::Off);
-  icon.addPixmap(pixmap, QIcon::Selected, QIcon::On);
-  icon.addPixmap(pixmap, QIcon::Disabled, QIcon::Off);
-  icon.addPixmap(pixmap, QIcon::Disabled, QIcon::On);
+  icon.addPixmap(pixmapOn,       QIcon::Normal,   QIcon::On);
+  icon.addPixmap(pixmapOff,      QIcon::Normal,   QIcon::Off);
+  icon.addPixmap(pixmapOn,       QIcon::Active,   QIcon::On);
+  icon.addPixmap(pixmapOff,      QIcon::Active,   QIcon::Off);
+  icon.addPixmap(pixmapOn,       QIcon::Selected, QIcon::On);
+  icon.addPixmap(pixmapOff,      QIcon::Selected, QIcon::Off);
+  icon.addPixmap(pixmapDisabled, QIcon::Disabled, QIcon::On);
+  icon.addPixmap(pixmapDisabled, QIcon::Disabled, QIcon::Off);
 
   return icon;
 }
+
+QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
+							const QColor& color) noexcept {
+  return svgIcon(resourcePath, color, QSize(24, 24));
+}
+
+
 
 // void Helper_t::applyManjaroDarkColor(QTableView *table){
 

@@ -229,58 +229,7 @@ int SWTextEdit::currentFontSize() const{
   return fontSize_->value();
 }
 
-// void SWTextEdit::restoreFont(const QString &family, int size, const QColor& color) noexcept{
 
-//   QSignalBlocker b1(fontFamily_);
-//   QSignalBlocker b2(fontSize_);
-
-//   fontFamily_->setCurrentFont(QFont(family));
-//   fontSize_->setValue(size);
-
-
-//   QTextCharFormat fmt;
-//   fmt.setFontFamilies({family});
-//   fmt.setFontPointSize(size);
-//   fmt.setForeground(color);
-//   editor_->setCurrentCharFormat(fmt);
-
-//   // Establecer como fuente por defecto del documento
-//   QFont font(family, size);
-//   editor_->document()->setDefaultFont(font);
-
-// }
-// void SWTextEdit::restoreFont(const QString &family, int size, const QColor& color) noexcept{
-
-//   defaultColor_ = color;
-
-//   QSignalBlocker b1(fontFamily_);
-//   QSignalBlocker b2(fontSize_);
-
-//   fontFamily_->setCurrentFont(QFont(family));
-//   fontSize_->setValue(size);
-
-//   // Formato por defecto del documento (persiste aunque se borre todo el texto)
-//   QTextCharFormat fmt;
-//   fmt.setFontFamilies({family});
-//   fmt.setFontPointSize(size);
-//   fmt.setForeground(color);
-
-//   editor_->setCurrentCharFormat(fmt);
-
-//   QTextCursor cursor(editor_->document());
-//   cursor.select(QTextCursor::Document);
-//   cursor.mergeCharFormat(fmt);
-
-//   QFont font(family, size);
-//   editor_->document()->setDefaultFont(font);
-
-//   Guardar el color como formato por defecto para cuando el doc quede vacío
-//   QTextBlockFormat blockFmt;
-//   editor_->document()->rootFrame()->setFrameFormat(QTextFrameFormat());
-//   cursor.movePosition(QTextCursor::Start);
-//   editor_->setTextCursor(cursor);
-//   editor_->mergeCurrentCharFormat(fmt);
-// }
 void SWTextEdit::restoreFont(const QString &family, int size, const QColor& color) noexcept{
 
   defaultColor_ = color;

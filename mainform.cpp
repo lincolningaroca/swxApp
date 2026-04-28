@@ -298,7 +298,7 @@ void MainForm::verifyUserState(){
   const auto userName = (sessionStatus == SW::SessionStatus::Session_start)
 						  ? SW::Helper_t::current_user_ : u_public;
 
- lblState_->setText(QString("<strong>User: %1</strong>").arg(userName));
+ lblState_->setText(QString("<strong style=\"color:#0099bc\">User: %1</strong>").arg(userName));
 
 }
 
@@ -917,7 +917,8 @@ void MainForm::setUpStatusBar(){
 
   lblState_ = new QLabel(this);
   ui->statusbar->addWidget(lblState_);
-  lblState_->setText(SW::Helper_t::currentUser_.value(SW::User::U_public));
+  auto user = SW::Helper_t::currentUser_.value(SW::User::U_public);
+  lblState_->setText(QString("<p style=\"color:#0099bc\">%1</p>").arg(user));
 
 
   lblInfo_ = new QLabel(this);
