@@ -298,7 +298,7 @@ void MainForm::verifyUserState(){
   const auto userName = (sessionStatus == SW::SessionStatus::Session_start)
 						  ? SW::Helper_t::current_user_ : u_public;
 
- lblState_->setText(QString("<strong style=\"color:#0099bc\">User: %1</strong>").arg(userName));
+  lblState_->setText(QString("<strong style=\"color:#0099bc\">User: %1</strong>").arg(userName));
 
 }
 
@@ -758,9 +758,7 @@ void MainForm::on_showAllDescription(){
 
 void MainForm::on_showPublicUrlDialog(){
 
-  // auto colorScheme = themeType_.key(ui->cboTheme->currentText());
-  auto colorScheme = currentScheme_;
-  PublicUrlDialog publicDialog(colorScheme, this);
+  PublicUrlDialog publicDialog(currentScheme_, this);
   publicDialog.setWindowTitle("Direcciones url públicas");
 
   publicDialog.exec();
