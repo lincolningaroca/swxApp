@@ -208,6 +208,16 @@ void ResetPasswordDialog::setInit_Form() noexcept{
   ui->txtRespuesta->setEchoMode(QLineEdit::Password);
 
 
+  auto msg = QString("<p>Al restaurar su password o clave, se le solicitará, los datos que ingresó,<br>"
+					"al momento de registrar su usuario, segun sea el caso, que haya elegido<br>"
+					"un <strong><i>PIN numérico</i></strong> o una <strong><i>pregunta secreta</i></strong>, para la restauración de su clave.</p>");
+  ui->lblDesc->setText(msg);
+
+  auto icon = QPixmap(":/img/contrasena.png").scaled(
+	QSize(48, 48), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  ui->lblIcon->setPixmap(icon);
+
+
   //iconos y acciones para QLineEdit para mostrar y/o ocultar los caracteres de los controles.
   QObject::connect(ui->checkBox, &QCheckBox::clicked, this, [this](bool checked){
     setFeatures(ui->txtRespuesta, ui->checkBox, checked);
