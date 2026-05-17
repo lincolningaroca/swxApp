@@ -55,6 +55,8 @@ private:
   void setUpShowMenuAction();
   void setUpStatusBar();
 
+  void updateLblInfo() noexcept;
+
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 
   bool hasValidTableData() const noexcept;

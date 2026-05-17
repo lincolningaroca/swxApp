@@ -59,6 +59,7 @@ MainForm::MainForm(QWidget *parent)
 
 
   initFrm();
+  qApp->installEventFilter(this);
   setUpStatusBar();
 
   loadListCategory(userId_);
@@ -921,7 +922,9 @@ void MainForm::setUpStatusBar(){
 
 
   lblInfo_ = new QLabel(this);
-  lblInfo_->setText(QStringLiteral("<a href='about dialog'>SWSystem's - Lincoln Ingaroca</a>"));
+
+  // lblInfo_->setText(QStringLiteral("<a href='about dialog'>SWSystem's - Lincoln Ingaroca</a>"));
+  updateLblInfo();
   lblInfo_->setTextFormat(Qt::RichText);
   lblInfo_->setTextInteractionFlags(Qt::TextBrowserInteraction);
   lblInfo_->setCursor(Qt::PointingHandCursor);
@@ -933,6 +936,13 @@ void MainForm::setUpStatusBar(){
    */
   QObject::connect(lblInfo_, &QLabel::linkActivated, this, &MainForm::on_showAboutDialog);
 
+}
+
+void MainForm::updateLblInfo() noexcept{
+  const auto linkColor = qApp->palette().color(QPalette::Active, QPalette::Link);
+  lblInfo_->setText(QString("<a href='about dialog' style='color:%1;'>"
+							"<span>SWSystem's - Lincoln Ingaroca</span>"
+							"</a>").arg(linkColor.name()));
 }
 
 void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
@@ -1378,6 +1388,12 @@ void MainForm::showEvent(QShowEvent *event){
 
 bool MainForm::eventFilter(QObject *watched, QEvent *event){
 
+  if(event->type() == QEvent::ApplicationPaletteChange){
+
+	verifyUserState();
+	updateLblInfo();
+  }
+
   if(watched == ui->tvUrl && event->type() == QEvent::ContextMenu){
 	QContextMenuEvent* contextMenuEvent = dynamic_cast<QContextMenuEvent*>(event);
 	if(contextMenuEvent){
@@ -1387,5 +1403,6 @@ bool MainForm::eventFilter(QObject *watched, QEvent *event){
 
 	}
   }
+
   return QMainWindow::eventFilter(watched, event);
 }
