@@ -61,6 +61,8 @@ private:
   bool validateSelectedRow() noexcept;
   bool deleteAll() noexcept;
 
+  QColor getEnfasisColor() const;
+
   //variables y estructuras privadas de la aplicacion
 
   const QSqlDatabase db_{};

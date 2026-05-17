@@ -298,7 +298,7 @@ void MainForm::verifyUserState(){
   const auto userName = (sessionStatus == SW::SessionStatus::Session_start)
 						  ? SW::Helper_t::current_user_ : u_public;
 
-  lblState_->setText(QString("<strong style=\"color:#0099bc\">User: %1</strong>").arg(userName));
+  lblState_->setText(QString("<strong style=\"color:%1;\">User: %2</strong>").arg(getEnfasisColor().name(), userName));
 
 }
 
@@ -917,12 +917,7 @@ void MainForm::setUpStatusBar(){
   ui->statusbar->addWidget(lblState_);
   auto user = SW::Helper_t::currentUser_.value(SW::User::U_public);
 
-#if(QT_VERSION >= QT_VERSION_CHECK(6, 6, 0))
-  auto colorEnfasis = qApp->palette().color(QPalette::Active, QPalette::Accent);
-#else
-  auto colorEnfasis = qApp->palette().color(QPalette::Active, QPalette::Highlight);
-#endif
-  lblState_->setText(QString("<p style=\"color:%1\">%2</p>").arg(colorEnfasis.name(), user));
+  lblState_->setText(QString("<p style=\"color:%1\">%2</p>").arg(getEnfasisColor().name(), user));
 
 
   lblInfo_ = new QLabel(this);
@@ -1261,6 +1256,20 @@ bool MainForm::deleteAll() noexcept{
 	  return true;
   }
   return false;
+
+}
+
+QColor MainForm::getEnfasisColor() const{
+
+  QColor colorEnfasis{};
+
+#if(QT_VERSION >= QT_VERSION_CHECK(6, 6, 0))
+  colorEnfasis = qApp->palette().color(QPalette::Active, QPalette::Accent);
+#else
+  colorEnfasis = qApp->palette().color(QPalette::Active, QPalette::Highlight);
+#endif
+
+  return colorEnfasis;
 
 }
 
