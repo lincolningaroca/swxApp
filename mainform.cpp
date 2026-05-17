@@ -923,7 +923,6 @@ void MainForm::setUpStatusBar(){
 
   lblInfo_ = new QLabel(this);
 
-  // lblInfo_->setText(QStringLiteral("<a href='about dialog'>SWSystem's - Lincoln Ingaroca</a>"));
   updateLblInfo();
   lblInfo_->setTextFormat(Qt::RichText);
   lblInfo_->setTextInteractionFlags(Qt::TextBrowserInteraction);

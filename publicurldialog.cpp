@@ -57,6 +57,7 @@ void PublicUrlDialog::on_loadDataTableView(){
 
   xxxModel_->select();
 
+  ui->urlTableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
   ui->urlTableView->setModel(xxxModel_);
 
   //setup headers to table view
