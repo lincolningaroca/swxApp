@@ -179,8 +179,20 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>212</height>
+         </size>
+        </property>
         <property name="title">
-         <string/>
+         <string>Opciones</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>

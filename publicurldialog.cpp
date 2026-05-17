@@ -19,8 +19,7 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
 
   ui->setupUi(this);
 
-  setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-
+  setMaximumSize(QSize(950,500));
   loadDataComboBox();
   on_loadDataTableView();
 

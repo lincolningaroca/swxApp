@@ -22,7 +22,6 @@
 #include "publicurldialog.hpp"
 #include "categorydialog.hpp"
 #include "swwidgets/swtablemodel.hpp"
-// #include "swwidgets/swlabel.hpp"
 #include "util/excelexporter.hpp"
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
