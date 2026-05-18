@@ -743,11 +743,8 @@ void MainForm::on_showAllDescription(){
 
   QMessageBox msgDescription(this);
 
-  // msgDescription.setIcon(QMessageBox::Information);
-  QPixmap pixMap(QStringLiteral(":/img/desc.png"));
-  // pixMap.scaled(32,32);
   msgDescription.setWindowTitle(qApp->applicationName().append(" - Descripción completa de la URL"));
-  msgDescription.setIconPixmap(pixMap.scaled(64, 64));
+  msgDescription.setIcon(QMessageBox::Information);
   msgDescription.setText(desc);
   msgDescription.setDetailedText(url);
   msgDescription.addButton(QStringLiteral("Cerrar descripción"), QMessageBox::AcceptRole);

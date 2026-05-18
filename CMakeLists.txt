@@ -25,7 +25,7 @@ qt_add_executable(${PROJECT_NAME}
     mainform.hpp
     mainform.ui
 rsc.qrc
-    helperdatabase/helperdb.cpp helperdatabase/helperdb.hpp util/excelexporter.cpp util/excelexporter.hpp util/helper.cpp util/helper.hpp util/systemthemewatcher.cpp util/systemthemewatcher.hpp
+    helperdatabase/helperdb.cpp helperdatabase/helperdb.hpp util/excelexporter.cpp util/excelexporter.hpp util/helper.cpp util/helper.hpp
     acercadedialog.hpp acercadedialog.cpp acercadedialog.ui
     categorydialog.cpp categorydialog.hpp categorydialog.ui
     dlgnewcategory.cpp dlgnewcategory.hpp dlgnewcategory.ui
