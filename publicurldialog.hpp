@@ -4,8 +4,10 @@
 #include <QSqlDatabase>
 
 namespace Ui {
-  class PublicUrlDialog;
+class PublicUrlDialog;
 }
+
+class QAction;
 
 class PublicUrlDialog : public QDialog{
   Q_OBJECT
@@ -20,13 +22,21 @@ private:
   QHash<uint32_t, QString> data_{};
   const QSqlDatabase db_{};
 
+  QAction *openUrl_{nullptr};
+
   void loadDataComboBox();
   void writeSettings();
   void readSettings();
 
+  void setupContextMenu();
+
+  void applyIcons(Qt::ColorScheme scheme) noexcept;
+
 private slots:
   void on_openUrl();
   void on_loadDataTableView();
+
+  void on_showContextMenu(const QPoint& pos);
 
   // QWidget interface
 protected:

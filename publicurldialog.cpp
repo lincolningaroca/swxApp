@@ -6,6 +6,8 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QCloseEvent>
+#include <QAction>
+#include <QMenu>
 
 #include "helperdatabase/helperdb.hpp"
 #include "util/helper.hpp"
@@ -22,6 +24,13 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   setMaximumSize(QSize(950,500));
   loadDataComboBox();
   on_loadDataTableView();
+
+  setupContextMenu();
+  applyIcons(colorScheme);
+
+  ui->urlTableView->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(ui->urlTableView, &QTableView::customContextMenuRequested, this, &PublicUrlDialog::on_showContextMenu);
+
 
   readSettings();
 
@@ -75,6 +84,19 @@ void PublicUrlDialog::on_loadDataTableView(){
 
 }
 
+void PublicUrlDialog::on_showContextMenu(const QPoint &pos){
+
+  auto index = ui->urlTableView->indexAt(pos);
+  if(!index.isValid()) return;
+
+  QMenu mainMenu(this);
+
+
+  mainMenu.addAction(openUrl_);
+  mainMenu.exec(ui->urlTableView->mapToGlobal(pos));
+
+}
+
 void PublicUrlDialog::writeSettings(){
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
@@ -95,6 +117,15 @@ void PublicUrlDialog::readSettings(){
 
   this->restoreGeometry(formGeometry);
   ui->urlTableView->horizontalHeader()->restoreState(headerState);
+
+}
+
+void PublicUrlDialog::setupContextMenu(){
+
+  openUrl_ = new QAction("Abrir dirección en el navegador", this);
+
+  connect(openUrl_, &QAction::triggered, this, &PublicUrlDialog::on_openUrl);
+
 
 }
 
@@ -134,4 +165,15 @@ void PublicUrlDialog::showEvent(QShowEvent *event){
     ui->urlTableView->setColumnWidth(2, headerWidth);
   }
 
+}
+
+void PublicUrlDialog::applyIcons(Qt::ColorScheme scheme) noexcept {
+
+ const QColor windowColor = qApp->palette().color(QPalette::Window);
+ const bool isDark = (scheme == Qt::ColorScheme::Dark) ||
+					 (scheme == Qt::ColorScheme::Unknown && windowColor.lightness() < 128);
+ const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+
+ if(openUrl_)
+   openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
 }
