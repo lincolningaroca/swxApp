@@ -28,7 +28,7 @@ private:
 
   void setFeatures(QLineEdit* w, QCheckBox* b, bool checked) noexcept;
 
-
+  void applyIcons() noexcept;
   void setInit_Form() noexcept;
 };
 

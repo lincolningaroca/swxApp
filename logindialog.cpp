@@ -310,9 +310,7 @@ void LogInDialog::setStateControls(bool op) noexcept{
 
 void LogInDialog::applyIcons() noexcept {
 
-  const QColor windowColor = qApp->palette().color(QPalette::Window);
-  const bool isDark = (windowColor.lightness() < 128);
-  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+  const auto iconColor = SW::Helper_t::currentIconColor();
 
   // Botón expandir/colapsar — depende del estado actual
   const QString arrowIcon = isExpanded_ ? ":/img/up.svg" : ":/img/down.svg";

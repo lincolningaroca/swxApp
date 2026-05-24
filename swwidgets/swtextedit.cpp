@@ -256,19 +256,8 @@ void SWTextEdit::restoreFont(const QString &family, int size, const QColor& colo
   editor_->setCurrentCharFormat(fmt);
 }
 
-void SWTextEdit::applyIcons(Qt::ColorScheme scheme) noexcept {
+void SWTextEdit::applyIcons(const QColor &iconColor) noexcept {
 
-  bool isDark = false;
-  if (scheme == Qt::ColorScheme::Dark) {
-	isDark = true;
-  } else if (scheme == Qt::ColorScheme::Light) {
-	isDark = false;
-  } else {
-	const QColor windowColor = qApp->palette().color(QPalette::Window);
-	isDark = (windowColor.lightness() < 128);
-  }
-
-  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
 
   alignLeftAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-left.svg",   iconColor));
   alignCenterAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-center.svg", iconColor));

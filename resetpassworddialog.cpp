@@ -173,20 +173,38 @@ ResetPasswordDialog::~ResetPasswordDialog(){
   delete ui;
 }
 
-void ResetPasswordDialog::setFeatures(QLineEdit *w, QCheckBox *b, bool checked) noexcept{
+// void ResetPasswordDialog::setFeatures(QLineEdit *w, QCheckBox *b, bool checked) noexcept{
+
+//   if(checked){
+//     w->setEchoMode(QLineEdit::Normal);
+// 	b->setIcon(QIcon(QStringLiteral(":/img/open.svg")));
+//     b->setToolTip("Ocultar los caracteres.");
+//   }
+//   else{
+//     w->setEchoMode(QLineEdit::Password);
+// 	b->setIcon(QIcon(QStringLiteral(":/img/close.svg")));
+//     b->setToolTip("Mostrar los caracteres.");
+
+//   }
+
+// }
+void ResetPasswordDialog::setFeatures(QLineEdit *w, QCheckBox *b, bool checked) noexcept {
+
+  // const QColor windowColor = qApp->palette().color(QPalette::Window);
+  // const bool isDark = (windowColor.lightness() < 128);
+  // const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+
+  const auto iconColor = SW::Helper_t::currentIconColor();
 
   if(checked){
-    w->setEchoMode(QLineEdit::Normal);
-    b->setIcon(QIcon(QStringLiteral(":/img/open.png")));
-    b->setToolTip("Ocultar los caracteres.");
+	w->setEchoMode(QLineEdit::Normal);
+	b->setIcon(SW::Helper_t::svgIcon(":/img/open.svg", iconColor));
+	b->setToolTip("Ocultar los caracteres.");
+  } else {
+	w->setEchoMode(QLineEdit::Password);
+	b->setIcon(SW::Helper_t::svgIcon(":/img/close.svg", iconColor));
+	b->setToolTip("Mostrar los caracteres.");
   }
-  else{
-    w->setEchoMode(QLineEdit::Password);
-    b->setIcon(QIcon(QStringLiteral(":/img/close.png")));
-    b->setToolTip("Mostrar los caracteres.");
-
-  }
-
 }
 
 void ResetPasswordDialog::setInit_Form() noexcept{
@@ -234,4 +252,23 @@ void ResetPasswordDialog::setInit_Form() noexcept{
     setFeatures(ui->txtRePassword, ui->checkBox_4, checked);
   });
 
+  applyIcons();
+
+}
+
+void ResetPasswordDialog::applyIcons() noexcept {
+
+  const auto iconColor = SW::Helper_t::currentIconColor();
+
+  const QString eyeOpen   = ":/img/open.svg";
+  const QString eyeClosed = ":/img/close.svg";
+
+  ui->checkBox->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox->isChecked() ? eyeOpen : eyeClosed, iconColor));
+  ui->checkBox_2->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_2->isChecked() ? eyeOpen : eyeClosed, iconColor));
+  ui->checkBox_3->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_3->isChecked() ? eyeOpen : eyeClosed, iconColor));
+  ui->checkBox_4->setIcon(SW::Helper_t::svgIcon(
+	ui->checkBox_4->isChecked() ? eyeOpen : eyeClosed, iconColor));
 }

@@ -169,10 +169,7 @@ void PublicUrlDialog::showEvent(QShowEvent *event){
 
 void PublicUrlDialog::applyIcons(Qt::ColorScheme scheme) noexcept {
 
- const QColor windowColor = qApp->palette().color(QPalette::Window);
- const bool isDark = (scheme == Qt::ColorScheme::Dark) ||
-					 (scheme == Qt::ColorScheme::Unknown && windowColor.lightness() < 128);
- const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+ const auto iconColor = SW::Helper_t::currentIconColor(scheme);
 
  if(openUrl_)
    openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));

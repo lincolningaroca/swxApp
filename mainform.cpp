@@ -312,6 +312,7 @@ void MainForm::loadListCategory(uint32_t user_id) noexcept{
 void MainForm::applyPreferredTheme(Qt::ColorScheme scheme){
 
   // Delega el esquema al sistema via Helper
+  QSignalBlocker blocker(QGuiApplication::styleHints());
   SW::Helper_t::set_Theme(scheme);
   qApp->setPalette(qApp->palette());
   applyIcons(scheme);
@@ -942,23 +943,7 @@ void MainForm::updateLblInfo() noexcept{
 
 void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
 
-  bool isDark = false;
-
-  if (scheme == Qt::ColorScheme::Dark) {
-	isDark = true;
-  } else if (scheme == Qt::ColorScheme::Light) {
-	isDark = false;
-  } else {
-	// Unknown = seguir al SO → detectar por la paleta actual, que SÍ está actualizada
-	const QColor windowColor = qApp->palette().color(QPalette::Window);
-	isDark = (windowColor.lightness() < 128);
-  }
-
-  qDebug() << "applyIcons scheme:" << static_cast<int>(scheme)
-		   << "isDark:" << isDark
-		   << "palette window lightness:" << qApp->palette().color(QPalette::Window).lightness();
-
-  const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
+  const auto iconColor = SW::Helper_t::currentIconColor(scheme);
 
   // --- Toolbar: login/logout ---
   ui->btnLogIn->setIcon(SW::Helper_t::svgIcon(":/img/log-in.svg", iconColor));
@@ -985,7 +970,8 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   // if (moveUrl_)      moveUrl_->setIcon(SW::Helper_t::svgIcon(":/img/move-right.svg", iconColor));
   if (delCategory_)  delCategory_->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
 
-  ui->pteDesc->applyIcons(scheme);
+  ui->pteDesc->applyIcons(iconColor);
+
 
 }
 

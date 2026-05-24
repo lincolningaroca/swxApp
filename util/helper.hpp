@@ -25,6 +25,9 @@ struct Helper_t{
   Helper_t& operator=(const Helper_t&) = delete;
   Helper_t& operator=(Helper_t&&) = delete;
 
+  static QColor currentIconColor(Qt::ColorScheme scheme) noexcept;
+  static QColor currentIconColor() noexcept; // sobrecarga sin parámetro
+
   [[nodiscard]]static bool verify_Values(const QStringView text1, const QStringView text2) noexcept{return (text1.toString() == text2.toString());}
   [[nodiscard]]static bool open_Url(const QUrl& url) noexcept{return QDesktopServices::openUrl(url);}
   [[nodiscard]]static bool urlValidate(QStringView url) noexcept;

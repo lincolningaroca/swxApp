@@ -20,6 +20,26 @@ extern "C"{
 
 namespace SW {
 
+QColor Helper_t::currentIconColor(Qt::ColorScheme scheme) noexcept {
+  bool isDark = false;
+  if (scheme == Qt::ColorScheme::Dark) {
+	isDark = true;
+  } else if (scheme == Qt::ColorScheme::Light) {
+	isDark = false;
+  } else {
+	// Unknown → detectar por paleta
+	const QColor windowColor = qApp->palette().color(QPalette::Window);
+	isDark = (windowColor.lightness() < 128);
+  }
+  return isDark ? QColor(220, 220, 220) : QColor(30, 30, 30);
+}
+
+QColor Helper_t::currentIconColor() noexcept {
+  // Sin parámetro → siempre por paleta (para forms sin esquema explícito)
+  const QColor windowColor = qApp->palette().color(QPalette::Window);
+  return (windowColor.lightness() < 128) ? QColor(220, 220, 220) : QColor(30, 30, 30);
+}
+
 Qt::ColorScheme Helper_t::detectSystemColorScheme() {
 
   return QGuiApplication::styleHints()->colorScheme();
@@ -210,7 +230,7 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
   QPixmap pixmapOff(size);
   pixmapOff.fill(Qt::transparent);
   QPainter painterOff(&pixmapOff);
-  painterOff.setOpacity(0.45);  // 35% de opacidad para estado Off
+  painterOff.setOpacity(0.85);  // 35% de opacidad para estado Off
   renderer.render(&painterOff);
   painterOff.end();
 
@@ -218,7 +238,7 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
   QPixmap pixmapDisabled(size);
   pixmapDisabled.fill(Qt::transparent);
   QPainter painterDis(&pixmapDisabled);
-  painterDis.setOpacity(0.20);  // 20% para disabled
+  painterDis.setOpacity(0.45);  // 20% para disabled
   renderer.render(&painterDis);
   painterDis.end();
 
@@ -231,6 +251,7 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
   icon.addPixmap(pixmapOff,      QIcon::Selected, QIcon::Off);
   icon.addPixmap(pixmapDisabled, QIcon::Disabled, QIcon::On);
   icon.addPixmap(pixmapDisabled, QIcon::Disabled, QIcon::Off);
+
 
   return icon;
 }

@@ -61,7 +61,7 @@ public:
 
   void restoreFont(const QString &family, int size, const QColor &color) noexcept;
 
-  void applyIcons(Qt::ColorScheme scheme) noexcept;
+  void applyIcons(const QColor& iconColor) noexcept;
 
 
 signals:
