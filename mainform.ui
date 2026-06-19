@@ -449,7 +449,7 @@
     <string>Actualizar password</string>
    </property>
    <property name="toolTip">
-    <string>Cambiar o actulaizar password</string>
+    <string>Cambiar o actualizar password</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
