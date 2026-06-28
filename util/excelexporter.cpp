@@ -9,6 +9,13 @@
 #include <QSqlTableModel>
 #include <QTableView>
 
+#include <QAbstractItemModel>
+#include <QDir>
+#include <QFileInfo>
+#include <QSqlRecord>
+#include <QSqlTableModel>
+#include <QTableView>
+
 namespace  SW {
 
 bool ExcelExporter::exportTableView(QTableView *tableView, const QString &filePath) {

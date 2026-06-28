@@ -1,6 +1,9 @@
 #include "helper.hpp"
 
+<<<<<<< HEAD
 #include "openssl/rand.h"
+=======
+>>>>>>> develop
 
 #include <QDir>
 #include <QIODevice>
