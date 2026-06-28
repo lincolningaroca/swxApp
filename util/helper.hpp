@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QStandardPaths>
-#include <QCryptographicHash>
-#include <QStringView>
-#include <QDesktopServices>
 #include <QApplication>
+#include <QCryptographicHash>
+#include <QDesktopServices>
 #include <QPalette>
+#include <QStandardPaths>
+#include <QStringView>
 
 class QTableView;
 

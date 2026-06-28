@@ -1,12 +1,11 @@
 #pragma once
 
-#include <QDialog>
-
 #include "helperdatabase/helperdb.hpp"
 
+#include <QDialog>
 
-class QLineEdit;
 class QCheckBox;
+class QLineEdit;
 
 namespace Ui {
   class ResetPasswordDialog;

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "util/helper.hpp"
+
 #include <QSqlDatabase>
 #include <QSqlQuery>
-
-#include "util/helper.hpp"
 
 
 class QStringView;

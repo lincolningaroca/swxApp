@@ -1,11 +1,11 @@
 #include "dlgnewcategory.hpp"
 #include "ui_dlgnewcategory.h"
 
+#include "helperdatabase/helperdb.hpp"
+#include "util/helper.hpp"
+
 #include <QMessageBox>
 #include <QPushButton>
-
-#include "util/helper.hpp"
-#include "helperdatabase/helperdb.hpp"
 
 
 dlgNewCategory::dlgNewCategory(OpenMode mode, const QStringList &list, QWidget *parent) :

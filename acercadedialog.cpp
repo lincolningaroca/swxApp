@@ -1,12 +1,12 @@
 #include "acercadedialog.hpp"
 #include "ui_acercadedialog.h"
 
-#include <QMessageBox>
-#include <QFile>
-#include <QSettings>
-#include <QFontDataBase>
-
 #include "util/helper.hpp"
+
+#include <QFile>
+#include <QFontDataBase>
+#include <QMessageBox>
+#include <QSettings>
 
 AcercaDeDialog::AcercaDeDialog(Qt::ColorScheme colorMode, QWidget *parent)
   : QDialog(parent),

@@ -1,13 +1,13 @@
 #include "excelexporter.hpp"
 
-#include <QAbstractItemModel>
-#include <QTableView>
-#include <QFileInfo>
-#include <QDir>
-#include <QSqlTableModel>
-#include <QSqlRecord>
-
 #include "xlsxdocument.h"
+#include <QAbstractItemModel>
+
+#include <QDir>
+#include <QFileInfo>
+#include <QSqlRecord>
+#include <QSqlTableModel>
+#include <QTableView>
 
 namespace  SW {
 

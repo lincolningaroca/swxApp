@@ -1,17 +1,17 @@
 #pragma once
 
-#include <QDialog>
-
 #include "helperdatabase/helperdb.hpp"
 #include "util/helper.hpp"
+
+#include <QDialog>
 
 namespace Ui {
 class LogInDialog;
 }
 
-class QLineEdit;
 class QCheckBox;
 class QCloseEvent;
+class QLineEdit;
 class QPropertyAnimation;
 
 class LogInDialog : public QDialog

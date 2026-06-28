@@ -1,8 +1,8 @@
 #include "swtablemodel.hpp"
 
-#include <QTextDocument>
-
 #include "util/helper.hpp"
+
+#include <QTextDocument>
 
 SWTableModel::SWTableModel(QObject *parent, const QSqlDatabase &db)
   : QSqlTableModel{parent, db}

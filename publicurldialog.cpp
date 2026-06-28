@@ -1,18 +1,18 @@
 #include "publicurldialog.hpp"
 #include "ui_publicurldialog.h"
 
-#include <QSqlTableModel>
+#include "helperdatabase/helperdb.hpp"
+#include "swwidgets/switemdelegate.hpp"
+#include "swwidgets/swtablemodel.hpp"
+#include "util/helper.hpp"
+
+#include <QAction>
+#include <QCloseEvent>
 #include <QDesktopServices>
+#include <QMenu>
 #include <QMessageBox>
 #include <QSettings>
-#include <QCloseEvent>
-#include <QAction>
-#include <QMenu>
-
-#include "helperdatabase/helperdb.hpp"
-#include "util/helper.hpp"
-#include "swwidgets/swtablemodel.hpp"
-#include "swwidgets/switemdelegate.hpp"
+#include <QSqlTableModel>
 
 PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   QDialog(parent),

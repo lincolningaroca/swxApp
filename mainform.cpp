@@ -1,32 +1,32 @@
 #include "mainform.hpp"
 #include "ui_mainform.h"
 
-#include <QSqlError>
-#include <QSqlQuery>
-#include <QMessageBox>
-#include <QSettings>
-#include <QAction>
-#include <QFileDialog>
-#include <QSqlTableModel>
-#include <QFile>
-#include <QProcess>
-#include <QStyleHints>
-#include <QMenu>
-#include <QMouseEvent>
-#include <QTextEdit>
-#include <QLabel>
-
-#include "dlgnewcategory.hpp"
 #include "acercadedialog.hpp"
+#include "categorydialog.hpp"
+#include "changepwddialog.hpp"
+#include "configdialog.hpp"
+#include "dlgnewcategory.hpp"
 #include "logindialog.hpp"
 #include "publicurldialog.hpp"
-#include "categorydialog.hpp"
-#include "swwidgets/swtablemodel.hpp"
-#include "util/excelexporter.hpp"
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
-#include "configdialog.hpp"
-#include "changepwddialog.hpp"
+#include "swwidgets/swtablemodel.hpp"
+#include "util/excelexporter.hpp"
+
+#include <QAction>
+#include <QFile>
+#include <QFileDialog>
+#include <QLabel>
+#include <QMenu>
+#include <QMessageBox>
+#include <QMouseEvent>
+#include <QProcess>
+#include <QSettings>
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QSqlTableModel>
+#include <QStyleHints>
+#include <QTextEdit>
 
 
 MainForm::MainForm(QWidget *parent)

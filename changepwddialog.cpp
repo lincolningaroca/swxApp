@@ -1,10 +1,10 @@
 #include "changepwddialog.hpp"
 #include "ui_changepwddialog.h"
 
-#include <QMessageBox>
-
 #include "helperdatabase/helperdb.hpp"
 #include "util/helper.hpp"
+
+#include <QMessageBox>
 
 
 ChangePwdDialog::ChangePwdDialog(const QString &user, QWidget *parent)
