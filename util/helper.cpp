@@ -1,18 +1,18 @@
 #include "helper.hpp"
 
-#include <random>
-#include <QIODevice>
-#include <QStyle>
-#include <QRegularExpression>
-#include <QDir>
-#include <QSettings>
-#include <QStyleFactory>
-#include <QStyleHints>
-#include <QTableView>
 
-#include <QSvgRenderer>
+#include <QDir>
+#include <QIODevice>
 #include <QPainter>
 #include <QPixmap>
+#include <QRegularExpression>
+#include <QSettings>
+#include <QStyle>
+#include <QStyleFactory>
+#include <QStyleHints>
+#include <QSvgRenderer>
+#include <QTableView>
+#include <random>
 
 extern "C"{
 #include "openssl/rand.h"
