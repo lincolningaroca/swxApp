@@ -1,9 +1,6 @@
 #include "helper.hpp"
 
 
-#include "openssl/rand.h"
-
-
 #include <QDir>
 #include <QIODevice>
 #include <QPainter>
@@ -18,6 +15,7 @@
 #include <random>
 
 extern "C"{
+#include "openssl/rand.h"
 }
 
 namespace SW {
