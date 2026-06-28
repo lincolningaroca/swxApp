@@ -1,13 +1,13 @@
 #pragma once
 
+#include "helperdatabase/helperdb.hpp"
+#include "util/helper.hpp"
+
 #include <QMainWindow>
 #include <QSqlDatabase>
 
-#include "util/helper.hpp"
-#include "helperdatabase/helperdb.hpp"
-
-class QLabel;
 class QAction;
+class QLabel;
 class QMenu;
 struct SWTableModel;
 

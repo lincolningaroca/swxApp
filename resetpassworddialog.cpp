@@ -1,13 +1,13 @@
 #include "resetpassworddialog.hpp"
 #include "ui_resetpassworddialog.h"
 
-#include <QMessageBox>
-#include <QRegularExpressionValidator>
-#include <QAction>
-
 #include "logindialog.hpp"
 #include "mainform.hpp"
 #include "util/helper.hpp"
+
+#include <QAction>
+#include <QMessageBox>
+#include <QRegularExpressionValidator>
 
 ResetPasswordDialog::ResetPasswordDialog(QWidget *parent)
   :QDialog(parent), ui(new Ui::ResetPasswordDialog){

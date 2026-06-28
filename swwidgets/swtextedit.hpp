@@ -3,13 +3,11 @@
 
 #include <QWidget>
 
-// Forward declarations
-// class QTextEdit;
-class QToolBar;
 class QAction;
+class QFontComboBox;
 class QSpinBox;
 class QTextCharFormat;
-class QFontComboBox;
+class QToolBar;
 
 #include <QTextEdit>
 

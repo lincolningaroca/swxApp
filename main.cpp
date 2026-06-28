@@ -1,15 +1,13 @@
 #include "mainform.hpp"
+#include "util/helper.hpp"
 
 #include <QApplication>
-
-#include <QSqlDatabase>
+#include <QDir>
+#include <QFontDatabase>
 #include <QLocalServer>
 #include <QLocalSocket>
-#include <QDir>
 #include <QMessageBox>
-#include <QFontDatabase>
-
-#include "util/helper.hpp"
+#include <QSqlDatabase>
 
 
 /**

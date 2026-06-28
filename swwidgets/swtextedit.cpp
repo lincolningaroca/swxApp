@@ -1,20 +1,21 @@
 #include "swtextedit.hpp"
-#include <QVBoxLayout>
-#include <QTextCharFormat>
-#include <QColorDialog>
-#include <QColor>
-#include <QIcon>
-#include <QStyle>
-#include <QApplication>
-#include <QTextEdit>
-#include <QToolBar>
-#include <QFontComboBox>
-#include <QSpinBox>
-#include <QAction>
-#include <QFontComboBox>
-#include <QTextFrame>
 
 #include "util/helper.hpp" // para svgIcon
+
+#include <QAction>
+#include <QApplication>
+#include <QColor>
+#include <QColorDialog>
+#include <QFontComboBox>
+#include <QFontComboBox>
+#include <QIcon>
+#include <QSpinBox>
+#include <QStyle>
+#include <QTextCharFormat>
+#include <QTextEdit>
+#include <QTextFrame>
+#include <QToolBar>
+#include <QVBoxLayout>
 
 SWTextEdit::SWTextEdit(QWidget *parent):
   QWidget(parent){
