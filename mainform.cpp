@@ -63,7 +63,8 @@ MainForm::MainForm(QWidget *parent)
 
   loadListCategory(userId_);
 
-  setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+  setUpTable(currentCategoryId());
+
   QObject::connect(ui->tvUrl, &QTableView::doubleClicked, this, &MainForm::on_showDescriptionDialog);
   canCreateBackUp();
   canStartSession();
@@ -171,7 +172,7 @@ MainForm::MainForm(QWidget *parent)
   /**
    * @brief QObject::connect
    */
-  QObject::connect(ui->cboCategory, &QComboBox::currentTextChanged, this, &MainForm::on_categorySelectedChanged);
+  QObject::connect(ui->cboCategory, &QComboBox::currentIndexChanged, this, &MainForm::on_categorySelectedChanged);
 
   setCboCategoryToolTip();
   hastvUrlData();
@@ -215,6 +216,12 @@ MainForm::MainForm(QWidget *parent)
 MainForm::~MainForm()
 {
   delete ui;
+}
+
+uint32_t MainForm::currentCategoryId() const noexcept{
+
+  return ui->cboCategory->currentData().isValid() ? ui->cboCategory->currentData().toUInt() : 1;
+
 }
 
 void MainForm::has_data() noexcept{
@@ -271,8 +278,9 @@ void MainForm::on_showNewCategoryDialog(){
 	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n"));
 	return;
   }
-  ui->cboCategory->clear();
+
   loadListCategory(userId_);
+  setUpTable(currentCategoryId());
   has_data();
 
   hastvUrlData();
@@ -304,8 +312,17 @@ void MainForm::verifyUserState(){
 
 void MainForm::loadListCategory(uint32_t user_id) noexcept{
 
+  QSignalBlocker blocker(ui->cboCategory);
+
+  ui->cboCategory->clear();
   categoryList_ = helperdb_.loadList_Category(user_id);
-  ui->cboCategory->addItems(categoryList_.values());
+
+  // Recorremos el Hash e insertamos el nombre en el ComboBox guardando su respectivo ID en Qt::UserRole (oculto)
+  auto it = categoryList_.constBegin();
+  while (it != categoryList_.constEnd()) {
+	ui->cboCategory->addItem(it.value(), it.key());
+	++it;
+  }
 
 }
 
@@ -330,7 +347,6 @@ void MainForm::on_loadLoginForm(){
 	const auto user = SW::Helper_t::hashGenerator(logDialog.userName().toLatin1());
 	userId_ = helperdb_.getUser_id(user, SW::User::U_user);
 
-	ui->cboCategory->clear();
 	loadListCategory(userId_);
 
 	ui->btnLogOut->setEnabled(true);
@@ -344,11 +360,14 @@ void MainForm::on_loadLoginForm(){
 	lblIcon_->setPixmap(QPixmap(":/img/user-log.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
 	SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
+
+	setUpTable(currentCategoryId());
 	has_data();
 	checkStatusContextMenu();
 	canRestoreDataBase();
 	verifyUserState();
 	ui->actionActualizar_password->setVisible(true);
+
   }
 
 }
@@ -400,10 +419,13 @@ void MainForm::on_deleteCategory(){
 	return;
   if(deleteAll()){
 	QMessageBox::information(this, SW::Helper_t::appName(),QStringLiteral("Datos eliminados."));
-	ui->cboCategory->clear();
+
 	loadListCategory(userId_);
+	setUpTable(currentCategoryId());
 	has_data();
 	checkStatusContextMenu();
+
+
   }
 
 }
@@ -435,7 +457,7 @@ void MainForm::on_addNewUrl(){
 	  return;
 	}
 
-	const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+	const auto categoryId = currentCategoryId();
 
 	if(helperdb_.urlExists(ui->txtUrl->text(), categoryId)){
 
@@ -452,7 +474,8 @@ void MainForm::on_addNewUrl(){
 	  ui->txtUrl->clear();
 	  ui->pteDesc->clear();
 	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
-	  setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+
+	  setUpTable(currentCategoryId());
 	  verifyContextMenu();
 
 	  hastvUrlData();
@@ -479,7 +502,10 @@ void MainForm::on_addNewUrl(){
 	auto currentRow = ui->tvUrl->currentIndex().row();
 	auto id = ui->tvUrl->model()->index(currentRow,0).data().toInt();
 	qry.addBindValue(id, QSql::In);
-	const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+
+	// const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+	const auto categoryId = currentCategoryId();
+
 	qry.addBindValue(categoryId, QSql::In);
 
 	if(!qry.exec()){
@@ -489,7 +515,7 @@ void MainForm::on_addNewUrl(){
 
 	}
 
-	setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	setUpTable(currentCategoryId());
 
 	ui->btnAdd->setText(QStringLiteral("Agregar"));
 	editAction(false);
@@ -503,7 +529,8 @@ void MainForm::on_addNewUrl(){
 
 void MainForm::on_editCategory(){
 
-  const auto id = categoryList_.key(ui->cboCategory->currentText());
+  const auto id = currentCategoryId();
+
   const QStringList dataLocal = helperdb_.dataCategory(id);
   dlgNewCategory editCategory(dlgNewCategory::OpenMode::Edit, dataLocal, this);
   if(editCategory.exec() == QDialog::Rejected){
@@ -513,6 +540,8 @@ void MainForm::on_editCategory(){
 	QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("Datos actualizados!\n"));
 	ui->cboCategory->clear();
 	loadListCategory(userId_);
+
+	setUpTable(currentCategoryId());
   }
 
 }
@@ -537,7 +566,8 @@ void MainForm::on_quitUrl(){
 	const auto urlId=urlList_.key(url);
 	if(helperdb_.deleteUrls(2, 0, urlId)){
 	  ui->tvUrl->model()->removeRow(ui->tvUrl->currentIndex().row());
-	  setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+
+	  setUpTable(currentCategoryId());
 	}
 
   }
@@ -571,11 +601,13 @@ void MainForm::on_btnEdit(){
 }
 
 
-void MainForm::on_categorySelectedChanged(const QString &text){
+void MainForm::on_categorySelectedChanged(int index){
 
-  setUpTable(categoryList_.key(text));
+  Q_UNUSED(index);
+
+  setUpTable(currentCategoryId());
   verifyContextMenu();
-  // setUpCboCategoryContextMenu();
+
   setCboCategoryToolTip();
   hastvUrlData();
   checkStatusContextMenu();
@@ -590,8 +622,10 @@ void MainForm::on_callLogout(){
   ui->btnLogIn->setEnabled(true);
   ui->btnResetPassword->setVisible(true);
   setWindowTitle(QApplication::applicationName());
-  ui->cboCategory->clear();
+
   loadListCategory(userId_);
+  setUpTable(currentCategoryId());
+
   lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_closed;
   has_data();
@@ -602,6 +636,8 @@ void MainForm::on_callLogout(){
   verifyUserState();
 
   ui->actionActualizar_password->setVisible(false);
+
+
 
 }
 
@@ -716,11 +752,15 @@ void MainForm::on_restoreDatabase(){
   }
   QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("La base de datos, fue restaurada"));
   db.open();
-  ui->cboCategory->clear();
+
+  // ui->cboCategory->clear();
   loadListCategory(userId_);
+  setUpTable(currentCategoryId());
   has_data();
   canCreateBackUp();
   canStartSession();
+
+
 
 }
 
@@ -767,7 +807,8 @@ void MainForm::on_moveUrl(){
 
   const auto currentRow_ = ui->tvUrl->currentIndex().row();
   const auto url_ = xxxModel_->index(currentRow_, 1).data().toString();
-  const auto currentCategoryId_ = categoryList_.key(ui->cboCategory->currentText());
+  const auto currentCategoryId_ =currentCategoryId();
+
   const auto urlid = xxxModel_->index(currentRow_, 0).data().toUInt();
   auto data_ = categoryList_;
   data_.remove(currentCategoryId_);
@@ -796,7 +837,8 @@ void MainForm::on_moveUrl(){
 	  QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al intentar actualizar.\n"));
 	  return;
 	}
-	setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	// setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+	setUpTable(currentCategoryId());
 	verifyContextMenu();
 	hastvUrlData();
   }
@@ -1110,7 +1152,9 @@ void MainForm::setUptvUrlContextMenu() noexcept{
 
 void MainForm::verifyContextMenu() noexcept{
 
-  const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+  // const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
+  const auto categoryId = currentCategoryId();
+
   auto [res, errMessage] = helperdb_.verifyDeleteCategory(categoryId);
   //      qDebug()<<count;
   (res) ? delCategory_->setDisabled(true) : delCategory_->setEnabled(true);
@@ -1171,12 +1215,24 @@ void MainForm::readSettings() noexcept{
 
 	if(!categoryName.isEmpty() && ui->cboCategory->count() > 1){
 
-	  {
+	  //  {
 
-		QSignalBlocker signalBlocker(ui->cboCategory);
-		ui->cboCategory->setCurrentText(categoryName);
+	  // QSignalBlocker signalBlocker(ui->cboCategory);
+	  // ui->cboCategory->setCurrentText(categoryName);
+	  //  }
+	  //  categorySelectedChanged(categoryName);
+
+	  auto foundIndex = ui->cboCategory->findText(categoryName);
+
+	  if(foundIndex != -1){
+		{
+
+		  QSignalBlocker signalBlocker(ui->cboCategory);
+		  ui->cboCategory->setCurrentIndex(foundIndex);
+		}
+		on_categorySelectedChanged(foundIndex);
 	  }
-	  categorySelectedChanged(categoryName);
+
 	}
   }
 
@@ -1192,7 +1248,9 @@ void MainForm::readSettings() noexcept{
 
 void MainForm::setCboCategoryToolTip() noexcept{
 
-  const auto id = categoryList_.key(ui->cboCategory->currentText());
+  // const auto id = categoryList_.key(ui->cboCategory->currentText());
+  const auto id = currentCategoryId();
+
   const auto categoryData = helperdb_.dataCategory(id);
   const auto desc=categoryData.value(1);
   //  QString desc{};
@@ -1241,7 +1299,9 @@ bool MainForm::validateSelectedRow() noexcept{
 
 bool MainForm::deleteAll() noexcept{
 
-  const auto categoryId=categoryList_.key(ui->cboCategory->currentText());
+  // const auto categoryId=categoryList_.key(ui->cboCategory->currentText());
+  const auto categoryId = currentCategoryId();
+
   if(helperdb_.deleteUrls(1, categoryId)){
 	if(helperdb_.deleteCategory(categoryId))
 	  return true;
@@ -1311,15 +1371,15 @@ void MainForm::writeSettings() const noexcept{
 
 }
 
-void MainForm::categorySelectedChanged(const QString &text){
+// void MainForm::categorySelectedChanged(const QString &text){
 
-  setUpTable(categoryList_.key(text));
-  verifyContextMenu();
-  setCboCategoryToolTip();
-  hastvUrlData();
-  checkStatusContextMenu();
+//   setUpTable(categoryList_.key(text));
+//   verifyContextMenu();
+//   setCboCategoryToolTip();
+//   hastvUrlData();
+//   checkStatusContextMenu();
 
-}
+// }
 
 /**
  * @brief MainForm::showAboutDialog show abou dialog
