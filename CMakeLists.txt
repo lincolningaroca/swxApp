@@ -37,6 +37,7 @@ rsc.qrc
     configdialog.hpp configdialog.cpp configdialog.ui
     swwidgets/swtextedit.hpp swwidgets/swtextedit.cpp
     changepwddialog.hpp changepwddialog.cpp changepwddialog.ui
+    midlewidget.hpp midlewidget.cpp midlewidget.ui
        )
 
 target_link_libraries(${PROJECT_NAME}

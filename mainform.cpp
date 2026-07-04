@@ -7,6 +7,7 @@
 #include "configdialog.hpp"
 #include "dlgnewcategory.hpp"
 #include "logindialog.hpp"
+#include "midlewidget.hpp"
 #include "publicurldialog.hpp"
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
@@ -115,8 +116,8 @@ MainForm::MainForm(QWidget *parent)
   QObject::connect(ui->btnEditCategory, &QPushButton::clicked, this, &MainForm::on_editCategory);
 
 
-  QObject::connect(ui->txtUrl, &QLineEdit::textChanged, this, [this](const QString& text){
-	(!text.simplified().isEmpty()) ? ui->btnAdd->setEnabled(true) : ui->btnAdd->setDisabled(true);
+  QObject::connect(midleWidget, &MidleWidget::urlTextChanged, this, [this](const QString& text){
+	ui->btnAdd->setEnabled(!text.simplified().isEmpty());
   });
 
   /**
@@ -229,14 +230,16 @@ void MainForm::has_data() noexcept{
   if(categoryList_.isEmpty()){
 	ui->btnEditCategory->setDisabled(true);
 	ui->btnDeleteCategory->setDisabled(true);
-	ui->txtUrl->setDisabled(true);
-	ui->pteDesc->setDisabled(true);
+	// ui->txtUrl->setDisabled(true);
+	// ui->pteDesc->setDisabled(true);
+	midleWidget->setInputsEnabled(false);
 
   }else{
 	ui->btnEditCategory->setEnabled(true);
 	ui->btnDeleteCategory->setEnabled(true);
-	ui->txtUrl->setEnabled(true);
-	ui->pteDesc->setEnabled(true);
+	// ui->txtUrl->setEnabled(true);
+	// ui->pteDesc->setEnabled(true);
+	midleWidget->setInputsEnabled(true);
   }
 
 }
@@ -447,33 +450,36 @@ void MainForm::on_addNewUrl(){
 									 "<strong>http://, https://, ftp://, www.</strong> son opcionales<br>"
 									 "Lo mínimo que se espera es una direccón de la forma: <strong>\"url.domino\"</strong>"
 									 "</span>"
-									 "</p>").arg(ui->txtUrl->text());
+									 "</p>").arg(/*ui->txtUrl->text()*/midleWidget->url());
 
   if(ui->btnAdd->text().compare("Agregar") == 0){
-	if(!SW::Helper_t::urlValidate(ui->txtUrl->text())){
+	if(!SW::Helper_t::urlValidate(/*ui->txtUrl->text()*/midleWidget->url())){
 	  QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
-	  ui->txtUrl->selectAll();
-	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  // ui->txtUrl->selectAll();
+	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  midleWidget->selectAndFocus();
 	  return;
 	}
 
 	const auto categoryId = currentCategoryId();
 
-	if(helperdb_.urlExists(ui->txtUrl->text(), categoryId)){
+	if(helperdb_.urlExists(midleWidget->url(), categoryId)){
 
-	  auto warningMsg = QString("<p>La url: <cite><strong>%1</strong></cite></p> ya esta registrada!!").arg(ui->txtUrl->text());
+	  auto warningMsg = QString("<p>La url: <cite><strong>%1</strong></cite></p> ya esta registrada!!").arg(/*ui->txtUrl->text()*/midleWidget->url());
 	  QMessageBox::warning(this, SW::Helper_t::appName(), warningMsg);
-	  ui->txtUrl->selectAll();
-	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  // ui->txtUrl->selectAll();
+	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  midleWidget->selectAndFocus();
 	  return;
 	}
 	//get the key from categoryList, with current selected text to cboCategory.
 	// auto categoryId = categoryList.key(ui->cboCategory->currentText());
-	if(helperdb_.saveData_url(ui->txtUrl->text(), ui->pteDesc->toHtml(), categoryId)){
+	if(helperdb_.saveData_url(/*ui->txtUrl->text()*/midleWidget->url(), midleWidget->description()/*ui->pteDesc->toHtml()*/, categoryId)){
 	  //              QMessageBox::information(this,SW::Helper_t::appName(),"Datos guardados!!");
-	  ui->txtUrl->clear();
-	  ui->pteDesc->clear();
-	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  // ui->txtUrl->clear();
+	  // ui->pteDesc->clear();
+	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  midleWidget->clearInputs();
 
 	  setUpTable(currentCategoryId());
 	  verifyContextMenu();
@@ -485,19 +491,20 @@ void MainForm::on_addNewUrl(){
   }else{
 
 
-	if(!SW::Helper_t::urlValidate(ui->txtUrl->text())){
+	if(!SW::Helper_t::urlValidate(/*ui->txtUrl->text()*/midleWidget->url())){
 	  QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
-	  ui->txtUrl->selectAll();
-	  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  // ui->txtUrl->selectAll();
+	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	  midleWidget->selectAndFocus();
 	  return;
 	}
 
 	QSqlQuery qry(db_);
 	qry.prepare(R"(UPDATE  urls SET url=?, desc=? WHERE url_id=? AND categoryid=?)");
-	const auto encryptedData = SW::Helper_t::encrypt(ui->txtUrl->text());
+	const auto encryptedData = SW::Helper_t::encrypt(/*ui->txtUrl->text()*/midleWidget->url());
 	qry.addBindValue(encryptedData, QSql::In);
 	// const auto descData = SW::Helper_t::encrypt(ui->pteDesc->toPlainText().simplified().toUpper());
-	const auto descData = SW::Helper_t::encrypt(ui->pteDesc->toHtml());
+	const auto descData = SW::Helper_t::encrypt(/*ui->pteDesc->toHtml()*/midleWidget->description());
 	qry.addBindValue(descData, QSql::In);
 	auto currentRow = ui->tvUrl->currentIndex().row();
 	auto id = ui->tvUrl->model()->index(currentRow,0).data().toInt();
@@ -520,9 +527,10 @@ void MainForm::on_addNewUrl(){
 	ui->btnAdd->setText(QStringLiteral("Agregar"));
 	editAction(false);
 
-	ui->txtUrl->clear();
-	ui->pteDesc->clear();
-	ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	// ui->txtUrl->clear();
+	// ui->pteDesc->clear();
+	// ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	midleWidget->clearInputs();
   }
 
 }
@@ -582,20 +590,23 @@ void MainForm::on_btnEdit(){
   if( !validateSelectedRow() ) return;
 
   auto currentRow = ui->tvUrl->currentIndex().row();
-  ui->txtUrl->setText(ui->tvUrl->model()->index(currentRow,1).data().toString());
+  // ui->txtUrl->setText(ui->tvUrl->model()->index(currentRow,1).data().toString());
+  midleWidget->setUrl(ui->tvUrl->model()->index(currentRow,1).data().toString());
 
   const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
   QSqlQuery query(db_);
   query.prepare("SELECT desc FROM urls WHERE url_id = ?");
   query.addBindValue(urlId);
   if(query.exec() && query.next()){
-	ui->pteDesc->setHtml(SW::Helper_t::decrypt(query.value(0).toString()));
+	// ui->pteDesc->setHtml(SW::Helper_t::decrypt(query.value(0).toString()));
+	midleWidget->setDescription(SW::Helper_t::decrypt(query.value(0).toString()));
   }
 
 
   editAction(true);
-  ui->txtUrl->selectAll();
-  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+  // ui->txtUrl->selectAll();
+  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+  midleWidget->selectAndFocus();
   ui->btnAdd->setText(QStringLiteral("Actualizar"));
 
 }
@@ -766,10 +777,11 @@ void MainForm::on_restoreDatabase(){
 
 void MainForm::on_cancelAction(){
 
-  ui->txtUrl->clear();
-  ui->pteDesc->clear();
+  // ui->txtUrl->clear();
+  // ui->pteDesc->clear();
+  midleWidget->clearInputs();
   ui->btnCancel->setDisabled(true);
-  ui->txtUrl->setFocus();
+  // ui->txtUrl->setFocus();
   editAction(false);
   ui->btnAdd->setText(QStringLiteral("Agregar"));
 
@@ -1012,16 +1024,20 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   // if (moveUrl_)      moveUrl_->setIcon(SW::Helper_t::svgIcon(":/img/move-right.svg", iconColor));
   if (delCategory_)  delCategory_->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
 
-  ui->pteDesc->applyIcons(iconColor);
+  // ui->pteDesc->applyIcons(iconColor);
+  midleWidget->applyIcons(iconColor);
 
 
 }
 
 void MainForm::initFrm() noexcept{
 
+  midleWidget =new MidleWidget(this);
+  ui->insertLayout->addWidget(midleWidget);
 
-  ui->txtUrl->setPlaceholderText(QStringLiteral("(http:// | https:// | ftp://)(www.)url.com(.pe | .abc)"));
-  ui->pteDesc->setPlaceholderText(QStringLiteral("Description to url's"));
+  // ui->txtUrl->setPlaceholderText(QStringLiteral("(http:// | https:// | ftp://)(www.)url.com(.pe | .abc)"));
+  // ui->pteDesc->setPlaceholderText(QStringLiteral("Description to url's"));
+  midleWidget->setPlacesHolders();
   ui->btnNewCategory->setToolTip(QStringLiteral("New Category!"));
   ui->btnEditCategory->setToolTip(QStringLiteral("Edit Category Data!"));
   //btnAdd disabled
@@ -1040,7 +1056,8 @@ void MainForm::initFrm() noexcept{
   ui->btnCancel->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
 
   //set the focus to txturl control
-  ui->txtUrl->setFocus(Qt::OtherFocusReason);
+  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+  midleWidget->clearInputs();
 
   ui->actionActualizar_password->setVisible(false);
 
@@ -1204,7 +1221,8 @@ void MainForm::readSettings() noexcept{
   }
   settings.endGroup();
 
-  ui->pteDesc->restoreFont(fontFamily, fontSize, textColor);
+  // ui->pteDesc->restoreFont(fontFamily, fontSize, textColor);
+  midleWidget->restoreFont(fontFamily, fontSize, textColor);
 
   auto ret = SW::Helper_t::nativeRegistryKeyExists("category name");
 
@@ -1363,10 +1381,10 @@ void MainForm::writeSettings() const noexcept{
 
   settings.beginGroup(QStringLiteral("Editor"));
 
-  auto *editor = ui->pteDesc->editor();
-  settings.setValue(QStringLiteral("fontFamily"), ui->pteDesc->currentFont());
-  settings.setValue(QStringLiteral("fontSize"), ui->pteDesc->currentFontSize());
-  settings.setValue(QStringLiteral("textColor"), editor->textColor().name(QColor::HexRgb));
+  // auto *editor = ui->pteDesc->editor();
+  settings.setValue(QStringLiteral("fontFamily"), midleWidget->currentFont()/*ui->pteDesc->currentFont()*/);
+  settings.setValue(QStringLiteral("fontSize"), midleWidget->currentFontSize()/*ui->pteDesc->currentFontSize()*/);
+  settings.setValue(QStringLiteral("textColor"), /*editor->textColor().name(QColor::HexRgb)*/midleWidget->textColor());
   settings.endGroup();
 
 }

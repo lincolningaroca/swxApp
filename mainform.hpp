@@ -9,6 +9,7 @@
 class QAction;
 class QLabel;
 class QMenu;
+class MidleWidget;
 struct SWTableModel;
 
 QT_BEGIN_NAMESPACE
@@ -26,6 +27,7 @@ public:
 private:
   Ui::MainForm *ui;
 
+  MidleWidget *midleWidget{nullptr};
   //metodos privados de la aplicacion
 private:
 
