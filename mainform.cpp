@@ -37,6 +37,7 @@ MainForm::MainForm(QWidget *parent)
 
   ui->setupUi(this);
 
+
   QObject::connect(ui->showHideDatabaseAction, &QAction::toggled, this, [this](bool checked = false){
 
 	ui->dataBasetoolBar->setVisible(checked);
@@ -272,7 +273,7 @@ void MainForm::hastvUrlData() noexcept{
 
 void MainForm::on_showNewCategoryDialog(){
 
-  dlgNewCategory newCategory(dlgNewCategory::OpenMode::New, QStringList(), this);
+  dlgNewCategory newCategory(SW::OpenMode::New, QStringList(), this);
 
   if(newCategory.exec() == QDialog::Rejected)
 	return;
@@ -540,7 +541,7 @@ void MainForm::on_editCategory(){
   const auto id = currentCategoryId();
 
   const QStringList dataLocal = helperdb_.dataCategory(id);
-  dlgNewCategory editCategory(dlgNewCategory::OpenMode::Edit, dataLocal, this);
+  dlgNewCategory editCategory(SW::OpenMode::Edit, dataLocal, this);
   if(editCategory.exec() == QDialog::Rejected){
 	return;
   }
@@ -1038,6 +1039,7 @@ void MainForm::initFrm() noexcept{
   // ui->txtUrl->setPlaceholderText(QStringLiteral("(http:// | https:// | ftp://)(www.)url.com(.pe | .abc)"));
   // ui->pteDesc->setPlaceholderText(QStringLiteral("Description to url's"));
   midleWidget->setPlacesHolders();
+
   ui->btnNewCategory->setToolTip(QStringLiteral("New Category!"));
   ui->btnEditCategory->setToolTip(QStringLiteral("Edit Category Data!"));
   //btnAdd disabled

@@ -16,6 +16,8 @@ enum class SessionStatus{ Session_start, Session_closed };
 enum class User{ U_public, U_user };
 enum class AuthType{ Numeric_pin, Secret_Question };
 
+enum class OpenMode{ New, Edit};
+
 struct Helper_t{
 
   explicit Helper_t() = delete;

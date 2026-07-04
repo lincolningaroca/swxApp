@@ -2,9 +2,9 @@
 #include "ui_publicurldialog.h"
 
 #include "helperdatabase/helperdb.hpp"
+#include "maintenanceurldialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
 #include "swwidgets/swtablemodel.hpp"
-#include "util/helper.hpp"
 
 #include <QAction>
 #include <QCloseEvent>
@@ -17,6 +17,7 @@
 PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   QDialog(parent),
   ui(new Ui::PublicUrlDialog),
+  colorScheme_(colorScheme),
   db_{QSqlDatabase::database(QStringLiteral("xxxConection"))}{
 
   ui->setupUi(this);
@@ -26,6 +27,7 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   on_loadDataTableView();
 
   setupContextMenu();
+
   applyIcons(colorScheme);
 
   ui->urlTableView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -38,7 +40,12 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   QObject::connect(ui->categoryComboBox, &QComboBox::currentIndexChanged, this, &PublicUrlDialog::on_categorySelectedChanged);
 
 
-  QObject::connect(ui->openPushButton, &QPushButton::clicked, this, &PublicUrlDialog::on_openUrl);
+  QObject::connect(ui->newToolButton, &QToolButton::clicked, this, [this](){on_showMaintenanceDialog(SW::OpenMode::New);});
+  QObject::connect(ui->editToolButton, &QToolButton::clicked, this, [this](){on_showMaintenanceDialog(SW::OpenMode::Edit);});
+  QObject::connect(ui->quitarToolButton, &QToolButton::clicked, this, &PublicUrlDialog::on_openUrl);
+  QObject::connect(ui->openPushButton, &QToolButton::clicked, this, &PublicUrlDialog::on_openUrl);
+
+
 }
 
 PublicUrlDialog::~PublicUrlDialog(){
@@ -71,6 +78,14 @@ void PublicUrlDialog::on_categorySelectedChanged(int index){
   Q_UNUSED(index);
   on_loadDataTableView();
 }
+
+void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
+
+  MaintenanceUrlDialog maintenanceDialog(colorScheme_, mode, this);
+  maintenanceDialog.exec();
+
+}
+
 
 void PublicUrlDialog::on_loadDataTableView(){
 
@@ -190,4 +205,10 @@ void PublicUrlDialog::applyIcons(Qt::ColorScheme scheme) noexcept {
 
  if(openUrl_)
    openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
+
+ ui->newToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-new.svg", iconColor));
+ ui->editToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
+ ui->quitarToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
+ ui->openPushButton->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
+
 }

@@ -40,5 +40,6 @@
         <file>img/light.png</file>
         <file>img/system.png</file>
         <file>img/contrasena.png</file>
+        <file>img/link-new.svg</file>
     </qresource>
 </RCC>

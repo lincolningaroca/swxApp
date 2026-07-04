@@ -2,13 +2,12 @@
 #include "ui_dlgnewcategory.h"
 
 #include "helperdatabase/helperdb.hpp"
-#include "util/helper.hpp"
 
 #include <QMessageBox>
 #include <QPushButton>
 
 
-dlgNewCategory::dlgNewCategory(OpenMode mode, const QStringList &list, QWidget *parent) :
+dlgNewCategory::dlgNewCategory(SW::OpenMode mode, const QStringList &list, QWidget *parent) :
   QDialog(parent), ui(new Ui::dlgNewCategory){
 
   ui->setupUi(this);

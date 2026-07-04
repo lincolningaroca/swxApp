@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/helper.hpp"
+
 #include <QDialog>
 
 
@@ -13,9 +15,8 @@ class dlgNewCategory : public QDialog
 
 
 public:
-  enum class OpenMode{ New, Edit};
 
-  explicit dlgNewCategory(OpenMode mode, const QStringList& list = {}, QWidget *parent = nullptr);
+  explicit dlgNewCategory(SW::OpenMode mode, const QStringList& list = {}, QWidget *parent = nullptr);
 
   ~dlgNewCategory();
 

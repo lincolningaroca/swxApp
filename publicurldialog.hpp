@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/helper.hpp"
+
 #include <QDialog>
 #include <QSqlDatabase>
 
@@ -19,6 +21,8 @@ public:
 private:
   Ui::PublicUrlDialog *ui;
 
+  Qt::ColorScheme colorScheme_{};
+
   QHash<uint32_t, QString> data_{};
   const QSqlDatabase db_{};
 
@@ -34,6 +38,7 @@ private:
 
   uint32_t currentCategoryId() const noexcept;
 
+
 private slots:
   void on_openUrl();
   void on_loadDataTableView();
@@ -41,6 +46,9 @@ private slots:
   void on_showContextMenu(const QPoint& pos);
 
   void on_categorySelectedChanged(int index);
+
+  void on_showMaintenanceDialog(SW::OpenMode mode);
+
 
   // QWidget interface
 protected:
