@@ -132,15 +132,13 @@ namespace SW {
 
     if(op == 1){
         qry_.prepare(R"(DELETE FROM urls WHERE categoryid=?)");
-        //        auto categoryId=categoryList.key(category);
+
         qry_.addBindValue(categoryId, QSql::In);
         ret = qry_.exec();
 
       }else{
         qry_.prepare(R"(DELETE FROM urls WHERE url_id=?)");
-        //        auto currentRow = ui->tvUrl->currentIndex().row();
-        //        auto url = ui->tvUrl->model()->index(currentRow, 1).data().toString();
-        //        auto urlId=urlList.key(url);
+
         qry_.addBindValue(urlId, QSql::In);
         ret = qry_.exec();
 
@@ -151,7 +149,6 @@ namespace SW {
   QHash<uint32_t, QString> HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept
   {
     QHash<uint32_t, QString> categoryList{};
-    categoryList.clear();
 
     qry_.prepare(R"(SELECT category_id, category_name FROM category WHERE userid = ?)");
 

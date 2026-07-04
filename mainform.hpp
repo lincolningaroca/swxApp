@@ -51,7 +51,7 @@ private:
   void setCboCategoryToolTip() noexcept;
   void editAction(bool op) noexcept;
   void writeSettings() const noexcept;
-  void categorySelectedChanged(const QString& text);
+  // void categorySelectedChanged(const QString& text);
   void setUpShowMenuAction();
   void setUpStatusBar();
 
@@ -64,6 +64,8 @@ private:
   bool deleteAll() noexcept;
 
   QColor getEnfasisColor() const;
+
+  uint32_t currentCategoryId() const noexcept;
 
   //variables y estructuras privadas de la aplicacion
 
@@ -112,7 +114,7 @@ private slots:
   void on_editCategory();
   void on_quitUrl();
   void on_btnEdit();
-  void on_categorySelectedChanged(const QString& text);
+  void on_categorySelectedChanged(int index);
   void on_callLogout();
   void on_makeBackup();
   void on_restoreDatabase();
