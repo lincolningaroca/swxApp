@@ -807,8 +807,6 @@ void MainForm::on_moveUrl(){
 
   const auto currentRow_ = ui->tvUrl->currentIndex().row();
   const auto url_ = xxxModel_->index(currentRow_, 1).data().toString();
-
-  // const auto currentCategoryId_ = categoryList_.key(ui->cboCategory->currentText());
   const auto currentCategoryId_ =currentCategoryId();
 
   const auto urlid = xxxModel_->index(currentRow_, 0).data().toUInt();

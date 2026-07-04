@@ -51,7 +51,6 @@ private:
   void setCboCategoryToolTip() noexcept;
   void editAction(bool op) noexcept;
   void writeSettings() const noexcept;
-  // void categorySelectedChanged(const QString& text);
   void setUpShowMenuAction();
   void setUpStatusBar();
 
