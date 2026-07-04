@@ -18,7 +18,7 @@ public:
 
 private:
   Ui::CategoryDialog *ui;
-  const QHash<uint32_t, QString> data_{};
+  void loadCategoryComboBox(const QHash<uint32_t, QString>& categoryList) noexcept;
 
 
 };
