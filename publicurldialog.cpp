@@ -35,7 +35,7 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   readSettings();
 
 
-  QObject::connect(ui->categoryComboBox, &QComboBox::currentTextChanged, this, &PublicUrlDialog::on_loadDataTableView);
+  QObject::connect(ui->categoryComboBox, &QComboBox::currentIndexChanged, this, &PublicUrlDialog::on_categorySelectedChanged);
 
 
   QObject::connect(ui->openPushButton, &QPushButton::clicked, this, &PublicUrlDialog::on_openUrl);
@@ -45,20 +45,37 @@ PublicUrlDialog::~PublicUrlDialog(){
   delete ui;
 }
 
+uint32_t PublicUrlDialog::currentCategoryId() const noexcept {
+  return ui->categoryComboBox->currentData().isValid() ? ui->categoryComboBox->currentData().toUInt() : 1;
+}
+
 void PublicUrlDialog::loadDataComboBox(){
 
   SW::HelperDataBase_t helperDb;
 
+  QSignalBlocker blocker(ui->categoryComboBox);
+  ui->categoryComboBox->clear();
+
   auto userId_ = helperDb.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
   data_ = helperDb.loadList_Category(userId_);
 
-  ui->categoryComboBox->addItems(data_.values());
+  auto it = data_.constBegin();
+  while (it != data_.constEnd()) {
+	ui->categoryComboBox->addItem(it.value(), it.key());
+	++it;
+  }
 
+}
+
+void PublicUrlDialog::on_categorySelectedChanged(int index){
+  Q_UNUSED(index);
+  on_loadDataTableView();
 }
 
 void PublicUrlDialog::on_loadDataTableView(){
 
-  const auto categoryId_ = data_.key(ui->categoryComboBox->currentText());
+  const auto categoryId_ = currentCategoryId();
+
   SWTableModel* xxxModel_ = new SWTableModel(this, db_);
   xxxModel_->setTable(QStringLiteral("urls"));
   xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId_));
