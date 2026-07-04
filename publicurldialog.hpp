@@ -32,11 +32,15 @@ private:
 
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 
+  uint32_t currentCategoryId() const noexcept;
+
 private slots:
   void on_openUrl();
   void on_loadDataTableView();
 
   void on_showContextMenu(const QPoint& pos);
+
+  void on_categorySelectedChanged(int index);
 
   // QWidget interface
 protected:
