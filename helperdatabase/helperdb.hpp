@@ -32,6 +32,7 @@ struct HelperDataBase_t{
   bool saveCategoryData(QStringView catName, QStringView desc, uint32_t userid) noexcept;
   bool updateCategory( QStringView url,  QStringView desc, uint32_t category_id, uint32_t user_id) noexcept;
   bool saveData_url(QStringView url, QStringView desc, std::uint32_t id) noexcept;
+  bool updateData_url(QStringView url, QStringView desc, std::uint32_t id, std::uint32_t categoryId) noexcept;
   bool deleteUrls(std::uint8_t op, uint32_t categoryId=0, uint32_t urlId=0) noexcept;
   bool deleteCategory(uint32_t categoryId) noexcept;
   bool validateAnswer(QStringView respuesta, uint32_t userId) noexcept;
