@@ -74,7 +74,8 @@ QString Helper_t::getColorReg(QByteArray dataColor) noexcept
 
 bool Helper_t::urlValidate(QStringView url) noexcept
 {
-  static QRegularExpression regex(R"(^(https?://|ftp://)?(www\.)?[a-zA-Z0-9.-]+(\.[a-zA-Z]{2,6})(/[^\s]*)?$)");
+  static QRegularExpression regex(
+	R"(^(https?://|ftp://)(www\.)?[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,10}(:[0-9]{1,5})?(/[^\s]*)?$)");
   auto match = regex.matchView(url);
   return match.hasMatch();
 }
