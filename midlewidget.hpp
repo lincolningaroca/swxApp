@@ -32,6 +32,8 @@ public:
 
   void setPlacesHolders();
 
+  QString errorMessage();
+
 private:
   Ui::MidleWidget *ui;
 

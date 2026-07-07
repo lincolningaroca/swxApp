@@ -7,27 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>697</width>
-    <height>274</height>
+    <height>52</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>Datos de la dirección url</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QLineEdit" name="urlLineEdit"/>
-      </item>
-      <item>
-       <widget class="SWTextEdit" name="descTextEdit"/>
-      </item>
-     </layout>
-    </widget>
+    <layout class="QVBoxLayout" name="insertLayout"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -62,13 +50,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>SWTextEdit</class>
-   <extends>QTextEdit</extends>
-   <header location="global">swwidgets/swtextedit.hpp</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

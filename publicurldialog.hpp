@@ -1,5 +1,6 @@
 #pragma once
 
+#include "helperdatabase/helperdb.hpp"
 #include "util/helper.hpp"
 
 #include <QDialog>
@@ -25,7 +26,11 @@ private:
 
   QHash<uint32_t, QString> data_{};
   const QSqlDatabase db_{};
+  SW::HelperDataBase_t helperdb_{};
 
+  QAction *deleteUrl_{nullptr};
+  QAction *editUrl_{nullptr};
+  QAction *newUrl_{nullptr};
   QAction *openUrl_{nullptr};
 
   void loadDataComboBox();
@@ -46,7 +51,7 @@ private slots:
   void on_showContextMenu(const QPoint& pos);
 
   void on_categorySelectedChanged(int index);
-
+  void on_deleteUrl();
   void on_showMaintenanceDialog(SW::OpenMode mode);
 
 

@@ -41,5 +41,6 @@
         <file>img/system.png</file>
         <file>img/contrasena.png</file>
         <file>img/link-new.svg</file>
+        <file>img/public-url.svg</file>
     </qresource>
 </RCC>

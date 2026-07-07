@@ -75,12 +75,38 @@ int MidleWidget::currentFontSize() const
   return ui->pteDesc->currentFontSize();
 }
 
+
+
 void MidleWidget::setPlacesHolders(){
 
   ui->txtUrl->setPlaceholderText(QStringLiteral("(http:// | https:// | ftp://)(www.)url.com(.pe | .abc)"));
   ui->pteDesc->setPlaceholderText(QStringLiteral("Description to url's"));
 
 }
+
+QString MidleWidget::errorMessage(){
+
+  const auto invalidUrlMsg = QString("<p>"
+									 "<span>"
+									 "La dirección: <strong>\"%1\"</strong>, no es válida!<br>"
+									 "una dirección url válida debe tener una de las siguiente formas:"
+									 "<ol>"
+									 "<li><strong>(http://www.)url.dominio</strong></li>"
+									 "<li><strong>(https://www.)url.dominio</strong></li>"
+									 "<li><strong>(ftp://)url.dominio</strong></li>"
+									 "<li><strong>(ftp://www.)url.dominio</strong></li>"
+									 "</ol>"
+									 "<br>Nota:<br>"
+									 "Tenga en cuenta que "
+									 "<strong>http://, https://, ftp://, www.</strong> son opcionales<br>"
+									 "Lo mínimo que se espera es una direccón de la forma: <strong>\"url.domino\"</strong>"
+									 "</span>"
+									 "</p>").arg(ui->txtUrl->text());
+  return invalidUrlMsg;
+
+}
+
+
 
 void MidleWidget::selectAndFocus() noexcept{
 

@@ -27,6 +27,7 @@
 #include <QSqlQuery>
 #include <QSqlTableModel>
 #include <QStyleHints>
+#include <QTimer>
 #include <QTextEdit>
 
 
@@ -211,6 +212,7 @@ MainForm::MainForm(QWidget *parent)
 
 
   QObject::connect(ui->actionActualizar_password, &QAction::triggered, this, &MainForm::on_showChangePasswordDialog);
+  QObject::connect(ui->actionVer_url_s_publicas, &QAction::triggered, this, &MainForm::on_showPublicUrlDialog);
 
 
 }
@@ -231,15 +233,13 @@ void MainForm::has_data() noexcept{
   if(categoryList_.isEmpty()){
 	ui->btnEditCategory->setDisabled(true);
 	ui->btnDeleteCategory->setDisabled(true);
-	// ui->txtUrl->setDisabled(true);
-	// ui->pteDesc->setDisabled(true);
+
 	midleWidget->setInputsEnabled(false);
 
   }else{
 	ui->btnEditCategory->setEnabled(true);
 	ui->btnDeleteCategory->setEnabled(true);
-	// ui->txtUrl->setEnabled(true);
-	// ui->pteDesc->setEnabled(true);
+
 	midleWidget->setInputsEnabled(true);
   }
 
@@ -371,6 +371,8 @@ void MainForm::on_loadLoginForm(){
 	canRestoreDataBase();
 	verifyUserState();
 	ui->actionActualizar_password->setVisible(true);
+	ui->toolBar->setVisible(true);
+	ui->actionVer_url_s_publicas->setVisible(true);
 
   }
 
@@ -436,28 +438,10 @@ void MainForm::on_deleteCategory(){
 
 void MainForm::on_addNewUrl(){
 
-  const auto invalidUrlMsg = QString("<p>"
-									 "<span>"
-									 "La dirección: <strong>\"%1\"</strong>, no es válida!<br>"
-									 "una dirección url válida debe tener una de las siguiente formas:"
-									 "<ol>"
-									 "<li><strong>(http://www.)url.dominio</strong></li>"
-									 "<li><strong>(https://www.)url.dominio</strong></li>"
-									 "<li><strong>(ftp://)url.dominio</strong></li>"
-									 "<li><strong>(ftp://www.)url.dominio</strong></li>"
-									 "</ol>"
-									 "<br>Nota:<br>"
-									 "Tenga en cuenta que "
-									 "<strong>http://, https://, ftp://, www.</strong> son opcionales<br>"
-									 "Lo mínimo que se espera es una direccón de la forma: <strong>\"url.domino\"</strong>"
-									 "</span>"
-									 "</p>").arg(/*ui->txtUrl->text()*/midleWidget->url());
-
   if(ui->btnAdd->text().compare("Agregar") == 0){
-	if(!SW::Helper_t::urlValidate(/*ui->txtUrl->text()*/midleWidget->url())){
-	  QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
-	  // ui->txtUrl->selectAll();
-	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	if(!SW::Helper_t::urlValidate(midleWidget->url())){
+	  QMessageBox::warning(this, SW::Helper_t::appName(), midleWidget->errorMessage());
+
 	  midleWidget->selectAndFocus();
 	  return;
 	}
@@ -466,20 +450,15 @@ void MainForm::on_addNewUrl(){
 
 	if(helperdb_.urlExists(midleWidget->url(), categoryId)){
 
-	  auto warningMsg = QString("<p>La url: <cite><strong>%1</strong></cite></p> ya esta registrada!!").arg(/*ui->txtUrl->text()*/midleWidget->url());
+	  auto warningMsg = QString("<p>La url: <cite><strong>%1</strong></cite></p> ya esta registrada!!").arg(midleWidget->url());
 	  QMessageBox::warning(this, SW::Helper_t::appName(), warningMsg);
-	  // ui->txtUrl->selectAll();
-	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+
 	  midleWidget->selectAndFocus();
 	  return;
 	}
-	//get the key from categoryList, with current selected text to cboCategory.
-	// auto categoryId = categoryList.key(ui->cboCategory->currentText());
-	if(helperdb_.saveData_url(/*ui->txtUrl->text()*/midleWidget->url(), midleWidget->description()/*ui->pteDesc->toHtml()*/, categoryId)){
-	  //              QMessageBox::information(this,SW::Helper_t::appName(),"Datos guardados!!");
-	  // ui->txtUrl->clear();
-	  // ui->pteDesc->clear();
-	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+
+	if(helperdb_.saveData_url(midleWidget->url(), midleWidget->description(), categoryId)){
+
 	  midleWidget->clearInputs();
 
 	  setUpTable(currentCategoryId());
@@ -492,33 +471,20 @@ void MainForm::on_addNewUrl(){
   }else{
 
 
-	if(!SW::Helper_t::urlValidate(/*ui->txtUrl->text()*/midleWidget->url())){
-	  QMessageBox::warning(this, SW::Helper_t::appName(), invalidUrlMsg);
-	  // ui->txtUrl->selectAll();
-	  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+	if(!SW::Helper_t::urlValidate(midleWidget->url())){
+	  QMessageBox::warning(this, SW::Helper_t::appName(), midleWidget->errorMessage());
+
 	  midleWidget->selectAndFocus();
 	  return;
 	}
 
-	QSqlQuery qry(db_);
-	qry.prepare(R"(UPDATE  urls SET url=?, desc=? WHERE url_id=? AND categoryid=?)");
-	const auto encryptedData = SW::Helper_t::encrypt(/*ui->txtUrl->text()*/midleWidget->url());
-	qry.addBindValue(encryptedData, QSql::In);
-	// const auto descData = SW::Helper_t::encrypt(ui->pteDesc->toPlainText().simplified().toUpper());
-	const auto descData = SW::Helper_t::encrypt(/*ui->pteDesc->toHtml()*/midleWidget->description());
-	qry.addBindValue(descData, QSql::In);
 	auto currentRow = ui->tvUrl->currentIndex().row();
 	auto id = ui->tvUrl->model()->index(currentRow,0).data().toInt();
-	qry.addBindValue(id, QSql::In);
 
-	// const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
 	const auto categoryId = currentCategoryId();
 
-	qry.addBindValue(categoryId, QSql::In);
-
-	if(!qry.exec()){
-	  QMessageBox::critical(this, SW::Helper_t::appName(), tr("Fallo la ejecución de la sentencia!\n%1").arg(
-															 qry.lastError().text()));
+	if(!helperdb_.updateData_url(midleWidget->url(), midleWidget->description(), id, categoryId)){
+	  QMessageBox::critical(this, SW::Helper_t::appName(), tr("Fallo la ejecución de la sentencia!\n%1"));
 	  return;
 
 	}
@@ -528,9 +494,6 @@ void MainForm::on_addNewUrl(){
 	ui->btnAdd->setText(QStringLiteral("Agregar"));
 	editAction(false);
 
-	// ui->txtUrl->clear();
-	// ui->pteDesc->clear();
-	// ui->txtUrl->setFocus(Qt::OtherFocusReason);
 	midleWidget->clearInputs();
   }
 
@@ -573,7 +536,7 @@ void MainForm::on_quitUrl(){
 
   if(msgBox.exec() == QMessageBox::Yes){
 	const auto urlId=urlList_.key(url);
-	if(helperdb_.deleteUrls(2, 0, urlId)){
+	if(helperdb_.deleteUrls(SW::DeleteUrlMode::ByUrlId, 0, urlId)){
 	  ui->tvUrl->model()->removeRow(ui->tvUrl->currentIndex().row());
 
 	  setUpTable(currentCategoryId());
@@ -591,7 +554,7 @@ void MainForm::on_btnEdit(){
   if( !validateSelectedRow() ) return;
 
   auto currentRow = ui->tvUrl->currentIndex().row();
-  // ui->txtUrl->setText(ui->tvUrl->model()->index(currentRow,1).data().toString());
+
   midleWidget->setUrl(ui->tvUrl->model()->index(currentRow,1).data().toString());
 
   const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
@@ -599,14 +562,13 @@ void MainForm::on_btnEdit(){
   query.prepare("SELECT desc FROM urls WHERE url_id = ?");
   query.addBindValue(urlId);
   if(query.exec() && query.next()){
-	// ui->pteDesc->setHtml(SW::Helper_t::decrypt(query.value(0).toString()));
+
 	midleWidget->setDescription(SW::Helper_t::decrypt(query.value(0).toString()));
   }
 
 
   editAction(true);
-  // ui->txtUrl->selectAll();
-  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
+
   midleWidget->selectAndFocus();
   ui->btnAdd->setText(QStringLiteral("Actualizar"));
 
@@ -648,6 +610,8 @@ void MainForm::on_callLogout(){
   verifyUserState();
 
   ui->actionActualizar_password->setVisible(false);
+  ui->toolBar->setVisible(false);
+  ui->actionVer_url_s_publicas->setVisible(false);
 
 
 
@@ -693,7 +657,6 @@ void MainForm::on_makeBackup(){
 
   QStringList argv{};
 
-  // argv << databasePath << path.arg(absolutePath,baseName,fecha,extension);
   argv << databasePath << backupCommand;
   qDebug() << "Ejecutando:" << path_app << argv;  // Para depuración
 
@@ -778,11 +741,9 @@ void MainForm::on_restoreDatabase(){
 
 void MainForm::on_cancelAction(){
 
-  // ui->txtUrl->clear();
-  // ui->pteDesc->clear();
   midleWidget->clearInputs();
   ui->btnCancel->setDisabled(true);
-  // ui->txtUrl->setFocus();
+
   editAction(false);
   ui->btnAdd->setText(QStringLiteral("Agregar"));
 
@@ -790,7 +751,6 @@ void MainForm::on_cancelAction(){
 
 void MainForm::on_showAllDescription(){
 
-  // auto* otherModel = dynamic_cast<QSqlTableModel*>(ui->tvUrl->model());
   auto row = ui->tvUrl->currentIndex().row();
   const auto desc = ui->tvUrl->model()->index(row,2).data().toString();
   const auto url = ui->tvUrl->model()->index(row,1).data().toString();
@@ -850,7 +810,7 @@ void MainForm::on_moveUrl(){
 	  QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al intentar actualizar.\n"));
 	  return;
 	}
-	// setUpTable(categoryList_.key(ui->cboCategory->currentText()));
+
 	setUpTable(currentCategoryId());
 	verifyContextMenu();
 	hastvUrlData();
@@ -1006,6 +966,7 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   ui->btnResetPassword->setIcon(SW::Helper_t::svgIcon(":/img/restore-password.svg", iconColor));
   ui->firstTimeLogInBtn->setIcon(SW::Helper_t::svgIcon(":/img/user-cog.svg", iconColor));
   ui->actionActualizar_password->setIcon(SW::Helper_t::svgIcon(":/img/key-round.svg", iconColor));
+  ui->actionVer_url_s_publicas->setIcon(SW::Helper_t::svgIcon(":/img/public-url.svg", iconColor));
 
   // --- Toolbar: base de datos ---
   ui->btnBackUp->setIcon(SW::Helper_t::svgIcon(":/img/database-backup.svg", iconColor));
@@ -1022,10 +983,10 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   if (openUrl_)      openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
   if (editUrl_)      editUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
   if (quitUrl_)      quitUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
+  if (showPublicUrl_) showPublicUrl_->setIcon(SW::Helper_t::svgIcon(":/img/public-url.svg", iconColor));
   // if (moveUrl_)      moveUrl_->setIcon(SW::Helper_t::svgIcon(":/img/move-right.svg", iconColor));
   if (delCategory_)  delCategory_->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
 
-  // ui->pteDesc->applyIcons(iconColor);
   midleWidget->applyIcons(iconColor);
 
 
@@ -1036,8 +997,6 @@ void MainForm::initFrm() noexcept{
   midleWidget =new MidleWidget(this);
   ui->insertLayout->addWidget(midleWidget);
 
-  // ui->txtUrl->setPlaceholderText(QStringLiteral("(http:// | https:// | ftp://)(www.)url.com(.pe | .abc)"));
-  // ui->pteDesc->setPlaceholderText(QStringLiteral("Description to url's"));
   midleWidget->setPlacesHolders();
 
   ui->btnNewCategory->setToolTip(QStringLiteral("New Category!"));
@@ -1057,11 +1016,14 @@ void MainForm::initFrm() noexcept{
   ui->btnopen->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O));
   ui->btnCancel->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
 
-  //set the focus to txturl control
-  // ui->txtUrl->setFocus(Qt::OtherFocusReason);
   midleWidget->clearInputs();
 
   ui->actionActualizar_password->setVisible(false);
+
+  QTimer::singleShot(0, this, [this](){
+	ui->toolBar->setVisible(false);
+	ui->actionVer_url_s_publicas->setVisible(false);
+  });
 
   ui->btnResetPassword->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P));
 
@@ -1141,13 +1103,9 @@ void MainForm::setUptvUrlContextMenu() noexcept{
 
   contextMenu = new QMenu(this);
 
-  const auto openUrlIcon = QIcon(QStringLiteral(":/img/openurl.png"));
-  const auto editUrlIcon = QIcon(QStringLiteral(":/img/editurl.png"));
-  const auto quitUrlIcon = QIcon(QStringLiteral(":/img/quiturl.png"));
-
-  openUrl_ = contextMenu->addAction(openUrlIcon, QStringLiteral("Abrir url en el navegador"));
-  editUrl_ = contextMenu->addAction(editUrlIcon, QStringLiteral("Editar url"));
-  quitUrl_ = contextMenu->addAction(quitUrlIcon, QStringLiteral("Quitar url"));
+  openUrl_ = contextMenu->addAction(QStringLiteral("Abrir url en el navegador"));
+  editUrl_ = contextMenu->addAction(QStringLiteral("Editar url"));
+  quitUrl_ = contextMenu->addAction(QStringLiteral("Quitar url"));
   contextMenu->addSeparator();
   showDescDetail_ = contextMenu->addAction(QStringLiteral("Ver descripción de URL completa"));
 
@@ -1171,7 +1129,6 @@ void MainForm::setUptvUrlContextMenu() noexcept{
 
 void MainForm::verifyContextMenu() noexcept{
 
-  // const auto categoryId = categoryList_.key(ui->cboCategory->currentText());
   const auto categoryId = currentCategoryId();
 
   auto [res, errMessage] = helperdb_.verifyDeleteCategory(categoryId);
@@ -1223,7 +1180,6 @@ void MainForm::readSettings() noexcept{
   }
   settings.endGroup();
 
-  // ui->pteDesc->restoreFont(fontFamily, fontSize, textColor);
   midleWidget->restoreFont(fontFamily, fontSize, textColor);
 
   auto ret = SW::Helper_t::nativeRegistryKeyExists("category name");
@@ -1234,13 +1190,6 @@ void MainForm::readSettings() noexcept{
 	categoryName = settings.value("category name", QString()).toString();
 
 	if(!categoryName.isEmpty() && ui->cboCategory->count() > 1){
-
-	  //  {
-
-	  // QSignalBlocker signalBlocker(ui->cboCategory);
-	  // ui->cboCategory->setCurrentText(categoryName);
-	  //  }
-	  //  categorySelectedChanged(categoryName);
 
 	  auto foundIndex = ui->cboCategory->findText(categoryName);
 
@@ -1268,7 +1217,6 @@ void MainForm::readSettings() noexcept{
 
 void MainForm::setCboCategoryToolTip() noexcept{
 
-  // const auto id = categoryList_.key(ui->cboCategory->currentText());
   const auto id = currentCategoryId();
 
   const auto categoryData = helperdb_.dataCategory(id);
@@ -1319,10 +1267,9 @@ bool MainForm::validateSelectedRow() noexcept{
 
 bool MainForm::deleteAll() noexcept{
 
-  // const auto categoryId=categoryList_.key(ui->cboCategory->currentText());
   const auto categoryId = currentCategoryId();
 
-  if(helperdb_.deleteUrls(1, categoryId)){
+  if(helperdb_.deleteUrls(SW::DeleteUrlMode::ByCategory, categoryId)){
 	if(helperdb_.deleteCategory(categoryId))
 	  return true;
   }
@@ -1350,7 +1297,7 @@ void MainForm::editAction(bool op) noexcept{
   ui->btnQuit->setDisabled(op);
   ui->btnopen->setDisabled(op);
   ui->tvUrl->setDisabled(op);
-  // ui->tvUrl->setState();
+
   contextMenu->setDisabled(op);
 
   ui->btnCancel->setEnabled(op);
@@ -1383,23 +1330,14 @@ void MainForm::writeSettings() const noexcept{
 
   settings.beginGroup(QStringLiteral("Editor"));
 
-  // auto *editor = ui->pteDesc->editor();
-  settings.setValue(QStringLiteral("fontFamily"), midleWidget->currentFont()/*ui->pteDesc->currentFont()*/);
-  settings.setValue(QStringLiteral("fontSize"), midleWidget->currentFontSize()/*ui->pteDesc->currentFontSize()*/);
-  settings.setValue(QStringLiteral("textColor"), /*editor->textColor().name(QColor::HexRgb)*/midleWidget->textColor());
+  settings.setValue(QStringLiteral("fontFamily"), midleWidget->currentFont());
+  settings.setValue(QStringLiteral("fontSize"), midleWidget->currentFontSize());
+  settings.setValue(QStringLiteral("textColor"), midleWidget->textColor());
   settings.endGroup();
 
 }
 
-// void MainForm::categorySelectedChanged(const QString &text){
 
-//   setUpTable(categoryList_.key(text));
-//   verifyContextMenu();
-//   setCboCategoryToolTip();
-//   hastvUrlData();
-//   checkStatusContextMenu();
-
-// }
 
 /**
  * @brief MainForm::showAboutDialog show abou dialog

@@ -42,7 +42,7 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
 
   QObject::connect(ui->newToolButton, &QToolButton::clicked, this, [this](){on_showMaintenanceDialog(SW::OpenMode::New);});
   QObject::connect(ui->editToolButton, &QToolButton::clicked, this, [this](){on_showMaintenanceDialog(SW::OpenMode::Edit);});
-  QObject::connect(ui->quitarToolButton, &QToolButton::clicked, this, &PublicUrlDialog::on_openUrl);
+  QObject::connect(ui->quitarToolButton, &QToolButton::clicked, this, PublicUrlDialog::on_deleteUrl);
   QObject::connect(ui->openPushButton, &QToolButton::clicked, this, &PublicUrlDialog::on_openUrl);
 
 
@@ -79,11 +79,69 @@ void PublicUrlDialog::on_categorySelectedChanged(int index){
   on_loadDataTableView();
 }
 
+void PublicUrlDialog::on_deleteUrl(){
+
+  if(!ui->urlTableView->selectionModel()->hasSelection()){
+	QMessageBox::warning(this, qApp->applicationName(), "Seleccione una fila.");
+	return;
+  }
+
+  auto currentRow = ui->urlTableView->currentIndex().row();
+
+  const auto url = ui->urlTableView->model()->index(currentRow, 1).data().toString();
+
+  QMessageBox msgBox(this);
+  msgBox.setText(QString("<span>Confirma que desea eliminar esta dirección:<br>"
+						 " <cite style='color:#ff0800;'><strong>%1</strong></cite></span>").arg(url));
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+  msgBox.button(QMessageBox::Yes)->setText("Eliminar");
+  msgBox.button(QMessageBox::No)->setText("Cancelar");
+
+  if(msgBox.exec() == QMessageBox::Yes){
+	const auto urlId=ui->urlTableView->model()->index(currentRow, 0).data().toInt();
+	if(helperdb_.deleteUrls(SW::DeleteUrlMode::ByUrlId, 0, urlId)){
+
+	  on_loadDataTableView();
+	}
+
+  }
+
+}
+
+
 void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 
-  MaintenanceUrlDialog maintenanceDialog(colorScheme_, mode, this);
-  maintenanceDialog.exec();
+  QList<QVariant> dataUrl{};
+  if(mode == SW::OpenMode::Edit){
 
+	if(!ui->urlTableView->selectionModel()->hasSelection()){
+	  QMessageBox::warning(this, qApp->applicationName(), "Seleccione una fila.");
+	  return;
+	}
+
+	auto currentIndex = ui->urlTableView->currentIndex();
+	auto id = ui->urlTableView->model()->index(currentIndex.row(), 0).data().toInt();
+
+	// Leer directo de BD para evitar ambigüedad con el modelo
+	QSqlQuery query(db_);
+	query.prepare("SELECT url_id, url, desc FROM urls WHERE url_id = ?");
+	query.addBindValue(id);
+
+	if(!query.exec() || !query.next()){
+	  QMessageBox::critical(this, qApp->applicationName(), "Error al leer los datos.");
+	  return;
+	}
+
+	dataUrl.append(query.value(0).toInt());
+	dataUrl.append(SW::Helper_t::decrypt(query.value(1).toString())); // url
+	dataUrl.append(SW::Helper_t::decrypt(query.value(2).toString())); // desc
+  }
+
+  MaintenanceUrlDialog maintenanceDialog(colorScheme_, mode, dataUrl, currentCategoryId(), this);
+  if(maintenanceDialog.exec() == QDialog::Accepted){
+	on_loadDataTableView();
+  }
 }
 
 
@@ -119,12 +177,19 @@ void PublicUrlDialog::on_loadDataTableView(){
 void PublicUrlDialog::on_showContextMenu(const QPoint &pos){
 
   auto index = ui->urlTableView->indexAt(pos);
-  if(!index.isValid()) return;
 
   QMenu mainMenu(this);
 
+  mainMenu.addAction(newUrl_);
 
-  mainMenu.addAction(openUrl_);
+  if(index.isValid()){
+
+	mainMenu.addAction(editUrl_);
+	mainMenu.addAction(deleteUrl_);
+	mainMenu.addSeparator();
+	mainMenu.addAction(openUrl_);
+  }
+
   mainMenu.exec(ui->urlTableView->mapToGlobal(pos));
 
 }
@@ -154,8 +219,15 @@ void PublicUrlDialog::readSettings(){
 
 void PublicUrlDialog::setupContextMenu(){
 
+  newUrl_ = new QAction("Agregar nueva url", this);
+  editUrl_ = new QAction("Edidar datos de la url", this);
+  deleteUrl_ = new QAction("Eliminar url", this);
   openUrl_ = new QAction("Abrir dirección en el navegador", this);
 
+
+  connect(newUrl_, &QAction::triggered, this, [this](){on_showMaintenanceDialog(SW::OpenMode::New);});
+  connect(editUrl_, &QAction::triggered, this, [this](){on_showMaintenanceDialog(SW::OpenMode::Edit);});
+  connect(deleteUrl_, &QAction::triggered, this, &PublicUrlDialog::on_deleteUrl);
   connect(openUrl_, &QAction::triggered, this, &PublicUrlDialog::on_openUrl);
 
 
@@ -164,8 +236,8 @@ void PublicUrlDialog::setupContextMenu(){
 void PublicUrlDialog::on_openUrl(){
 
   if(!ui->urlTableView->selectionModel()->hasSelection()){
-    QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("Seleccione una fila!\n"));
-    return;
+	QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("Seleccione una fila!\n"));
+	return;
   }
 
 
@@ -173,8 +245,8 @@ void PublicUrlDialog::on_openUrl(){
   const auto url_ = ui->urlTableView->model()->index(row_, 1).data().toString();
 
   if(!QDesktopServices::openUrl(QUrl(url_))){
-    QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al abrir la dirección url.\n"));
-    return;
+	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al abrir la dirección url.\n"));
+	return;
   }
 
 }
@@ -191,24 +263,26 @@ void PublicUrlDialog::showEvent(QShowEvent *event){
   auto headerState = SW::Helper_t::nativeRegistryKeyExists("Public_url_dialog/Header_state");
 
   if(!headerState){
-    int availableWidth = ui->urlTableView->viewport()->width();
-    auto headerWidth = availableWidth/2;
-    ui->urlTableView->setColumnWidth(1, headerWidth);
-    ui->urlTableView->setColumnWidth(2, headerWidth);
+	int availableWidth = ui->urlTableView->viewport()->width();
+	auto headerWidth = availableWidth/2;
+	ui->urlTableView->setColumnWidth(1, headerWidth);
+	ui->urlTableView->setColumnWidth(2, headerWidth);
   }
 
 }
 
 void PublicUrlDialog::applyIcons(Qt::ColorScheme scheme) noexcept {
 
- const auto iconColor = SW::Helper_t::currentIconColor(scheme);
+  const auto iconColor = SW::Helper_t::currentIconColor(scheme);
 
- if(openUrl_)
-   openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
+  if(newUrl_) newUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-new.svg", iconColor));
+  if(editUrl_) editUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
+  if(deleteUrl_) deleteUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
+  if(openUrl_) openUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
 
- ui->newToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-new.svg", iconColor));
- ui->editToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
- ui->quitarToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
- ui->openPushButton->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
+  ui->newToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-new.svg", iconColor));
+  ui->editToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
+  ui->quitarToolButton->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
+  ui->openPushButton->setIcon(SW::Helper_t::svgIcon(":/img/link-open.svg", iconColor));
 
 }
