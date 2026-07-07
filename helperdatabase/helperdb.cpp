@@ -143,24 +143,21 @@ namespace SW {
 
   }
 
-  bool HelperDataBase_t::deleteUrls(std::uint8_t op, uint32_t categoryId, uint32_t urlId) noexcept{
+  bool HelperDataBase_t::deleteUrls(DeleteUrlMode op, uint32_t categoryId, uint32_t urlId) noexcept{
 
-	bool ret=false;
-
-	if(op == 1){
+	if(op == DeleteUrlMode::ByCategory){
 		qry_.prepare(R"(DELETE FROM urls WHERE categoryid=?)");
 
 		qry_.addBindValue(categoryId, QSql::In);
-		ret = qry_.exec();
 
 	  }else{
 		qry_.prepare(R"(DELETE FROM urls WHERE url_id=?)");
 
 		qry_.addBindValue(urlId, QSql::In);
-		ret = qry_.exec();
+
 
 	  }
-	  return ret;
+	  return qry_.exec();
   }
 
   QHash<uint32_t, QString> HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept
