@@ -32,8 +32,11 @@ protected:
 	}
   }
 
+  virtual void insertFromMimeData(const QMimeData *source) override;
 private:
   QColor defaultColor_{Qt::black};
+
+
 };
 
 class SWTextEdit : public QWidget

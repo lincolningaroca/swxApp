@@ -9,6 +9,7 @@
 #include <QFontComboBox>
 #include <QFontComboBox>
 #include <QIcon>
+#include <QMimeData>
 #include <QSpinBox>
 #include <QStyle>
 #include <QTextCharFormat>
@@ -264,4 +265,19 @@ void SWTextEdit::applyIcons(const QColor &iconColor) noexcept {
   alignCenterAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-center.svg", iconColor));
   alignRightAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-align-rigth.svg",  iconColor));
   colorAction_->setIcon(SW::Helper_t::svgIcon(":/img/text-color.svg",   iconColor));
+}
+
+
+void SWInnerEdit::insertFromMimeData(const QMimeData *source)
+{
+  // Si hay texto HTML o enriquecido, lo ignoramos y solo usamos texto plano
+  if (source->hasText()) {
+	// Forzamos la inserción como texto plano, sin formato
+	QString plainText = source->text();
+	textCursor().insertText(plainText);
+	ensureCursorVisible();
+  } else {
+	// Si no hay texto, delegamos al comportamiento por defecto
+	QTextEdit::insertFromMimeData(source);
+  }
 }
