@@ -77,11 +77,11 @@ void ConfigDialog::initDialog() noexcept{
   ui->btnDark->setIcon(QIcon(":/img/dark.png"));
   ui->btnDark->setIconSize(QSize(32, 32));
 
-  auto *itemStyleApp = new QListWidgetItem(QIcon(":/img/fusion-style.png"), "Estilo de la aplicación");
+  auto *itemStyleApp = new QListWidgetItem(QIcon(":/img/style-fusion.png"), "Estilo de la aplicación");
   itemStyleApp->setSizeHint(QSize(130, 40));
   ui->listMenu->addItem(itemStyleApp);
 
-  ui->lblImagen->setPixmap(QPixmap(":/img/fusion-style.png").scaled(
+  ui->lblImagen->setPixmap(QPixmap(":/img/style-fusion.png").scaled(
 	256, 256, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   ui->lblImagen->setAlignment(Qt::AlignCenter);
 }
