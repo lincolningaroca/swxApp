@@ -258,6 +258,9 @@
    <property name="cursor">
     <cursorShape>PointingHandCursor</cursorShape>
    </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::ContextMenuPolicy::PreventContextMenu</enum>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -278,6 +281,9 @@
    <property name="cursor">
     <cursorShape>PointingHandCursor</cursorShape>
    </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::ContextMenuPolicy::PreventContextMenu</enum>
+   </property>
    <property name="windowTitle">
     <string>toolBar_2</string>
    </property>
@@ -294,6 +300,9 @@
    <property name="cursor">
     <cursorShape>PointingHandCursor</cursorShape>
    </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::ContextMenuPolicy::PreventContextMenu</enum>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -306,6 +315,9 @@
    <addaction name="btnSettings"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
+   <property name="contextMenuPolicy">
+    <enum>Qt::ContextMenuPolicy::PreventContextMenu</enum>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
