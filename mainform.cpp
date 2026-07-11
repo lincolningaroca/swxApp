@@ -170,8 +170,8 @@ MainForm::MainForm(QWidget *parent)
 	if(currentScheme_ == Qt::ColorScheme::Unknown){
 	  applyPreferredTheme(Qt::ColorScheme::Unknown);
 
-	  verifyUserState();
-	  updateLblInfo();
+	  // verifyUserState();
+	  // updateLblInfo();
 	}
   });
 
@@ -1400,3 +1400,12 @@ void MainForm::showEvent(QShowEvent *event){
 
 }
 
+void MainForm::changeEvent(QEvent *event){
+
+  if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange) {
+	verifyUserState();
+	updateLblInfo();
+  }
+
+  QMainWindow::changeEvent(event);
+}

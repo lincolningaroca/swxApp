@@ -134,4 +134,8 @@ protected:
   virtual void showEvent(QShowEvent *event) override;
 
 
+
+  // QWidget interface
+protected:
+  virtual void changeEvent(QEvent *event) override;
 };
