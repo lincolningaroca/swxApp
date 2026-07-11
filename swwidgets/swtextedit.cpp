@@ -7,7 +7,6 @@
 #include <QColor>
 #include <QColorDialog>
 #include <QFontComboBox>
-#include <QFontComboBox>
 #include <QIcon>
 #include <QMimeData>
 #include <QSpinBox>
