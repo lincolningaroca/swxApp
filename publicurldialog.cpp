@@ -217,8 +217,14 @@ void PublicUrlDialog::writeSettings(){
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
   settings.beginGroup("Public_url_dialog");
+
   settings.setValue("form_geometry", this->saveGeometry());
   settings.setValue("Header_state", ui->urlTableView->horizontalHeader()->saveState());
+
+  if(ui->categoryComboBox->count() > 1){
+
+	settings.setValue("lastCategory", ui->categoryComboBox->currentText());
+  }
   settings.endGroup();
 
 }
@@ -229,10 +235,21 @@ void PublicUrlDialog::readSettings(){
   settings.beginGroup("Public_url_dialog");
   const auto formGeometry = settings.value("form_geometry", QByteArray()).toByteArray();
   const auto headerState = settings.value("Header_state", QByteArray()).toByteArray();
+  const auto lastCategory = settings.value("lastCategory", QString()).toString();
   settings.endGroup();
 
   this->restoreGeometry(formGeometry);
   ui->urlTableView->horizontalHeader()->restoreState(headerState);
+
+  if(!lastCategory.isEmpty() && ui->categoryComboBox->count() > 1){
+
+	auto foundIndex = ui->categoryComboBox->findText(lastCategory);
+	if(foundIndex != -1){
+
+	  QSignalBlocker blocker(ui->categoryComboBox);
+	  ui->categoryComboBox->setCurrentIndex(foundIndex);
+	}
+  }
 
 }
 
