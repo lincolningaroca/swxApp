@@ -81,9 +81,6 @@ private:
   QAction* moveUrl_{ nullptr };
   QAction* exportToExcelFile_{nullptr};
 
-  QMenu* contextMenu_{nullptr};
-  QMenu* contextMenu{nullptr};
-
   const QHash<Qt::ColorScheme, QString> themeType_{
     {Qt::ColorScheme::Unknown, "Predeterminado del sistema"},
     {Qt::ColorScheme::Light, "Modo Claro"},
@@ -127,6 +124,7 @@ private slots:
   void on_showSettingsDialog();
   void on_showDescriptionDialog(const QModelIndex &index);
   void on_showChangePasswordDialog();
+  void on_showTableContextMenu(const QPoint &p);
 
 
 

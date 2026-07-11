@@ -85,6 +85,8 @@ MainForm::MainForm(QWidget *parent)
   canRestoreDataBase();
 
 
+  ui->tvUrl->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(ui->tvUrl, &QTableView::customContextMenuRequested, this, &MainForm::on_showTableContextMenu);
   /**
    * @brief QObject::connect
    * connect to btnResetPassword
@@ -294,14 +296,10 @@ void MainForm::on_showNewCategoryDialog(){
 
 void MainForm::checkStatusContextMenu(){
 
-  (static_cast<bool>(SW::Helper_t::sessionStatus_)) ? showPublicUrl_->setVisible(false) : showPublicUrl_->setVisible(true);
-
-  (ui->cboCategory->model()->rowCount() > 1 && ui->tvUrl->model()->rowCount() > 0)
-	? moveUrl_->setVisible(true) : moveUrl_->setVisible(false);
+  const bool sessionActive = (SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_start);
+  showPublicUrl_->setVisible(sessionActive);
 
 }
-
-
 
 void MainForm::verifyUserState(){
 
@@ -381,9 +379,8 @@ void MainForm::on_loadLoginForm(){
 void MainForm::on_showResetPasswordDialog(){
 
   ResetPasswordDialog resetDialog(this);
-  resetDialog.setWindowTitle(SW::Helper_t::appName().append(" - Restablecer clave o password"));
+  resetDialog.setWindowTitle(SW::Helper_t::appName()+" - Restablecer clave o password");
   resetDialog.exec();
-
 
 }
 
@@ -409,7 +406,7 @@ void MainForm::on_exportToExcel(){
 void MainForm::on_deleteCategory(){
 
   QMessageBox msgBox(this);
-  msgBox.setWindowTitle(SW::Helper_t::appName().append(QStringLiteral(" - Advertencia")));
+  msgBox.setWindowTitle(SW::Helper_t::appName()+" - Advertencia");
   msgBox.setText(QStringLiteral("<p style='color:#FB4934;'>"
 								"<cite><strong>Esta a punto de eliminar ésta categoría y todo su contenido.<br>"
 								"Recuerde que al aceptar, eliminará de forma permanente estos datos.<br>"
@@ -620,10 +617,10 @@ void MainForm::on_callLogout(){
 void MainForm::on_makeBackup(){
 
   QProcess process(this);
-  const auto path_app {SW::Helper_t::app_pathLocation().append("/tools/sqlite-tools-win-x64-3450100/sqlite3.exe")};
+  const auto path_app {SW::Helper_t::app_pathLocation()+"/tools/sqlite-tools-win-x64-3450100/sqlite3.exe"};
   // qInfo() << path_app << '\n';
 
-  const auto databasePath = SW::Helper_t::AppLocalDataLocation().append("/xdatabase.db");
+  const auto databasePath = SW::Helper_t::AppLocalDataLocation()+"/xdatabase.db";
   const auto filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Crear una copia de seguridad"), SW::Helper_t::getLastOpenedDirectory(),
 													 QStringLiteral("Archivos de copia de seguridad (*.bak)"));
 
@@ -675,7 +672,7 @@ void MainForm::on_makeBackup(){
 
 void MainForm::on_restoreDatabase(){
 
-  const auto dbasePath{SW::Helper_t::AppLocalDataLocation().append("/xdatabase.db")};
+  const auto dbasePath{SW::Helper_t::AppLocalDataLocation()+"/xdatabase.db"};
 
   if(!helperdb_.isDataBase_empty()){
 
@@ -713,7 +710,7 @@ void MainForm::on_restoreDatabase(){
 
   args << dbasePath << cmd.arg(pathBackup);
 
-  const auto app{SW::Helper_t::app_pathLocation().append("/tools/sqlite-tools-win-x64-3450100/sqlite3.exe")};
+  const auto app{SW::Helper_t::app_pathLocation()+"/tools/sqlite-tools-win-x64-3450100/sqlite3.exe"};
 
   QProcess process{this};
 
@@ -757,7 +754,7 @@ void MainForm::on_showAllDescription(){
 
   QMessageBox msgDescription(this);
 
-  msgDescription.setWindowTitle(qApp->applicationName().append(" - Descripción completa de la URL"));
+  msgDescription.setWindowTitle(qApp->applicationName()+" - Descripción completa de la URL");
   msgDescription.setIcon(QMessageBox::Information);
   msgDescription.setText(desc);
   msgDescription.setDetailedText(url);
@@ -832,7 +829,7 @@ void MainForm::on_firstTimeLoginDialog(){
 void MainForm::on_showSettingsDialog(){
 
   ConfigDialog settings(currentScheme_, this);
-  settings.setWindowTitle(SW::Helper_t::appName().append(" - Configuración"));
+  settings.setWindowTitle(SW::Helper_t::appName()+" - Configuración");
 
   // Apply: aplica y guarda sin cerrar el diálogo
   QObject::connect(&settings, &ConfigDialog::themeChanged, this, [this](Qt::ColorScheme scheme){
@@ -869,7 +866,7 @@ void MainForm::on_showDescriptionDialog(const QModelIndex &index){
 
   QDialog dlg(this);
   dlg.setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-  dlg.setWindowTitle(SW::Helper_t::appName().append(" - Descripción"));
+  dlg.setWindowTitle(SW::Helper_t::appName()+" - Descripción");
   dlg.resize(500, 300);
 
   auto *layout = new QVBoxLayout(&dlg);
@@ -899,6 +896,8 @@ void MainForm::on_showChangePasswordDialog(){
   chnDialog.exec();
 
 }
+
+
 
 void MainForm::setUpShowMenuAction(){
 
@@ -1101,29 +1100,45 @@ void MainForm::setUpCboCategoryContextMenu() noexcept{
 
 void MainForm::setUptvUrlContextMenu() noexcept{
 
-  contextMenu = new QMenu(this);
+  openUrl_ = new QAction(QStringLiteral("Abrir url en el navegador"), this);
+  editUrl_ = new QAction(QStringLiteral("Editar url"), this);
+  quitUrl_ = new QAction(QStringLiteral("Quitar url"), this);
 
-  openUrl_ = contextMenu->addAction(QStringLiteral("Abrir url en el navegador"));
-  editUrl_ = contextMenu->addAction(QStringLiteral("Editar url"));
-  quitUrl_ = contextMenu->addAction(QStringLiteral("Quitar url"));
-  contextMenu->addSeparator();
-  showDescDetail_ = contextMenu->addAction(QStringLiteral("Ver descripción de URL completa"));
+  showDescDetail_ = new QAction(QStringLiteral("Ver descripción de URL completa"), this);
 
-  contextMenu->addSeparator();
-  showPublicUrl_ = contextMenu->addAction(QStringLiteral("Ver url's públicas"));
+  showPublicUrl_ = new QAction(QStringLiteral("Ver url's públicas"));
 
-  contextMenu->addSeparator();
-  moveUrl_ = contextMenu->addAction(QStringLiteral("Mover url, a otra categoría"));
+  moveUrl_ = new QAction(QStringLiteral("Mover url, a otra categoría"), this);
 
-  //add a export to excel context menu
-
-  contextMenu->addSeparator();
   const auto exportToExcelFileIcon = QIcon(QStringLiteral(":/img/excelDocument.png"));
-  exportToExcelFile_ = contextMenu->addAction(exportToExcelFileIcon, QStringLiteral("Exportar datos a excel"));
-
-  ui->tvUrl->installEventFilter(this);
+  exportToExcelFile_ = new QAction(exportToExcelFileIcon, QStringLiteral("Exportar datos a excel"), this);
 
   checkStatusContextMenu();
+
+}
+
+void MainForm::on_showTableContextMenu(const QPoint& p){
+
+  QMenu tableMenu(this);
+
+  auto index = ui->tvUrl->indexAt(p);
+
+  if(index.isValid()){
+
+	tableMenu.addAction(openUrl_);
+	tableMenu.addAction(editUrl_);
+	tableMenu.addAction(quitUrl_);
+	tableMenu.addSeparator();
+	tableMenu.addAction(showDescDetail_);
+	tableMenu.addAction(showPublicUrl_);
+	tableMenu.addSeparator();
+	tableMenu.addAction(moveUrl_);
+	tableMenu.addSeparator();
+	tableMenu.addAction(exportToExcelFile_);
+
+  }
+
+  tableMenu.exec(ui->tvUrl->mapToGlobal(p));
 
 }
 
@@ -1298,7 +1313,7 @@ void MainForm::editAction(bool op) noexcept{
   ui->btnopen->setDisabled(op);
   ui->tvUrl->setDisabled(op);
 
-  contextMenu->setDisabled(op);
+  // contextMenu_->setDisabled(op);
 
   ui->btnCancel->setEnabled(op);
 
@@ -1345,7 +1360,7 @@ void MainForm::writeSettings() const noexcept{
 void MainForm::on_showAboutDialog(){
 
   AcercaDeDialog acercaDe(currentScheme_, this);
-  acercaDe.setWindowTitle(SW::Helper_t::appName().append(" - Acerca de"));
+  acercaDe.setWindowTitle(SW::Helper_t::appName()+" - Acerca de");
   acercaDe.exec();
 
 }
@@ -1393,15 +1408,15 @@ bool MainForm::eventFilter(QObject *watched, QEvent *event){
 	updateLblInfo();
   }
 
-  if(watched == ui->tvUrl && event->type() == QEvent::ContextMenu){
-	QContextMenuEvent* contextMenuEvent = dynamic_cast<QContextMenuEvent*>(event);
-	if(contextMenuEvent){
-	  contextMenu->exec(contextMenuEvent->globalPos());
+ //  if(watched == ui->tvUrl && event->type() == QEvent::ContextMenu){
+	// QContextMenuEvent* contextMenuEvent = dynamic_cast<QContextMenuEvent*>(event);
+	// if(contextMenuEvent){
+	//   contextMenu->exec(contextMenuEvent->globalPos());
 
-	  return true;
+	//   return true;
 
-	}
-  }
+	// }
+ //  }
 
   return QMainWindow::eventFilter(watched, event);
 }
