@@ -9,7 +9,7 @@ class ConfigDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit ConfigDialog(Qt::ColorScheme currentScheme, QWidget *parent = nullptr);
+  explicit ConfigDialog(Qt::ColorScheme currentScheme, bool isFusionActive, QWidget *parent = nullptr);
   ~ConfigDialog();
 
   // Retorna el esquema seleccionado por el usuario
@@ -21,6 +21,9 @@ private:
 
   Qt::ColorScheme selectedScheme_{Qt::ColorScheme::Unknown};
   Qt::ColorScheme originalScheme_{Qt::ColorScheme::Unknown};
+
+  bool selectedStyle_{false};
+  bool originalStyle_{false};
 
   void initDialog() noexcept;
   void setCurrentTheme(Qt::ColorScheme scheme) noexcept;
@@ -40,6 +43,7 @@ private slots:
 
 signals:
   void themeChanged(Qt::ColorScheme scheme);
+  void styleChanged(bool style);
 
   // QWidget interface
 protected:

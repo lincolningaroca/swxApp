@@ -28,6 +28,7 @@ private:
   Ui::MainForm *ui;
 
   MidleWidget *midleWidget{nullptr};
+  QString defaultStyleName_{};
   //metodos privados de la aplicacion
 private:
 
@@ -125,6 +126,7 @@ private slots:
   void on_showDescriptionDialog(const QModelIndex &index);
   void on_showChangePasswordDialog();
   void on_showTableContextMenu(const QPoint &p);
+  void on_styleChanged(bool style);
 
 
 
@@ -132,10 +134,5 @@ private slots:
 protected:
   virtual void closeEvent(QCloseEvent *event) override;
   virtual void showEvent(QShowEvent *event) override;
-
-
-
-  // QWidget interface
-protected:
   virtual void changeEvent(QEvent *event) override;
 };

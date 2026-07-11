@@ -6,21 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>482</width>
+    <width>560</width>
     <height>387</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QListWidget" name="listMenu">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
-         <width>140</width>
+         <width>180</width>
          <height>16777215</height>
         </size>
        </property>
@@ -32,7 +38,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="pageApariencia">
         <layout class="QVBoxLayout" name="vLayoutApariencia">
@@ -112,7 +118,7 @@
         </layout>
        </widget>
        <widget class="QWidget" name="pageGeneral">
-        <layout class="QVBoxLayout" name="vLayoutGeneral">
+        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QLabel" name="lblGeneral">
            <property name="text">
@@ -121,9 +127,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="chkRememberCategory">
+          <widget class="QCheckBox" name="chkFusionStyle">
            <property name="text">
-            <string>Recordar ultima categoria seleccionada</string>
+            <string>Establecer estilo fusión</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -131,22 +137,12 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="chkConfirmDelete">
+          <widget class="QLabel" name="lblImagen">
            <property name="text">
-            <string>Confirmar al eliminar una URL</string>
+            <string/>
            </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="chkRememberWindow">
-           <property name="text">
-            <string>Recordar posicion de ventana</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+           <property name="scaledContents">
+            <bool>false</bool>
            </property>
           </widget>
          </item>

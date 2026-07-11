@@ -27,6 +27,7 @@
 #include <QSqlQuery>
 #include <QSqlTableModel>
 #include <QStyleHints>
+#include <QStyleFactory>
 #include <QTimer>
 #include <QTextEdit>
 
@@ -37,6 +38,8 @@ MainForm::MainForm(QWidget *parent)
 {
 
   ui->setupUi(this);
+
+  defaultStyleName_ = qApp->style()->objectName();
 
 
   QObject::connect(ui->showHideDatabaseAction, &QAction::toggled, this, [this](bool checked = false){
@@ -170,8 +173,6 @@ MainForm::MainForm(QWidget *parent)
 	if(currentScheme_ == Qt::ColorScheme::Unknown){
 	  applyPreferredTheme(Qt::ColorScheme::Unknown);
 
-	  // verifyUserState();
-	  // updateLblInfo();
 	}
   });
 
@@ -829,7 +830,9 @@ void MainForm::on_firstTimeLoginDialog(){
 
 void MainForm::on_showSettingsDialog(){
 
-  ConfigDialog settings(currentScheme_, this);
+  bool isFusionActive = (qApp->style()->objectName().compare(QStringLiteral("fusion"), Qt::CaseInsensitive) == 0);
+
+  ConfigDialog settings(currentScheme_, isFusionActive, this);
   settings.setWindowTitle(SW::Helper_t::appName()+" - Configuración");
 
   // Apply: aplica y guarda sin cerrar el diálogo
@@ -838,6 +841,8 @@ void MainForm::on_showSettingsDialog(){
 	applyPreferredTheme(currentScheme_);
 
   });
+
+  QObject::connect(&settings, &ConfigDialog::styleChanged, this, &MainForm::on_styleChanged );
 
   // Aceptar: aplica solo si no se había aplicado ya con Apply
   if(settings.exec() == QDialog::Accepted){
@@ -1143,6 +1148,12 @@ void MainForm::on_showTableContextMenu(const QPoint& p){
 
 }
 
+void MainForm::on_styleChanged(bool style){
+
+  qApp->setStyle(QStyleFactory::create(style ? QStringLiteral("Fusion") : defaultStyleName_));
+
+}
+
 void MainForm::verifyContextMenu() noexcept{
 
   const auto categoryId = currentCategoryId();
@@ -1224,6 +1235,10 @@ void MainForm::readSettings() noexcept{
   settings.beginGroup(QStringLiteral("Theme"));
   const auto theme = settings.value(QStringLiteral("theme Value"), 0).toInt();
   currentScheme_ = static_cast<Qt::ColorScheme>(theme);
+
+  // LEER SI FUSION ESTABA ACTIVO (por defecto falso)
+  bool useFusion = settings.value(QStringLiteral("useFusionStyle"), false).toBool();
+  on_styleChanged(useFusion);
 
   settings.endGroup();
 
@@ -1340,6 +1355,10 @@ void MainForm::writeSettings() const noexcept{
   // Ahora usa currentScheme_ directamente, sin cboTheme
   settings.setValue(QStringLiteral("theme name"), themeType_.value(currentScheme_));
   settings.setValue(QStringLiteral("theme Value"), static_cast<uint32_t>(currentScheme_));
+
+  // GUARDAR EL ESTADO ACTUAL DEL ESTILO
+  bool isFusion = (qApp->style()->objectName().compare(QStringLiteral("fusion"), Qt::CaseInsensitive) == 0);
+  settings.setValue(QStringLiteral("useFusionStyle"), isFusion);
 
 
   settings.endGroup();

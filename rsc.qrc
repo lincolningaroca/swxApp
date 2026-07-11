@@ -42,5 +42,6 @@
         <file>img/contrasena.png</file>
         <file>img/link-new.svg</file>
         <file>img/public-url.svg</file>
+        <file>img/fusion-style.png</file>
     </qresource>
 </RCC>
