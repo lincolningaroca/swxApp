@@ -133,7 +133,5 @@ protected:
   virtual void closeEvent(QCloseEvent *event) override;
   virtual void showEvent(QShowEvent *event) override;
 
-  // QObject interface
-public:
-  virtual bool eventFilter(QObject *watched, QEvent *event) override;
+
 };

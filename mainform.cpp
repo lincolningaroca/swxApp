@@ -61,7 +61,6 @@ MainForm::MainForm(QWidget *parent)
 
 
   initFrm();
-  qApp->installEventFilter(this);
   setUpStatusBar();
 
   loadListCategory(userId_);
@@ -170,7 +169,9 @@ MainForm::MainForm(QWidget *parent)
 	// Si eligió Dark o Light fijo, ignoramos el cambio del SO
 	if(currentScheme_ == Qt::ColorScheme::Unknown){
 	  applyPreferredTheme(Qt::ColorScheme::Unknown);
-	  // verifyAppColorScheme();
+
+	  verifyUserState();
+	  updateLblInfo();
 	}
   });
 
@@ -1399,24 +1400,3 @@ void MainForm::showEvent(QShowEvent *event){
 
 }
 
-
-bool MainForm::eventFilter(QObject *watched, QEvent *event){
-
-  if(event->type() == QEvent::ApplicationPaletteChange){
-
-	verifyUserState();
-	updateLblInfo();
-  }
-
- //  if(watched == ui->tvUrl && event->type() == QEvent::ContextMenu){
-	// QContextMenuEvent* contextMenuEvent = dynamic_cast<QContextMenuEvent*>(event);
-	// if(contextMenuEvent){
-	//   contextMenu->exec(contextMenuEvent->globalPos());
-
-	//   return true;
-
-	// }
- //  }
-
-  return QMainWindow::eventFilter(watched, event);
-}
