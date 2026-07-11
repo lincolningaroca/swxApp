@@ -212,7 +212,11 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QTableView" name="tvUrl"/>
+        <widget class="QTableView" name="tvUrl">
+         <property name="showGrid">
+          <bool>false</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -240,8 +244,10 @@
     </property>
     <addaction name="showHideAction"/>
     <addaction name="showHideDatabaseAction"/>
-    <addaction name="separator"/>
     <addaction name="actionPreferencias"/>
+    <addaction name="separator"/>
+    <addaction name="separator"/>
+    <addaction name="showGridAction"/>
    </widget>
    <widget class="QMenu" name="menuPreferencias">
     <property name="title">
@@ -481,6 +487,11 @@
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="showGridAction">
+   <property name="text">
+    <string>Ver separadores de tabla</string>
    </property>
   </action>
  </widget>

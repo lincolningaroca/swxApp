@@ -218,6 +218,12 @@ MainForm::MainForm(QWidget *parent)
   QObject::connect(ui->actionActualizar_password, &QAction::triggered, this, &MainForm::on_showChangePasswordDialog);
   QObject::connect(ui->actionVer_url_s_publicas, &QAction::triggered, this, &MainForm::on_showPublicUrlDialog);
 
+  ui->showGridAction->setCheckable(true);
+  connect(ui->showGridAction, &QAction::toggled, this, [this](bool checked){
+	ui->tvUrl->setShowGrid(checked);
+	ui->tvUrl->viewport()->update();
+
+  });
 
 }
 
@@ -337,6 +343,14 @@ void MainForm::applyPreferredTheme(Qt::ColorScheme scheme){
   SW::Helper_t::set_Theme(scheme);
   qApp->setPalette(qApp->palette());
   applyIcons(scheme);
+
+  QPalette tablePalette = ui->tvUrl->palette();
+  if (scheme == Qt::ColorScheme::Dark || scheme == Qt::ColorScheme::Unknown) {
+	tablePalette.setColor(QPalette::AlternateBase, QColor(35, 35, 35));
+  } else {
+	tablePalette.setColor(QPalette::AlternateBase, QColor(245, 245, 245));
+  }
+  ui->tvUrl->setPalette(tablePalette);
   this->update();
 
 }
@@ -771,6 +785,8 @@ void MainForm::on_showPublicUrlDialog(){
   PublicUrlDialog publicDialog(currentScheme_, this);
   publicDialog.setWindowTitle("Direcciones url públicas");
 
+  publicDialog.setShowGrid(ui->tvUrl->showGrid());
+
   publicDialog.exec();
 
 }
@@ -1150,7 +1166,13 @@ void MainForm::on_showTableContextMenu(const QPoint& p){
 
 void MainForm::on_styleChanged(bool style){
 
-  qApp->setStyle(QStyleFactory::create(style ? QStringLiteral("Fusion") : defaultStyleName_));
+  if (style) {
+	qApp->setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
+
+  } else {
+	qApp->setStyle(QStyleFactory::create(defaultStyleName_));
+
+  }
 
 }
 
@@ -1187,6 +1209,11 @@ void MainForm::readSettings() noexcept{
   if(!headerState.isEmpty()){
 	ui->tvUrl->horizontalHeader()->restoreState(headerState);
   }
+
+  const bool showGrid = settings.value("showGrid", true).toBool(); // true por defecto
+  ui->showGridAction->setChecked(showGrid);
+  ui->tvUrl->setShowGrid(showGrid);
+
   settings.endGroup();
 
   settings.beginGroup(QStringLiteral("Editor"));
@@ -1344,6 +1371,7 @@ void MainForm::writeSettings() const noexcept{
 
   settings.beginGroup("TableView");
   settings.setValue("columnLayout", ui->tvUrl->horizontalHeader()->saveState());
+  settings.setValue("showGrid", ui->showGridAction->isChecked());
   settings.endGroup();
 
   if(ui->cboCategory->count() > 1 && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_closed){

@@ -19,6 +19,8 @@ public:
   explicit PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent = nullptr);
   ~PublicUrlDialog();
 
+  void setShowGrid(bool checked);
+
 private:
   Ui::PublicUrlDialog *ui;
 
@@ -42,6 +44,8 @@ private:
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 
   uint32_t currentCategoryId() const noexcept;
+  void applyTablePalette(Qt::ColorScheme scheme);
+
 
 
 private slots:

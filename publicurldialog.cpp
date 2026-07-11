@@ -45,12 +45,31 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   QObject::connect(ui->quitarToolButton, &QToolButton::clicked, this, PublicUrlDialog::on_deleteUrl);
   QObject::connect(ui->openPushButton, &QToolButton::clicked, this, &PublicUrlDialog::on_openUrl);
 
+  applyTablePalette(colorScheme);
 
 }
 
 PublicUrlDialog::~PublicUrlDialog(){
   delete ui;
 }
+
+void PublicUrlDialog::applyTablePalette(Qt::ColorScheme scheme) {
+
+  QPalette tablePalette = ui->urlTableView->palette();
+  if (scheme == Qt::ColorScheme::Dark || scheme == Qt::ColorScheme::Unknown) {
+	tablePalette.setColor(QPalette::AlternateBase, QColor(35, 35, 35));
+  } else {
+	tablePalette.setColor(QPalette::AlternateBase, QColor(245, 245, 245));
+  }
+  ui->urlTableView->setPalette(tablePalette);
+}
+
+void PublicUrlDialog::setShowGrid(bool checked){
+
+  ui->urlTableView->setShowGrid(checked);
+  ui->urlTableView->viewport()->update();
+}
+
 
 uint32_t PublicUrlDialog::currentCategoryId() const noexcept {
   return ui->categoryComboBox->currentData().isValid() ? ui->categoryComboBox->currentData().toUInt() : 1;
