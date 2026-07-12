@@ -24,6 +24,8 @@ struct HelperDataBase_t{
   HelperDataBase_t& operator=(const HelperDataBase_t&) = delete;
   HelperDataBase_t& operator=(HelperDataBase_t&&) = delete;
 
+
+
   bool userExists(QStringView user) noexcept;
   bool userExists() noexcept;
   bool categoryExists(QStringView category, uint32_t userId) noexcept;
@@ -57,10 +59,12 @@ struct HelperDataBase_t{
   QString validateRescueType(uint32_t userId) noexcept;
   QString getQuestion(uint32_t userId) noexcept;
 
+  const QString& errorMessage() const noexcept {return errorMessage_;}
+
 private:
   const QSqlDatabase db_{};
+  QString errorMessage_{};
   QSqlQuery qry_{};
-
 
 
 };

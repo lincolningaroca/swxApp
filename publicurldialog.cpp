@@ -24,6 +24,8 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
 
   setMaximumSize(QSize(950,500));
   loadDataComboBox();
+
+  readSettings();
   on_loadDataTableView();
 
   setupContextMenu();
@@ -32,10 +34,6 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
 
   ui->urlTableView->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(ui->urlTableView, &QTableView::customContextMenuRequested, this, &PublicUrlDialog::on_showContextMenu);
-
-
-  readSettings();
-
 
   QObject::connect(ui->categoryComboBox, &QComboBox::currentIndexChanged, this, &PublicUrlDialog::on_categorySelectedChanged);
 
@@ -83,6 +81,7 @@ void PublicUrlDialog::loadDataComboBox(){
   ui->categoryComboBox->clear();
 
   auto userId_ = helperDb.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
+  qDebug() << userId_;
   data_ = helperDb.loadList_Category(userId_);
 
   auto it = data_.constBegin();
@@ -144,7 +143,7 @@ void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 
 	// Leer directo de BD para evitar ambigüedad con el modelo
 	QSqlQuery query(db_);
-	query.prepare("SELECT url_id, url, desc FROM urls WHERE url_id = ?");
+	query.prepare("SELECT url_id, url_text, url_desc FROM urls WHERE url_id = ?");
 	query.addBindValue(id);
 
 	if(!query.exec() || !query.next()){
@@ -167,7 +166,7 @@ void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 void PublicUrlDialog::on_loadDataTableView(){
 
   const auto categoryId_ = currentCategoryId();
-
+  qDebug() <<"category id= "<<categoryId_;
   SWTableModel* xxxModel_ = new SWTableModel(this, db_);
   xxxModel_->setTable(QStringLiteral("urls"));
   xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId_));

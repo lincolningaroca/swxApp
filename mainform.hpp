@@ -46,7 +46,7 @@ private:
   void setUpTableHeaders() const noexcept;
   void canCreateBackUp() const noexcept;
   void canStartSession() noexcept;
-  void setUpCboCategoryContextMenu() noexcept;
+
   void setUptvUrlContextMenu() noexcept;
   void verifyContextMenu() noexcept;
   void openUrl() noexcept;

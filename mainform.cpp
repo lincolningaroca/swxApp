@@ -289,7 +289,8 @@ void MainForm::on_showNewCategoryDialog(){
 	return;
 
   if(!helperdb_.saveCategoryData(newCategory.category(), newCategory.description(), userId_)){
-	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n"));
+	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n%1").arg(
+														   helperdb_.errorMessage()));
 	return;
   }
 
@@ -572,7 +573,7 @@ void MainForm::on_btnEdit(){
 
   const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
   QSqlQuery query(db_);
-  query.prepare("SELECT desc FROM urls WHERE url_id = ?");
+  query.prepare("SELECT url_desc FROM urls WHERE url_id = ?");
   query.addBindValue(urlId);
   if(query.exec() && query.next()){
 
@@ -878,7 +879,7 @@ void MainForm::on_showDescriptionDialog(const QModelIndex &index){
 
   // Traer directamente de la base de datos
   QSqlQuery query(db_);
-  query.prepare("SELECT desc FROM urls WHERE url_id = ?");
+  query.prepare("SELECT url_desc FROM urls WHERE url_id = ?");
   query.addBindValue(urlId);
 
   QString desc{};
@@ -1098,6 +1099,7 @@ void MainForm::canRestoreDataBase() const noexcept{
   ui->btnRestore->setVisible(static_cast<bool>(SW::Helper_t::sessionStatus_));
 
 }
+//revisar esta funcion, puede ser eliminada, ya que se cambio a postgresql
 
 void MainForm::canCreateBackUp() const noexcept{
   ui->btnBackUp->setVisible(hasValidTableData());
@@ -1108,15 +1110,6 @@ void MainForm::canStartSession() noexcept{
   ui->btnLogIn->setEnabled(helperdb_.userExists());
   ui->btnResetPassword->setEnabled(helperdb_.userExists());
   ui->firstTimeLogInBtn->setVisible(!helperdb_.userExists());
-
-}
-
-void MainForm::setUpCboCategoryContextMenu() noexcept{
-
-  const QIcon icon(QStringLiteral(":/img/118277.png"));
-  ui->cboCategory->setContextMenuPolicy(Qt::ActionsContextMenu);
-  delCategory_ = new QAction(icon, QStringLiteral("Forzar eliminación de categoría"),this);
-  ui->cboCategory->addAction(delCategory_);
 
 }
 
@@ -1294,7 +1287,7 @@ void MainForm::setCboCategoryToolTip() noexcept{
 }
 
 
-
+//revisar esta funcion, puede ser eliminada, ya que se cambio a postgresql
 bool MainForm::hasValidTableData() const noexcept{
 
   const auto tables = db_.tables(QSql::Tables);
