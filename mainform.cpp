@@ -41,7 +41,6 @@ MainForm::MainForm(QWidget *parent)
 
   defaultStyleName_ = qApp->style()->objectName();
 
-
   QObject::connect(ui->showHideDatabaseAction, &QAction::toggled, this, [this](bool checked = false){
 
 	ui->dataBasetoolBar->setVisible(checked);
@@ -55,7 +54,9 @@ MainForm::MainForm(QWidget *parent)
 
 	ui->preferenceToolBar->setVisible(checked);
   });
+
   setUpShowMenuAction();
+
 
   QObject::connect(ui->actionPreference, &QAction::triggered, this, &MainForm::on_showSettingsDialog);
 
@@ -63,12 +64,15 @@ MainForm::MainForm(QWidget *parent)
   userId_ = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
 
 
+
   initFrm();
+
   setUpStatusBar();
 
   loadListCategory(userId_);
 
   setUpTable(currentCategoryId());
+
 
   QObject::connect(ui->tvUrl, &QTableView::doubleClicked, this, &MainForm::on_showDescriptionDialog);
   canCreateBackUp();
@@ -80,15 +84,13 @@ MainForm::MainForm(QWidget *parent)
   /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //context menu implementation
 
-  setUpCboCategoryContextMenu();
   setUptvUrlContextMenu();
-  verifyContextMenu();
-
   canRestoreDataBase();
 
 
   ui->tvUrl->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(ui->tvUrl, &QTableView::customContextMenuRequested, this, &MainForm::on_showTableContextMenu);
+
   /**
    * @brief QObject::connect
    * connect to btnResetPassword
@@ -99,11 +101,8 @@ MainForm::MainForm(QWidget *parent)
    * @brief QObject::connect
    */
   QObject::connect(exportToExcelFile_, &QAction::triggered, this, &MainForm::on_exportToExcel);
-  /**
-   * @brief QObject::connect
-   */
-  QObject::connect(delCategory_, &QAction::triggered, this, &MainForm::on_deleteCategory);
-  /**
+
+/**
    * @brief QObject::connect
    * btnDeleteCategory
    */
@@ -183,8 +182,7 @@ MainForm::MainForm(QWidget *parent)
 
   setCboCategoryToolTip();
   hastvUrlData();
-
-  /**
+   /**
    * @brief QObject::connect
    */
   QObject::connect(ui->btnLogIn, &QAction::triggered, this, &MainForm::on_loadLoginForm);
@@ -224,6 +222,7 @@ MainForm::MainForm(QWidget *parent)
 	ui->tvUrl->viewport()->update();
 
   });
+
 
 }
 
@@ -476,7 +475,6 @@ void MainForm::on_addNewUrl(){
 	  midleWidget->clearInputs();
 
 	  setUpTable(currentCategoryId());
-	  verifyContextMenu();
 
 	  hastvUrlData();
 	  checkStatusContextMenu();
@@ -557,8 +555,6 @@ void MainForm::on_quitUrl(){
 	}
 
   }
-
-  verifyContextMenu();
   hastvUrlData();
 
 }
@@ -594,7 +590,6 @@ void MainForm::on_categorySelectedChanged(int index){
   Q_UNUSED(index);
 
   setUpTable(currentCategoryId());
-  verifyContextMenu();
 
   setCboCategoryToolTip();
   hastvUrlData();
@@ -631,11 +626,14 @@ void MainForm::on_callLogout(){
 
 }
 
+/**
+ * @brief esta funcion sera reemplazada, por una de postgreql
+ */
 void MainForm::on_makeBackup(){
 
   QProcess process(this);
   const auto path_app {SW::Helper_t::app_pathLocation()+"/tools/sqlite-tools-win-x64-3450100/sqlite3.exe"};
-  // qInfo() << path_app << '\n';
+  //
 
   const auto databasePath = SW::Helper_t::AppLocalDataLocation()+"/xdatabase.db";
   const auto filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Crear una copia de seguridad"), SW::Helper_t::getLastOpenedDirectory(),
@@ -742,7 +740,6 @@ void MainForm::on_restoreDatabase(){
   QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("La base de datos, fue restaurada"));
   db.open();
 
-  // ui->cboCategory->clear();
   loadListCategory(userId_);
   setUpTable(currentCategoryId());
   has_data();
@@ -820,7 +817,6 @@ void MainForm::on_moveUrl(){
 	  return;
 
 	}
-	// qInfo() <<categoryid;
 
 	if(!helperdb_.moveUrlToOtherCategory(categoryid, urlid)){
 	  QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al intentar actualizar.\n"));
@@ -828,7 +824,7 @@ void MainForm::on_moveUrl(){
 	}
 
 	setUpTable(currentCategoryId());
-	verifyContextMenu();
+
 	hastvUrlData();
   }
 
@@ -1006,8 +1002,6 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   if (editUrl_)      editUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-edit.svg", iconColor));
   if (quitUrl_)      quitUrl_->setIcon(SW::Helper_t::svgIcon(":/img/link-delete.svg", iconColor));
   if (showPublicUrl_) showPublicUrl_->setIcon(SW::Helper_t::svgIcon(":/img/public-url.svg", iconColor));
-  // if (moveUrl_)      moveUrl_->setIcon(SW::Helper_t::svgIcon(":/img/move-right.svg", iconColor));
-  if (delCategory_)  delCategory_->setIcon(SW::Helper_t::svgIcon(":/img/category-delete.svg", iconColor));
 
   midleWidget->applyIcons(iconColor);
 
@@ -1095,6 +1089,9 @@ void MainForm::setUpTableHeaders() const noexcept{
 
 }
 
+/**
+ * @brief revisar esta funcion, puede ser eliminada, ya que se cambio a postgresql
+ */
 void MainForm::canRestoreDataBase() const noexcept{
   ui->btnRestore->setVisible(static_cast<bool>(SW::Helper_t::sessionStatus_));
 
@@ -1115,7 +1112,9 @@ void MainForm::canStartSession() noexcept{
 
 void MainForm::setUptvUrlContextMenu() noexcept{
 
+
   openUrl_ = new QAction(QStringLiteral("Abrir url en el navegador"), this);
+
   editUrl_ = new QAction(QStringLiteral("Editar url"), this);
   quitUrl_ = new QAction(QStringLiteral("Quitar url"), this);
 
@@ -1125,10 +1124,13 @@ void MainForm::setUptvUrlContextMenu() noexcept{
 
   moveUrl_ = new QAction(QStringLiteral("Mover url, a otra categoría"), this);
 
+
   const auto exportToExcelFileIcon = QIcon(QStringLiteral(":/img/excelDocument.png"));
   exportToExcelFile_ = new QAction(exportToExcelFileIcon, QStringLiteral("Exportar datos a excel"), this);
 
+
   checkStatusContextMenu();
+
 
 }
 
@@ -1169,15 +1171,6 @@ void MainForm::on_styleChanged(bool style){
 
 }
 
-void MainForm::verifyContextMenu() noexcept{
-
-  const auto categoryId = currentCategoryId();
-
-  auto [res, errMessage] = helperdb_.verifyDeleteCategory(categoryId);
-  //      qDebug()<<count;
-  (res) ? delCategory_->setDisabled(true) : delCategory_->setEnabled(true);
-
-}
 
 void MainForm::openUrl() noexcept{
 
@@ -1192,10 +1185,12 @@ void MainForm::openUrl() noexcept{
 
 void MainForm::readSettings() noexcept{
 
+
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
 
   restoreGeometry(settings.value("position", QByteArray()).toByteArray());
   restoreState(settings.value("state", QByteArray()).toByteArray());
+
 
   settings.beginGroup("TableView");
   auto headerState = settings.value("columnLayout", QByteArray()).toByteArray();
@@ -1209,11 +1204,13 @@ void MainForm::readSettings() noexcept{
 
   settings.endGroup();
 
+
   settings.beginGroup(QStringLiteral("Editor"));
 
   const auto fontFamily = settings.value(QStringLiteral("fontFamily"), "Arial").toString();
   const auto fontSize = settings.value(QStringLiteral("fontSize"), 10).toInt();
   const auto colorStr = settings.value(QStringLiteral("textColor"), "").toString();
+
 
   QColor textColor{};
 
@@ -1229,7 +1226,9 @@ void MainForm::readSettings() noexcept{
 
   midleWidget->restoreFont(fontFamily, fontSize, textColor);
 
+
   auto ret = SW::Helper_t::nativeRegistryKeyExists("category name");
+
 
   QString categoryName{};
   if(ret && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_closed){
@@ -1258,11 +1257,13 @@ void MainForm::readSettings() noexcept{
 
   // LEER SI FUSION ESTABA ACTIVO (por defecto falso)
   bool useFusion = settings.value(QStringLiteral("useFusionStyle"), false).toBool();
+
   on_styleChanged(useFusion);
 
   settings.endGroup();
 
   applyPreferredTheme(static_cast<Qt::ColorScheme>(theme));
+
 
 }
 
@@ -1349,8 +1350,6 @@ void MainForm::editAction(bool op) noexcept{
   ui->btnopen->setDisabled(op);
   ui->tvUrl->setDisabled(op);
 
-  // contextMenu_->setDisabled(op);
-
   ui->btnCancel->setEnabled(op);
 
 }
@@ -1421,7 +1420,7 @@ void MainForm::closeEvent(QCloseEvent *event){
 
   writeSettings();
   QMainWindow::closeEvent(event);
-  // event->accept();
+
 }
 
 

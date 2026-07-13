@@ -129,44 +129,91 @@ bool initializeDefaultData(){
 
 int main(int argc, char *argv[])
 {
-  QApplication a(argc, argv);
+ //  QApplication a(argc, argv);
 
-  a.setApplicationName(QStringLiteral("SWUrlManager"));
-  a.setApplicationVersion(QStringLiteral("1.0"));
-  a.setOrganizationName(QStringLiteral("SWSystem's"));
+ //  a.setApplicationName(QStringLiteral("SWUrlManager"));
+ //  a.setApplicationVersion(QStringLiteral("1.0"));
+ //  a.setOrganizationName(QStringLiteral("SWSystem's"));
 
-  const QString serverName{a.applicationName()};
-  if(SingleIntsanceManager::isRunning(serverName)){
-	// QMessageBox::warning(nullptr, qApp->applicationName(), "Ya existe una instancia de la aplicación corriendo.");
-	return -1;
-  }
+ //  const QString serverName{a.applicationName()};
+ //  if(SingleIntsanceManager::isRunning(serverName)){
+	// // QMessageBox::warning(nullptr, qApp->applicationName(), "Ya existe una instancia de la aplicación corriendo.");
+	// return -1;
+ //  }
 
-  if(!SingleIntsanceManager::initServer(serverName)){
-	QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
-	return -1;
-  }
+ //  if(!SingleIntsanceManager::initServer(serverName)){
+	// QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
+	// return -1;
+ //  }
 
-  // 1. Conectar a la base de datos PostgreSQL
-  if(!connectToDatabase()){
-	return -1;
-  }
+ //  // 1. Conectar a la base de datos PostgreSQL
+ //  if(!connectToDatabase()){
+	// return -1;
+ //  }
 
-  // 2. Verificar e inicializar datos por defecto (usuario 'public')
-  if(!initializeDefaultData()){
-	return -1;
-  }
+ //  // 2. Verificar e inicializar datos por defecto (usuario 'public')
+ //  if(!initializeDefaultData()){
+	// return -1;
+ //  }
 
-  //Creacion de la carpeta de la aplicación
-  QDir dir(SW::Helper_t::AppLocalDataLocation());
-  if(!dir.exists()){
-	if(SW::Helper_t::createDataBase_dir())
-	  qInfo() << "Carpeta del sistema creado!";
-  }
+ //  //Creacion de la carpeta de la aplicación
+ //  QDir dir(SW::Helper_t::AppLocalDataLocation());
+ //  if(!dir.exists()){
+	// if(SW::Helper_t::createDataBase_dir())
+	//   qInfo() << "Carpeta del sistema creado!";
+ //  }
 
 
 
-  MainForm w;
-  w.setWindowTitle(a.applicationName());
-  w.show();
-  return a.exec();
+ //  MainForm w;
+ //  w.setWindowTitle(a.applicationName());
+ //  w.show();
+ //  return a.exec();
+ QApplication a(argc, argv);
+ a.setApplicationName(QStringLiteral("SWUrlManager"));
+ a.setApplicationVersion(QStringLiteral("1.0"));
+ a.setOrganizationName(QStringLiteral("SWSystem's"));
+
+ const QString serverName{a.applicationName()};
+ if(SingleIntsanceManager::isRunning(serverName)){
+   return -1;
+ }
+ if(!SingleIntsanceManager::initServer(serverName)){
+   QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
+   return -1;
+ }
+
+ // 1. Conectar a la base de datos PostgreSQL
+ qInfo() << "Conectando a PostgreSQL...";
+ if(!connectToDatabase()){
+   return -1;
+ }
+
+ // 2. Verificar e inicializar datos por defecto (usuario 'public')
+ qInfo() << "Verificando usuario 'public'...";
+ if(!initializeDefaultData()){
+   return -1;
+ }
+
+ //Creacion de la carpeta de la aplicación
+ QDir dir(SW::Helper_t::AppLocalDataLocation());
+ if(!dir.exists()){
+   if(SW::Helper_t::createDataBase_dir())
+	 qInfo() << "Carpeta del sistema creado!";
+ }
+
+ qInfo() << "Creando MainForm...";
+ MainForm w;
+ qInfo() << "MainForm creado. Estableciendo título...";
+
+ w.setWindowTitle(a.applicationName());
+ qInfo() << "Mostrando MainForm...";
+
+ w.show();
+ qInfo() << "MainForm mostrado. Iniciando event loop...";
+
+ int result = a.exec();
+ qInfo() << "Event loop terminado con código:" << result;
+
+ return result;
 }

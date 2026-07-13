@@ -73,7 +73,6 @@ private:
 
   const QSqlDatabase db_{};
 
-  QAction* delCategory_{ nullptr };
   QAction* openUrl_{ nullptr };
   QAction* editUrl_{ nullptr };
   QAction* quitUrl_{ nullptr };
