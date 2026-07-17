@@ -1,5 +1,5 @@
 #include "helperdb.hpp"
-#include <QFile>
+
 #include <QSqlError>
 #include <QStringView>
 
