@@ -7,110 +7,146 @@ namespace SW {
 
 HelperDataBase_t::HelperDataBase_t()
 :db_{QSqlDatabase::database(QStringLiteral("xxxConection"))},
-  qry_(db_)
+  qry_(db_),
+encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
 {
 }
 
-bool HelperDataBase_t::userExists(QStringView user) noexcept{
+bool HelperDataBase_t::userExists(QStringView user) noexcept {
 
-	qry_.prepare(R"(SELECT COUNT(*) FROM users WHERE user_name = ?)");
-	qry_.addBindValue(SW::Helper_t::hashGenerator(user.toString().toLatin1()));
-	if(qry_.exec()){
-		qry_.first();
-	} else {
-		errorMessage_ = qry_.lastError().text();
-	}
-	return (qry_.value(0).toInt() == 1);
+  qry_.prepare(R"(SELECT fn_user_exists(?))");
+  qry_.addBindValue(user.toString());  // texto plano — fn_user_exists hashea internamente
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  return qry_.first() ? qry_.value(0).toBool() : false;
 }
 
-bool HelperDataBase_t::userExists() noexcept{
+bool HelperDataBase_t::userExists() noexcept {
 
-	auto res{0};
-	qry_.prepare(R"(SELECT COUNT(user_name) FROM users WHERE user_name <> ?)");
-	qry_.addBindValue(SW::Helper_t::defaultUser, QSql::In);
-	if(qry_.exec()){
-		qry_.first();
-		res = qry_.value(0).toInt();
-	} else {
-		errorMessage_ = qry_.lastError().text();
-	}
-	return (res >= 1);
+  qry_.prepare(R"(SELECT fn_any_user_exists())");
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  return qry_.first() ? qry_.value(0).toBool() : false;
 }
 
-bool HelperDataBase_t::categoryExists(QStringView category, uint32_t userId) noexcept{
+// bool HelperDataBase_t::userExists() noexcept{
 
-	qry_.prepare(R"(SELECT COUNT(*) FROM category WHERE category_name = ? AND userid = ?)");
-	qry_.addBindValue(category.toString());
-	qry_.addBindValue(userId);
-	if(qry_.exec()){
-		qry_.first();
-	} else {
-		errorMessage_ = qry_.lastError().text();
-	}
-	return (qry_.value(0).toUInt() == 1);
+// 	auto res{0};
+// 	qry_.prepare(R"(SELECT COUNT(user_name) FROM users WHERE user_name <> ?)");
+// 	qry_.addBindValue(SW::Helper_t::defaultUser, QSql::In);
+// 	if(qry_.exec()){
+// 		qry_.first();
+// 		res = qry_.value(0).toInt();
+// 	} else {
+// 		errorMessage_ = qry_.lastError().text();
+// 	}
+// 	return (res >= 1);
+// }
+
+
+bool HelperDataBase_t::categoryExists(QStringView category, uint32_t userId) noexcept {
+
+  qry_.prepare(R"(SELECT fn_category_exists(?, ?))");
+  qry_.addBindValue(category.toString());
+  qry_.addBindValue(userId);
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  return qry_.first() ? qry_.value(0).toBool() : false;
 }
 
-bool HelperDataBase_t::urlExists(QStringView url, uint32_t categoryid) noexcept{
+// bool HelperDataBase_t::urlExists(QStringView url, uint32_t categoryid) noexcept{
 
-	qry_.prepare(R"(SELECT COUNT(*) FROM urls WHERE url_text = ? AND categoryid = ?)");
-	auto dataEncrypted = SW::Helper_t::encrypt(url.toString().simplified());
-	qry_.addBindValue(dataEncrypted);
-	qry_.addBindValue(categoryid);
-	if(qry_.exec()){
-		qry_.first();
-	} else {
-		errorMessage_ = qry_.lastError().text();
-	}
-	return (qry_.value(0).toInt() == 1);
+// 	qry_.prepare(R"(SELECT COUNT(*) FROM urls WHERE url_text = ? AND categoryid = ?)");
+// 	auto dataEncrypted = SW::Helper_t::encrypt(url.toString().simplified());
+// 	qry_.addBindValue(dataEncrypted);
+// 	qry_.addBindValue(categoryid);
+// 	if(qry_.exec()){
+// 		qry_.first();
+// 	} else {
+// 		errorMessage_ = qry_.lastError().text();
+// 	}
+// 	return (qry_.value(0).toInt() == 1);
+// }
+
+bool HelperDataBase_t::urlExists(QStringView url, uint32_t categoryid) noexcept {
+
+  qry_.prepare(R"(SELECT fn_url_exists(?, ?))");
+  qry_.addBindValue(url.toString().simplified());
+  qry_.addBindValue(categoryid);
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  return qry_.first() ? qry_.value(0).toBool() : false;
 }
+
 
 bool HelperDataBase_t::createUser(QStringView user, QStringView password, QStringView user_prof,
-								   QStringView rescue_type, QStringView val1, QStringView val2) noexcept{
+								  QStringView rescue_type, QStringView val1, QStringView val2) noexcept{
 
-	qry_.prepare(R"(INSERT INTO users(user_name, user_password, user_profile, rescue_type, first_value, confirm_value)
-					VALUES(?, ?, ?, ?, ?, ?))");
-	qry_.addBindValue(user.toString());
-	qry_.addBindValue(password.toString());
-	qry_.addBindValue(user_prof.toString());
-	qry_.addBindValue(rescue_type.toString());
-	qry_.addBindValue(val1.toString());
-	qry_.addBindValue(val2.toString());
+  qry_.prepare(R"(SELECT fn_create_user(?,?,?,?,?,?,?))");
+  qry_.addBindValue(user.toString());
+  qry_.addBindValue(password.toString());
+  qry_.addBindValue(user_prof.toString());
+  qry_.addBindValue(rescue_type.toString());
+  qry_.addBindValue(val1.toString());
+  qry_.addBindValue(val2.toString());
+  qry_.addBindValue(encryptionKey_);
 
-	bool result = qry_.exec();
-	if(!result){
-		errorMessage_ = qry_.lastError().text();
-	} else {
-		errorMessage_.clear();
-	}
-	return result;
+  bool result = qry_.exec();
+  if(!result){
+	errorMessage_ = qry_.lastError().text();
+  } else {
+	errorMessage_.clear();
+  }
+  return result;
 }
 
 bool HelperDataBase_t::logIn(QStringView user, QStringView password) noexcept{
+  qry_.prepare(R"(SELECT fn_login(?, ?))");
+  qry_.addBindValue(user.toString());
+  qry_.addBindValue(password.toString());
 
-	qry_.prepare(R"(SELECT COUNT(*) FROM users WHERE user_name = ? AND user_password = ?)");
-	qry_.addBindValue(SW::Helper_t::hashGenerator(user.toString().simplified().toLatin1()));
-	qry_.addBindValue(SW::Helper_t::hashGenerator(password.toString().simplified().toLatin1()));
-	if(qry_.exec())
-		qry_.first();
-	else
-		errorMessage_ = qry_.lastError().text();
-	return(qry_.value(0).toInt() == 1);
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  if(!qry_.first()) return false;
+
+  // PostgreSQL BOOLEAN → Qt lo devuelve como bool directamente
+  return qry_.value(0).toBool();
 }
 
-bool HelperDataBase_t::saveCategoryData(QStringView catName, QStringView desc, uint32_t userid) noexcept{
 
-	qry_.prepare(R"(INSERT INTO category(category_name, category_desc, userid) VALUES(?, ?, ?))");
-	qry_.addBindValue(catName.toString().simplified().toUpper(), QSql::In);
-	qry_.addBindValue(desc.toString().simplified().toUpper(), QSql::In);
-	qry_.addBindValue(userid, QSql::In);
+bool HelperDataBase_t::saveCategoryData(QStringView catName, QStringView desc, uint32_t userid) noexcept {
 
-	bool result = qry_.exec();
-	if(!result){
-		errorMessage_ = qry_.lastError().text();
-	} else {
-		errorMessage_.clear();
-	}
-	return result;
+  qry_.prepare(R"(SELECT fn_save_category(?, ?, ?))");
+  qry_.addBindValue(catName.toString());
+  qry_.addBindValue(desc.toString());
+  qry_.addBindValue(userid);
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  errorMessage_.clear();
+  return true;
 }
 
 bool HelperDataBase_t::updateCategory(QStringView url, QStringView desc, uint32_t category_id, uint32_t user_id) noexcept{
@@ -130,22 +166,38 @@ bool HelperDataBase_t::updateCategory(QStringView url, QStringView desc, uint32_
 	return result;
 }
 
-bool HelperDataBase_t::saveData_url(QStringView url, QStringView desc, std::uint32_t id) noexcept{
+// bool HelperDataBase_t::saveData_url(QStringView url, QStringView desc, std::uint32_t id) noexcept{
 
-	qry_.prepare(R"(INSERT INTO urls(url_text, url_desc, categoryid) VALUES(?, ?, ?))");
-	auto encryptData = SW::Helper_t::encrypt(url.toString().simplified());
-	qry_.addBindValue(encryptData, QSql::In);
-	auto descData = SW::Helper_t::encrypt(desc.toString());
-	qry_.addBindValue(descData, QSql::In);
-	qry_.addBindValue(id, QSql::In);
+// 	qry_.prepare(R"(INSERT INTO urls(url_text, url_desc, categoryid) VALUES(?, ?, ?))");
+// 	auto encryptData = SW::Helper_t::encrypt(url.toString().simplified());
+// 	qry_.addBindValue(encryptData, QSql::In);
+// 	auto descData = SW::Helper_t::encrypt(desc.toString());
+// 	qry_.addBindValue(descData, QSql::In);
+// 	qry_.addBindValue(id, QSql::In);
 
-	bool result = qry_.exec();
-	if(!result){
-		errorMessage_ = qry_.lastError().text();
-	} else {
-		errorMessage_.clear();
-	}
-	return result;
+// 	bool result = qry_.exec();
+// 	if(!result){
+// 		errorMessage_ = qry_.lastError().text();
+// 	} else {
+// 		errorMessage_.clear();
+// 	}
+// 	return result;
+// }
+bool HelperDataBase_t::saveData_url(QStringView url, QStringView desc, uint32_t id) noexcept {
+
+  qry_.prepare(R"(SELECT fn_save_url(?, ?, ?, ?))");
+  qry_.addBindValue(url.toString().simplified());
+  qry_.addBindValue(desc.toString());
+  qry_.addBindValue(id);
+  qry_.addBindValue(encryptionKey_);
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return false;
+  }
+
+  errorMessage_.clear();
+  return true;
 }
 
 bool HelperDataBase_t::updateData_url(QStringView url, QStringView desc, uint32_t id, uint32_t categoryId) noexcept{
@@ -273,20 +325,22 @@ bool HelperDataBase_t::isDataBase_empty() noexcept {
 	return (count == tables.size()-1);
 }
 
+
+
 int HelperDataBase_t::getUser_id(const QString& user, SW::User user_profile) noexcept {
 
-	auto userProf_ = SW::Helper_t::currentUser_.value(user_profile);
-	int ret_value{0};
-	qry_.prepare(R"(SELECT user_id FROM users WHERE user_name = ? AND user_profile = ?)");
-	qry_.addBindValue(user);
-	qry_.addBindValue(userProf_.simplified());
-	if(qry_.exec()){
-		if(qry_.first())
-			ret_value = qry_.value(0).toInt();
-	}else
-		errorMessage_ = qry_.lastError().text();
-	return ret_value;
+  qry_.prepare(R"(SELECT fn_get_user_id(?, ?))");
+  qry_.addBindValue(user);
+  qry_.addBindValue(SW::Helper_t::currentUser_.value(user_profile).simplified());
+
+  if(!qry_.exec()){
+	errorMessage_ = qry_.lastError().text();
+	return 0;
+  }
+
+  return qry_.first() ? qry_.value(0).toInt() : 0;
 }
+
 
 QStringList HelperDataBase_t::dataCategory(uint32_t category_id) noexcept {
 

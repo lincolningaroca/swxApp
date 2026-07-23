@@ -79,7 +79,8 @@ bool publicUserExists(){
   if(!db.isOpen()) return false;
 
   QSqlQuery qry(db);
-  qry.prepare(R"(SELECT COUNT(*) FROM users WHERE user_name = 'public')");
+  qry.prepare(R"(SELECT fn_user_exists(?))");
+  qry.addBindValue(QStringLiteral("public"));
 
   if(qry.exec() && qry.next()){
 	return (qry.value(0).toInt() > 0);

@@ -20,6 +20,37 @@ extern "C"{
 
 namespace SW {
 
+// En util/helper.cpp
+QString Helper_t::deriveEncryptionKey() noexcept {
+
+  // Material único por instalación — no hardcodeado
+  const auto machineId  = QSysInfo::machineUniqueId();
+  const auto orgName    = qApp->organizationName().toLatin1();
+  const auto appName    = qApp->applicationName().toLatin1();
+
+  // Salt desde datos del sistema
+  const QByteArray salt = machineId + orgName + appName;
+
+  // Passphrase base — no es la clave final
+  const QByteArray passphrase = machineId + QByteArray("SWSystem's_xApp");
+
+  // Derivar clave con PBKDF2-SHA256 — 100000 iteraciones
+  QByteArray derived(32, 0);  // 256 bits
+
+  PKCS5_PBKDF2_HMAC(
+	passphrase.constData(),
+	passphrase.size(),
+	reinterpret_cast<const unsigned char*>(salt.constData()),
+	salt.size(),
+	100000,
+	EVP_sha256(),
+	32,
+	reinterpret_cast<unsigned char*>(derived.data())
+	);
+
+  return QString::fromLatin1(derived.toHex());
+}
+
 QColor Helper_t::currentIconColor(Qt::ColorScheme scheme) noexcept {
   bool isDark = false;
   if (scheme == Qt::ColorScheme::Dark) {

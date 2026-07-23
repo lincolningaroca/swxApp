@@ -288,6 +288,8 @@ void MainForm::on_showNewCategoryDialog(){
 	return;
 
   if(!helperdb_.saveCategoryData(newCategory.category(), newCategory.description(), userId_)){
+	qDebug() << "Error saveCategoryData:" << helperdb_.errorMessage();
+
 	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n%1").arg(
 														   helperdb_.errorMessage()));
 	return;
@@ -299,6 +301,7 @@ void MainForm::on_showNewCategoryDialog(){
 
   hastvUrlData();
   checkStatusContextMenu();
+  qDebug() << "userId_ al guardar categoría:" << userId_;
 
 }
 
@@ -362,7 +365,7 @@ void MainForm::on_loadLoginForm(){
 
 	SW::Helper_t::current_user_ = logDialog.userName();
 
-	const auto user = SW::Helper_t::hashGenerator(logDialog.userName().toLatin1());
+	const auto user = logDialog.userName();
 	userId_ = helperdb_.getUser_id(user, SW::User::U_user);
 
 	loadListCategory(userId_);
@@ -906,7 +909,8 @@ void MainForm::on_showDescriptionDialog(const QModelIndex &index){
 
   dlg.exec();
 
-  xxxModel_->select();
+  // xxxModel_->select();
+  xxxModel_->refresh();
 }
 
 void MainForm::on_showChangePasswordDialog(){
@@ -1053,39 +1057,72 @@ void MainForm::initFrm() noexcept{
 
 }
 
-void MainForm::setUpTable(uint32_t categoryId) noexcept{
+// void MainForm::setUpTable(uint32_t categoryId) noexcept{
 
-  xxxModel_ = new SWTableModel(this, db_);
-  xxxModel_->setTable("urls");
-  xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId));
-  xxxModel_->select();
+//   xxxModel_ = new SWTableModel(this, db_);
 
+//   xxxModel_->setTable("urls");
+//   xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId));
+//   xxxModel_->select();
+
+//   ui->tvUrl->setModel(xxxModel_);
+//   setUpTableHeaders();
+//   ui->tvUrl->setMouseTracking(true);
+
+//   QSqlQuery query(xxxModel_->query().lastQuery(), db_);
+
+
+//   if(query.exec()){
+// 	while(query.next()){
+// 	  urlList_.insert(query.value(0).toUInt(),query.value(1).toString());
+// 	}
+//   }
+
+// }
+void MainForm::setUpTable(uint32_t categoryId) noexcept {
+
+  qDebug() << "setUpTable categoryId:" << categoryId;
+  qDebug() << "encryptionKey:" << helperdb_.encryptionKey().left(10);
+
+  xxxModel_ = new SWTableModel(this);
+
+  QSqlQuery qry(db_);
+  qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
+  qry.addBindValue(categoryId);
+  qry.addBindValue(helperdb_.encryptionKey());
+  // qry.exec();
+  if(!qry.exec()){
+	qDebug() << "fn_get_urls error:" << qry.lastError().text();
+  } else {
+	qDebug() << "fn_get_urls OK, filas:" << qry.size();
+  }
+
+  // Poblar urlList_ con los datos descifrados
+  urlList_.clear();
+  QSqlQuery listQry = qry;
+  listQry.seek(-1);
+  while(listQry.next()){
+	urlList_.insert(listQry.value(0).toUInt(), listQry.value(1).toString());
+  }
+
+  xxxModel_->setQuery(std::move(qry));
+  qDebug() << "rowCount:" << xxxModel_->rowCount();
   ui->tvUrl->setModel(xxxModel_);
   setUpTableHeaders();
   ui->tvUrl->setMouseTracking(true);
-
-  QSqlQuery query(xxxModel_->query().lastQuery(), db_);
-
-
-  if(query.exec()){
-	while(query.next()){
-	  urlList_.insert(query.value(0).toUInt(),query.value(1).toString());
-	}
-  }
-
 }
 
 void MainForm::setUpTableHeaders() const noexcept{
 
   ui->tvUrl->hideColumn(0);
-  ui->tvUrl->hideColumn(3);
+  // ui->tvUrl->hideColumn(3);
   ui->tvUrl->model()->setHeaderData(1,Qt::Horizontal, "Dirección URL");
   ui->tvUrl->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
   ui->tvUrl->setSelectionMode(QAbstractItemView::SingleSelection);
   ui->tvUrl->setItemDelegate(new SWItemDelegate(ui->tvUrl));
   ui->tvUrl->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   ui->tvUrl->verticalHeader()->setDefaultSectionSize(20);
-  ui->tvUrl->setAlternatingRowColors(true);
+  // ui->tvUrl->setAlternatingRowColors(true);
 
 }
 

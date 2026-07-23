@@ -37,10 +37,10 @@ dlgNewCategory::dlgNewCategory(SW::OpenMode mode, const QStringList &list, QWidg
       SW::HelperDataBase_t helperdb_{};
 
       uint32_t userid {0};
-      (static_cast<bool>(SW::Helper_t::sessionStatus_)) ?
-           userid = helperdb_.getUser_id(SW::Helper_t::current_user_, SW::User::U_public) :
-           userid = helperdb_.getUser_id(SW::Helper_t::current_user_, SW::User::U_user);
 
+	  (SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_start) ?
+		userid = helperdb_.getUser_id(SW::Helper_t::current_user_, SW::User::U_user) :
+		userid = helperdb_.getUser_id(SW::Helper_t::current_user_, SW::User::U_public);
 
       if(!static_cast<bool>(mode)){
           if(validateData()){

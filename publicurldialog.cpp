@@ -12,7 +12,8 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QSettings>
-#include <QSqlTableModel>
+#include <QSqlError>
+// #include <QSqlTableModel>
 
 PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   QDialog(parent),
@@ -128,6 +129,7 @@ void PublicUrlDialog::on_deleteUrl(){
 }
 
 
+
 void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 
   QList<QVariant> dataUrl{};
@@ -141,10 +143,11 @@ void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 	auto currentIndex = ui->urlTableView->currentIndex();
 	auto id = ui->urlTableView->model()->index(currentIndex.row(), 0).data().toInt();
 
-	// Leer directo de BD para evitar ambigüedad con el modelo
+	// Los datos ya llegan descifrados desde fn_get_urls — sin decrypt()
 	QSqlQuery query(db_);
-	query.prepare("SELECT url_id, url_text, url_desc FROM urls WHERE url_id = ?");
+	query.prepare(R"(SELECT url_id, url_text, url_desc FROM fn_get_urls_by_id(?, ?))");
 	query.addBindValue(id);
+	query.addBindValue(helperdb_.encryptionKey());
 
 	if(!query.exec() || !query.next()){
 	  QMessageBox::critical(this, qApp->applicationName(), "Error al leer los datos.");
@@ -152,8 +155,8 @@ void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 	}
 
 	dataUrl.append(query.value(0).toInt());
-	dataUrl.append(SW::Helper_t::decrypt(query.value(1).toString())); // url
-	dataUrl.append(SW::Helper_t::decrypt(query.value(2).toString())); // desc
+	dataUrl.append(query.value(1).toString()); // url — ya descifrada
+	dataUrl.append(query.value(2).toString()); // desc — ya descifrada
   }
 
   MaintenanceUrlDialog maintenanceDialog(colorScheme_, mode, dataUrl, currentCategoryId(), this);
@@ -161,35 +164,99 @@ void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 	on_loadDataTableView();
   }
 }
+// void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
+
+//   QList<QVariant> dataUrl{};
+//   if(mode == SW::OpenMode::Edit){
+
+// 	if(!ui->urlTableView->selectionModel()->hasSelection()){
+// 	  QMessageBox::warning(this, qApp->applicationName(), "Seleccione una fila.");
+// 	  return;
+// 	}
+
+// 	auto currentIndex = ui->urlTableView->currentIndex();
+// 	auto id = ui->urlTableView->model()->index(currentIndex.row(), 0).data().toInt();
+
+// 	// Leer directo de BD para evitar ambigüedad con el modelo
+// 	QSqlQuery query(db_);
+// 	query.prepare("SELECT url_id, url_text, url_desc FROM urls WHERE url_id = ?");
+// 	query.addBindValue(id);
+
+// 	if(!query.exec() || !query.next()){
+// 	  QMessageBox::critical(this, qApp->applicationName(), "Error al leer los datos.");
+// 	  return;
+// 	}
+
+// 	dataUrl.append(query.value(0).toInt());
+// 	dataUrl.append(SW::Helper_t::decrypt(query.value(1).toString())); // url
+// 	dataUrl.append(SW::Helper_t::decrypt(query.value(2).toString())); // desc
+//   }
+
+//   MaintenanceUrlDialog maintenanceDialog(colorScheme_, mode, dataUrl, currentCategoryId(), this);
+//   if(maintenanceDialog.exec() == QDialog::Accepted){
+// 	on_loadDataTableView();
+//   }
+// }
 
 
+// void PublicUrlDialog::on_loadDataTableView(){
+
+//   const auto categoryId_ = currentCategoryId();
+//   qDebug() <<"category id= "<<categoryId_;
+//   SWTableModel* xxxModel_ = new SWTableModel(this, db_);
+//   xxxModel_->setTable(QStringLiteral("urls"));
+//   xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId_));
+
+//   xxxModel_->select();
+
+//   ui->urlTableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+//   ui->urlTableView->setModel(xxxModel_);
+
+//   //setup headers to table view
+
+//   ui->urlTableView->hideColumn(0);
+//   ui->urlTableView->hideColumn(3);
+
+//   ui->urlTableView->model()->setHeaderData(1,Qt::Horizontal, "Dirección URL");
+//   ui->urlTableView->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
+//   ui->urlTableView->setItemDelegate(new SWItemDelegate(ui->urlTableView));
+//   ui->urlTableView->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+//   ui->urlTableView->verticalHeader()->setDefaultSectionSize(20);
+//   ui->urlTableView->setAlternatingRowColors(true);
+
+//   ui->urlTableView->setMouseTracking(true);
+
+// }
 void PublicUrlDialog::on_loadDataTableView(){
 
   const auto categoryId_ = currentCategoryId();
-  qDebug() <<"category id= "<<categoryId_;
-  SWTableModel* xxxModel_ = new SWTableModel(this, db_);
-  xxxModel_->setTable(QStringLiteral("urls"));
-  xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId_));
 
-  xxxModel_->select();
+  auto* model = new SWTableModel(this);
+
+  QSqlQuery qry(db_);
+  qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
+  qry.addBindValue(categoryId_);
+  qry.addBindValue(helperdb_.encryptionKey());
+
+  if(!qry.exec()){
+	qDebug() << "fn_get_urls error:" << qry.lastError().text();
+  }
+
+  model->setQuery(std::move(qry));
 
   ui->urlTableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-  ui->urlTableView->setModel(xxxModel_);
+  ui->urlTableView->setModel(model);
 
-  //setup headers to table view
+  ui->urlTableView->hideColumn(0);  // url_id
 
-  ui->urlTableView->hideColumn(0);
-  ui->urlTableView->hideColumn(3);
+  model->setHeaderData(1, Qt::Horizontal, "Dirección URL");
+  model->setHeaderData(2, Qt::Horizontal, "Descripción");
 
-  ui->urlTableView->model()->setHeaderData(1,Qt::Horizontal, "Dirección URL");
-  ui->urlTableView->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
   ui->urlTableView->setItemDelegate(new SWItemDelegate(ui->urlTableView));
   ui->urlTableView->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   ui->urlTableView->verticalHeader()->setDefaultSectionSize(20);
   ui->urlTableView->setAlternatingRowColors(true);
-
   ui->urlTableView->setMouseTracking(true);
-
 }
 
 void PublicUrlDialog::on_showContextMenu(const QPoint &pos){

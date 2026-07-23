@@ -34,6 +34,9 @@ struct Helper_t{
   [[nodiscard]]static bool open_Url(const QUrl& url) noexcept{return QDesktopServices::openUrl(url);}
   [[nodiscard]]static bool urlValidate(QStringView url) noexcept;
 
+  // En util/helper.hpp — agregar método
+  [[nodiscard]] static QString deriveEncryptionKey() noexcept;
+
 
   [[nodiscard]]static bool createDataBase_dir() noexcept;
 

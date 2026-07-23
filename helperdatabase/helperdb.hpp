@@ -25,13 +25,14 @@ struct HelperDataBase_t{
   HelperDataBase_t& operator=(HelperDataBase_t&&) = delete;
 
 
-
+  // helperdb.hpp — en la sección public
+  [[nodiscard]] QString encryptionKey() const noexcept { return encryptionKey_; }
   bool userExists(QStringView user) noexcept;
   bool userExists() noexcept;
   bool categoryExists(QStringView category, uint32_t userId) noexcept;
   bool urlExists(QStringView url, uint32_t categoryid) noexcept;
   bool createUser(QStringView, QStringView, QStringView user_prof,
-                  QStringView rescue_type, QStringView val1, QStringView val2) noexcept;
+				  QStringView rescue_type, QStringView val1, QStringView val2) noexcept;
   bool logIn(QStringView user, QStringView password) noexcept;
   ///////////******************///////////////////////////////////////////////////////////////////////////////////////
   //funciones del formulario principal
@@ -65,6 +66,8 @@ private:
   const QSqlDatabase db_{};
   QString errorMessage_{};
   QSqlQuery qry_{};
+
+  QString encryptionKey_{};
 
 
 };
