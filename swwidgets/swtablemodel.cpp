@@ -1,55 +1,3 @@
-// #include "swtablemodel.hpp"
-
-// #include "util/helper.hpp"
-
-// #include <QTextDocument>
-
-// SWTableModel::SWTableModel(QObject *parent, const QSqlDatabase &db)
-//   : QSqlTableModel{parent, db}
-// {
-
-// }
-
-// QVariant SWTableModel::data(const QModelIndex& index, int role) const{
-
-//   if((role == Qt::DisplayRole || role == Qt::ToolTipRole) && (index.column() == 1 || index.column() == 2)){
-// 	const auto decrypted = SW::Helper_t::decrypt(QSqlTableModel::data(index, Qt::DisplayRole).toString());
-
-// 	if(index.column() == 2){  // tanto DisplayRole como ToolTipRole en columna 2
-// 	  QTextDocument doc;
-// 	  doc.setHtml(decrypted);
-// 	  return doc.toPlainText();
-// 	}
-
-// 	return decrypted;
-//   }
-//   return QSqlTableModel::data(index, role);
-
-// }
-
-// QVariant SWTableModel::headerData(int section, Qt::Orientation orientation, int role) const{
-
-//   Q_UNUSED(section)
-//   // 1. Si piden el tamaño (SizeHint)
-//   if (orientation == Qt::Vertical && role == Qt::SizeHintRole) {
-
-// 	return QSize(0, 0); // Esto colapsa el ANCHO de la numeración lateral
-
-//   }
-
-//   if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
-// 	return QVariant();
-//   }
-
-
-//   // 3. PARA TODO LO DEMÁS (incluyendo títulos horizontales), usar la lógica base
-//   // Esto es lo que faltaba para que se vieran los títulos "URL", "Descripción", etc.
-//   return QSqlTableModel::headerData(section, orientation, role);
-
-
-// }
-
-
 #include "swtablemodel.hpp"
 
 #include <QTextDocument>
@@ -61,8 +9,7 @@ SWTableModel::SWTableModel(QObject* parent)
 
 QVariant SWTableModel::data(const QModelIndex& index, int role) const {
 
-  // Columna 2 (url_desc) — convertir HTML a texto plano para mostrar
-  if((role == Qt::DisplayRole || role == Qt::ToolTipRole) && index.column() == 2){
+  if((role == Qt::DisplayRole || role == Qt::ToolTipRole) && (index.column() == 1 || index.column() == 2)){
 	QTextDocument doc;
 	doc.setHtml(QSqlQueryModel::data(index, Qt::DisplayRole).toString());
 	return doc.toPlainText();

@@ -213,6 +213,7 @@ void ConfigDialog::on_btnCancel_clicked(){
 
   emit themeChanged(originalScheme_);
   emit styleChanged(originalStyle_);
+  saveLastSelection();
   reject();
 
 }

@@ -67,6 +67,7 @@ public:
 
 signals:
   void textChanged();
+  void textColorChanged(const QColor& color);
 
 private slots:
   void on_boldAction();

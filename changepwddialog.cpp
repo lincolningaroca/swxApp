@@ -130,8 +130,8 @@ void ChangePwdDialog::on_acceptRole(){
 
   SW::HelperDataBase_t helperDb{};
 
-  const auto user = SW::Helper_t::hashGenerator(user_.simplified().toLatin1());
-  auto userId = helperDb.getUser_id(user, SW::User::U_user);
+  // const auto user = user_.simplified();
+  auto userId = helperDb.getUser_id(user_.simplified(), SW::User::U_user);
 
   if(helperDb.resetPassword(ui->txtNewPassword->text().simplified(), userId)){
 
@@ -140,10 +140,7 @@ void ChangePwdDialog::on_acceptRole(){
 									 "<br>la próxima vez que inicie sesión, lo hará con su nueva clave.</strong>").arg(user_));
 	accept();
 
-
   }
-
-
 
 }
 

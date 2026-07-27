@@ -37,7 +37,7 @@ ResetPasswordDialog::ResetPasswordDialog(QWidget *parent)
       ui->txtUser->setFocus(Qt::OtherFocusReason);
       return;
     }
-    const auto user = SW::Helper_t::hashGenerator(ui->txtUser->text().simplified().toLatin1());
+	const auto user = ui->txtUser->text().simplified();
     userId_ = helper.getUser_id(user, SW::User::U_user);
     const auto rescue_type = helper.validateRescueType(userId_);
 
@@ -173,26 +173,7 @@ ResetPasswordDialog::~ResetPasswordDialog(){
   delete ui;
 }
 
-// void ResetPasswordDialog::setFeatures(QLineEdit *w, QCheckBox *b, bool checked) noexcept{
-
-//   if(checked){
-//     w->setEchoMode(QLineEdit::Normal);
-// 	b->setIcon(QIcon(QStringLiteral(":/img/open.svg")));
-//     b->setToolTip("Ocultar los caracteres.");
-//   }
-//   else{
-//     w->setEchoMode(QLineEdit::Password);
-// 	b->setIcon(QIcon(QStringLiteral(":/img/close.svg")));
-//     b->setToolTip("Mostrar los caracteres.");
-
-//   }
-
-// }
 void ResetPasswordDialog::setFeatures(QLineEdit *w, QCheckBox *b, bool checked) noexcept {
-
-  // const QColor windowColor = qApp->palette().color(QPalette::Window);
-  // const bool isDark = (windowColor.lightness() < 128);
-  // const QColor iconColor = isDark ? QColor(220, 220, 220) : QColor(50, 50, 50);
 
   const auto iconColor = SW::Helper_t::currentIconColor();
 

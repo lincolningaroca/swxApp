@@ -122,7 +122,6 @@ private slots:
   void on_moveUrl();
   void on_firstTimeLoginDialog();
   void on_showSettingsDialog();
-  void on_showDescriptionDialog(const QModelIndex &index);
   void on_showChangePasswordDialog();
   void on_showTableContextMenu(const QPoint &p);
   void on_styleChanged(bool style);

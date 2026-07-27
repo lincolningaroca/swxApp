@@ -46,12 +46,7 @@ struct HelperDataBase_t{
   bool resetPassword(QStringView password, uint32_t userId) noexcept;
   bool moveUrlToOtherCategory(uint32_t categoryId, uint32_t urlId) noexcept;
 
-  //verificar si la base d edatos existe
-  bool dataBase_exists(QStringView db_name) const;
-
   bool isDataBase_empty() noexcept;
-
-
 
   QHash<uint32_t, QString> loadList_Category(uint32_t user_id) noexcept;
   int getUser_id(const QString &user, SW::User user_profile) noexcept;

@@ -7,6 +7,7 @@ MidleWidget::MidleWidget(QWidget *parent)
   ui->setupUi(this);
 
   connect(ui->txtUrl, &QLineEdit::textChanged, this, &MidleWidget::urlTextChanged);
+  connect(ui->pteDesc, &SWTextEdit::textColorChanged, this, &MidleWidget::textColorChanged);
 }
 
 MidleWidget::~MidleWidget()

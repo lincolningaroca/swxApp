@@ -158,11 +158,14 @@ void SWTextEdit::on_underlineAction(){
 }
 
 void SWTextEdit::on_colorAction(){
+
   const auto color = QColorDialog::getColor(editor_->textColor(), this, "Color de texto");
   if(color.isValid()){
 	QTextCharFormat fmt;
 	fmt.setForeground(color);
 	editor_->mergeCurrentCharFormat(fmt);
+	editor_->setDefaultColor(color);
+	emit textColorChanged(color);
   }
 
 }

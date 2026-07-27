@@ -39,4 +39,5 @@ private:
 
 signals:
   void urlTextChanged(const QString& text);
+  void textColorChanged(const QColor& color);
 };

@@ -26,10 +26,10 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlTableModel>
-#include <QStyleHints>
 #include <QStyleFactory>
-#include <QTimer>
+#include <QStyleHints>
 #include <QTextEdit>
+#include <QTimer>
 
 
 MainForm::MainForm(QWidget *parent)
@@ -67,6 +67,13 @@ MainForm::MainForm(QWidget *parent)
 
   initFrm();
 
+  QObject::connect(midleWidget, &MidleWidget::textColorChanged, this, [this](const QColor& color){
+	QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
+	settings.beginGroup(QStringLiteral("Editor"));
+	settings.setValue(QStringLiteral("textColor"), color.name());
+	settings.endGroup();
+  });
+
   setUpStatusBar();
 
   loadListCategory(userId_);
@@ -74,7 +81,6 @@ MainForm::MainForm(QWidget *parent)
   setUpTable(currentCategoryId());
 
 
-  QObject::connect(ui->tvUrl, &QTableView::doubleClicked, this, &MainForm::on_showDescriptionDialog);
   canCreateBackUp();
   canStartSession();
 
@@ -288,7 +294,6 @@ void MainForm::on_showNewCategoryDialog(){
 	return;
 
   if(!helperdb_.saveCategoryData(newCategory.category(), newCategory.description(), userId_)){
-	qDebug() << "Error saveCategoryData:" << helperdb_.errorMessage();
 
 	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("Error al guardar los datos!\n%1").arg(
 														   helperdb_.errorMessage()));
@@ -301,7 +306,6 @@ void MainForm::on_showNewCategoryDialog(){
 
   hastvUrlData();
   checkStatusContextMenu();
-  qDebug() << "userId_ al guardar categoría:" << userId_;
 
 }
 
@@ -366,7 +370,9 @@ void MainForm::on_loadLoginForm(){
 	SW::Helper_t::current_user_ = logDialog.userName();
 
 	const auto user = logDialog.userName();
+	qDebug() << "USER NAME: " << user;
 	userId_ = helperdb_.getUser_id(user, SW::User::U_user);
+	qDebug() << "USER ID: "<< userId_;
 
 	loadListCategory(userId_);
 
@@ -529,7 +535,8 @@ void MainForm::on_editCategory(){
 	loadListCategory(userId_);
 
 	setUpTable(currentCategoryId());
-  }
+	setCboCategoryToolTip();
+  }  
 
 }
 
@@ -562,29 +569,44 @@ void MainForm::on_quitUrl(){
 
 }
 
+// void MainForm::on_btnEdit(){
+
+//   if( !validateSelectedRow() ) return;
+
+//   auto currentRow = ui->tvUrl->currentIndex().row();
+
+//   midleWidget->setUrl(ui->tvUrl->model()->index(currentRow,1).data().toString());
+//   midleWidget->setDescription(ui->tvUrl->model()->index(currentRow,2).data().toString());
+
+//   editAction(true);
+
+//   midleWidget->selectAndFocus();
+//   ui->btnAdd->setText(QStringLiteral("Actualizar"));
+
+// }
 void MainForm::on_btnEdit(){
-
-  if( !validateSelectedRow() ) return;
-
+  if(!validateSelectedRow()) return;
   auto currentRow = ui->tvUrl->currentIndex().row();
-
-  midleWidget->setUrl(ui->tvUrl->model()->index(currentRow,1).data().toString());
+  midleWidget->setUrl(ui->tvUrl->model()->index(currentRow, 1).data().toString());
 
   const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
-  QSqlQuery query(db_);
-  query.prepare("SELECT url_desc FROM urls WHERE url_id = ?");
-  query.addBindValue(urlId);
-  if(query.exec() && query.next()){
 
-	midleWidget->setDescription(SW::Helper_t::decrypt(query.value(0).toString()));
+  // Usar fn_get_urls_by_id para obtener datos descifrados
+  QSqlQuery query(db_);
+  query.prepare(R"(SELECT * FROM fn_get_urls_by_id(?, ?))");
+  query.addBindValue(urlId);
+  query.addBindValue(helperdb_.encryptionKey());
+
+  if(query.exec() && query.next()){
+	// query.value(2) es url_desc ya descifrada
+	midleWidget->setDescription(query.value(2).toString());
+  } else {
+	qDebug() << "Error en fn_get_urls_by_id:" << query.lastError().text();
   }
 
-
   editAction(true);
-
   midleWidget->selectAndFocus();
   ui->btnAdd->setText(QStringLiteral("Actualizar"));
-
 }
 
 
@@ -872,46 +894,6 @@ void MainForm::on_showSettingsDialog(){
 
 }
 
-void MainForm::on_showDescriptionDialog(const QModelIndex &index){
-
-  const auto urlId = ui->tvUrl->model()->index(index.row(), 0).data().toUInt();
-
-  // Traer directamente de la base de datos
-  QSqlQuery query(db_);
-  query.prepare("SELECT url_desc FROM urls WHERE url_id = ?");
-  query.addBindValue(urlId);
-
-  QString desc{};
-  if(query.exec() && query.next()){
-	desc = SW::Helper_t::decrypt(query.value(0).toString());
-  }
-
-  QDialog dlg(this);
-  dlg.setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-  dlg.setWindowTitle(SW::Helper_t::appName()+" - Descripción");
-  dlg.resize(500, 300);
-
-  auto *layout = new QVBoxLayout(&dlg);
-
-  auto *textView = new QTextEdit(&dlg);
-  textView->setReadOnly(true);
-  textView->setHtml(desc);
-
-  auto *btnLayout = new QHBoxLayout();
-  auto *btnClose = new QPushButton("Cerrar", &dlg);
-
-  btnLayout->addStretch();
-  btnLayout->addWidget(btnClose);
-  QObject::connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::accept);
-
-  layout->addWidget(textView);
-  layout->addLayout(btnLayout);
-
-  dlg.exec();
-
-  // xxxModel_->select();
-  xxxModel_->refresh();
-}
 
 void MainForm::on_showChangePasswordDialog(){
 
@@ -1057,32 +1039,36 @@ void MainForm::initFrm() noexcept{
 
 }
 
-// void MainForm::setUpTable(uint32_t categoryId) noexcept{
+// void MainForm::setUpTable(uint32_t categoryId) noexcept {
 
-//   xxxModel_ = new SWTableModel(this, db_);
+//   xxxModel_ = new SWTableModel(this);
 
-//   xxxModel_->setTable("urls");
-//   xxxModel_->setFilter(QString("categoryid=%1").arg(categoryId));
-//   xxxModel_->select();
+//   QSqlQuery qry(db_);
+//   qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
+//   qry.addBindValue(categoryId);
+//   qry.addBindValue(helperdb_.encryptionKey());
+//   // qry.exec();
+//   if(!qry.exec()){
+// 	qDebug() << "fn_get_urls error:" << qry.lastError().text();
+//   } else {
+// 	qDebug() << "fn_get_urls OK, filas:" << qry.size();
+//   }
 
+//   // Poblar urlList_ con los datos descifrados
+//   urlList_.clear();
+//   QSqlQuery listQry = qry;
+//   listQry.seek(-1);
+//   while(listQry.next()){
+// 	urlList_.insert(listQry.value(0).toUInt(), listQry.value(1).toString());
+//   }
+
+//   xxxModel_->setQuery(std::move(qry));
+//   qDebug() << "rowCount:" << xxxModel_->rowCount();
 //   ui->tvUrl->setModel(xxxModel_);
 //   setUpTableHeaders();
 //   ui->tvUrl->setMouseTracking(true);
-
-//   QSqlQuery query(xxxModel_->query().lastQuery(), db_);
-
-
-//   if(query.exec()){
-// 	while(query.next()){
-// 	  urlList_.insert(query.value(0).toUInt(),query.value(1).toString());
-// 	}
-//   }
-
 // }
 void MainForm::setUpTable(uint32_t categoryId) noexcept {
-
-  qDebug() << "setUpTable categoryId:" << categoryId;
-  qDebug() << "encryptionKey:" << helperdb_.encryptionKey().left(10);
 
   xxxModel_ = new SWTableModel(this);
 
@@ -1090,23 +1076,29 @@ void MainForm::setUpTable(uint32_t categoryId) noexcept {
   qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
   qry.addBindValue(categoryId);
   qry.addBindValue(helperdb_.encryptionKey());
-  // qry.exec();
-  if(!qry.exec()){
+
+  if (!qry.exec()) {
 	qDebug() << "fn_get_urls error:" << qry.lastError().text();
-  } else {
-	qDebug() << "fn_get_urls OK, filas:" << qry.size();
+	return; // Salir si falla la ejecución
   }
 
-  // Poblar urlList_ con los datos descifrados
+  qDebug() << "fn_get_urls OK, filas:" << qry.size();
+
+  // 1. Reposicionar el cursor al principio de los resultados
+  qry.seek(-1);
+
+  // 2. Poblar urlList_ usando el MISMO objeto qry
   urlList_.clear();
-  QSqlQuery listQry = qry;
-  listQry.seek(-1);
-  while(listQry.next()){
-	urlList_.insert(listQry.value(0).toUInt(), listQry.value(1).toString());
+  while (qry.next()) {
+	urlList_.insert(qry.value(0).toUInt(), qry.value(1).toString());
   }
 
+  // 3. AHORA SÍ, mover la consulta al modelo.
+  // El modelo tomará posesión de los datos y los mostrará.
   xxxModel_->setQuery(std::move(qry));
+
   qDebug() << "rowCount:" << xxxModel_->rowCount();
+
   ui->tvUrl->setModel(xxxModel_);
   setUpTableHeaders();
   ui->tvUrl->setMouseTracking(true);
@@ -1115,14 +1107,14 @@ void MainForm::setUpTable(uint32_t categoryId) noexcept {
 void MainForm::setUpTableHeaders() const noexcept{
 
   ui->tvUrl->hideColumn(0);
-  // ui->tvUrl->hideColumn(3);
+
   ui->tvUrl->model()->setHeaderData(1,Qt::Horizontal, "Dirección URL");
   ui->tvUrl->model()->setHeaderData(2,Qt::Horizontal, "Descripción");
   ui->tvUrl->setSelectionMode(QAbstractItemView::SingleSelection);
   ui->tvUrl->setItemDelegate(new SWItemDelegate(ui->tvUrl));
   ui->tvUrl->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   ui->tvUrl->verticalHeader()->setDefaultSectionSize(20);
-  // ui->tvUrl->setAlternatingRowColors(true);
+  ui->tvUrl->setAlternatingRowColors(true);
 
 }
 
