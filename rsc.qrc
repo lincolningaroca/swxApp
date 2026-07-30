@@ -44,5 +44,6 @@
         <file>img/public-url.svg</file>
         <file>img/style-fusion.png</file>
         <file>database/seed.sql</file>
+        <file>img/dbConfig.png</file>
     </qresource>
 </RCC>

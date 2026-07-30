@@ -110,8 +110,6 @@ ResetPasswordDialog::ResetPasswordDialog(QWidget *parent)
     ui->txtUser->setFocus(Qt::OtherFocusReason);
   });
 
-
-
   //btn reset password
   QObject::connect(ui->btnReset, &QPushButton::clicked, this, [this](){
     if(ui->txtNewPassword->text().isEmpty()){
@@ -163,7 +161,7 @@ ResetPasswordDialog::ResetPasswordDialog(QWidget *parent)
     }
     if(helper.resetPassword(ui->txtRePassword->text(), userId_)){
       QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("<span><em>Su clave o password de acceso fue cambiado con éxito!</em></strong></span>"));
-      //          ui->btnAtras->click();
+
       accept();
     }
   });

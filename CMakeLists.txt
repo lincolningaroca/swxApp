@@ -74,17 +74,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
 )
 
-add_custom_command(
-    TARGET ${PROJECT_NAME}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/tools/sqlite-tools-win-x64-3450100"
-    COMMAND
-    ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_CURRENT_SOURCE_DIR}/tools/sqlite-tools-win-x64-3450100"
-    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/tools/sqlite-tools-win-x64-3450100"
-    COMMENT "Copiando herramientas SQLite al directorio de salida")
-
 if(WIN32 AND TARGET OpenSSL::SSL)
     add_custom_command(
         TARGET ${PROJECT_NAME}

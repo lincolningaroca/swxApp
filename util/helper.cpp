@@ -1,6 +1,5 @@
 #include "helper.hpp"
 
-
 #include <QDir>
 #include <QIODevice>
 #include <QPainter>
@@ -11,7 +10,6 @@
 #include <QStyleFactory>
 #include <QStyleHints>
 #include <QSvgRenderer>
-#include <QTableView>
 #include <random>
 
 extern "C"{
@@ -39,9 +37,9 @@ QString Helper_t::deriveEncryptionKey() noexcept {
 
   PKCS5_PBKDF2_HMAC(
 	passphrase.constData(),
-	passphrase.size(),
+	static_cast<int>(passphrase.size()),
 	reinterpret_cast<const unsigned char*>(salt.constData()),
-	salt.size(),
+	static_cast<int>(salt.size()),
 	100000,
 	EVP_sha256(),
 	32,
@@ -74,13 +72,6 @@ QColor Helper_t::currentIconColor() noexcept {
 Qt::ColorScheme Helper_t::detectSystemColorScheme() {
 
   return QGuiApplication::styleHints()->colorScheme();
-}
-
-QString Helper_t::hashGenerator(const QByteArray &data) noexcept{
-  QCryptographicHash crypto(QCryptographicHash::Sha3_512);
-  crypto.addData(data);
-  return QString{crypto.result().toHex()};
-
 }
 
 QByteArray Helper_t::setColorReg(const QString& color) noexcept
@@ -184,54 +175,6 @@ void  Helper_t::set_Theme(Qt::ColorScheme theme) noexcept{
 	  hints->setColorScheme(Qt::ColorScheme::Unknown);
 	  break;
   }
-  // this->update();
-
-  // QPalette mPalette{};
-
-  // if(theme == Qt::ColorScheme::Light){
-  //   qApp->setStyle(QStyleFactory::create("Windowsvista"));
-  //   mPalette = QPalette();
-
-  // }else{
-  //   qApp->setStyle(QStyleFactory::create("Fusion"));
-
-  //   // --- ROLES PRINCIPALES DE FONDO Y TEXTO ---
-  //   mPalette.setColor(QPalette::Window,          QColor(43, 48, 52));    // Gris oscuro azulado
-  //   mPalette.setColor(QPalette::WindowText,      QColor(252, 252, 252)); // Blanco puro para lectura
-  //   mPalette.setColor(QPalette::Base,            QColor(35, 38, 41));    // Fondo de tablas y editores
-  //   mPalette.setColor(QPalette::AlternateBase,   QColor(43, 48, 52));    // Filas alternas
-  //   mPalette.setColor(QPalette::ToolTipBase,     QColor(43, 48, 52));
-  //   mPalette.setColor(QPalette::ToolTipText,     QColor(252, 252, 252));
-  //   mPalette.setColor(QPalette::PlaceholderText, QColor(127, 140, 141)); // Gris medio
-  //   mPalette.setColor(QPalette::Text,            QColor(252, 252, 252));
-
-  //   // --- ROLES DE BOTONES ---
-  //   mPalette.setColor(QPalette::Button,          QColor(43, 48, 52));
-  //   mPalette.setColor(QPalette::ButtonText,      QColor(252, 252, 252));
-  //   mPalette.setColor(QPalette::BrightText,      QColor(255, 255, 255));
-
-  //   // --- SELECCIÓN Y ENLACES (Aquí brilla el verde Manjaro) ---
-  //   mPalette.setColor(QPalette::Highlight,       QColor(22, 160, 133));          // Resaltado verde
-  //   mPalette.setColor(QPalette::HighlightedText, QColor(255, 255, 255)); // Texto blanco sobre verde
-  //   mPalette.setColor(QPalette::Link,            QColor(29, 153, 243));  // Azul para links
-  //   mPalette.setColor(QPalette::LinkVisited,     QColor(155, 89, 182));  // Púrpura para visitados
-
-  //   // --- ROLES DE PROFUNDIDAD (Bordes y Sombreados) ---
-  //   mPalette.setColor(QPalette::Light,           QColor(65, 71, 77));    // Iluminación de bordes
-  //   mPalette.setColor(QPalette::Midlight,        QColor(55, 60, 65));
-  //   mPalette.setColor(QPalette::Mid,             QColor(40, 44, 48));
-  //   mPalette.setColor(QPalette::Dark,            QColor(25, 28, 31));    // Sombra fuerte
-  //   mPalette.setColor(QPalette::Shadow,          QColor(0, 0, 0));       // Negro absoluto
-
-  //   // --- ESTADO DESACTIVADO (DISABLED) ---
-  //   mPalette.setColor(QPalette::Disabled, QPalette::WindowText,    QColor(127, 140, 141));
-  //   mPalette.setColor(QPalette::Disabled, QPalette::Text,          QColor(127, 140, 141));
-  //   mPalette.setColor(QPalette::Disabled, QPalette::ButtonText,    QColor(127, 140, 141));
-  //   mPalette.setColor(QPalette::Disabled, QPalette::Base,          QColor(43, 48, 52));
-  //   mPalette.setColor(QPalette::Disabled, QPalette::Highlight,     QColor(65, 71, 77));
-  // }
-
-  // return mPalette;
 
 
 
@@ -294,30 +237,17 @@ QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
 }
 
 
-
-// void Helper_t::applyManjaroDarkColor(QTableView *table){
-
-//   if(!table) return;
-
-//   table->setStyleSheet(
-
-//     "QTableView::item:hover {"
-//     "    background-color: rgba(22, 160, 133, 50);" /* Verde suave al pasar el mouse */
-//     "}"
-
-//     );
-
-
-// }
-
 QString Helper_t::encrypt(const QString& plainText, const QByteArray& key, const QByteArray& iv){
+
+  const QByteArray& k = key.isEmpty() ? encryptKey() : key;
+  const QByteArray& i = iv.isEmpty()  ? encryptIv()  : iv;
 
   QByteArray plainData = plainText.toUtf8();
   QByteArray encryptedData(plainData.size() + EVP_MAX_BLOCK_LENGTH, 0);
   int encryptedLen = 0;
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  EVP_EncryptInit(ctx, EVP_aes_256_cbc(), reinterpret_cast<const unsigned char*>(key.data()), reinterpret_cast<const unsigned char*>(iv.data()));
+  EVP_EncryptInit(ctx, EVP_aes_256_cbc(), reinterpret_cast<const unsigned char*>(k.data()), reinterpret_cast<const unsigned char*>(i.data()));
   EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(encryptedData.data()), &encryptedLen, reinterpret_cast<const unsigned char*>(plainData.data()), static_cast<int>(plainData.size()));
 
   int finalLen = 0;
@@ -332,12 +262,15 @@ QString Helper_t::encrypt(const QString& plainText, const QByteArray& key, const
 
 QString Helper_t::decrypt(const QString& encryptedText, const QByteArray& key, const QByteArray& iv){
 
+  const QByteArray& k = key.isEmpty() ? encryptKey() : key;
+  const QByteArray& i = iv.isEmpty()  ? encryptIv()  : iv;
+
   QByteArray encryptedData = QByteArray::fromBase64(encryptedText.toUtf8());
   QByteArray decryptedData(encryptedData.size(), 0);
   int decryptedLen = 0;
 
   EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-  EVP_DecryptInit(ctx, EVP_aes_256_cbc(), reinterpret_cast<const unsigned char*>(key.data()), reinterpret_cast<const unsigned char*>(iv.data()));
+  EVP_DecryptInit(ctx, EVP_aes_256_cbc(), reinterpret_cast<const unsigned char*>(k.data()), reinterpret_cast<const unsigned char*>(i.data()));
   EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(decryptedData.data()), &decryptedLen, reinterpret_cast<const unsigned char*>(encryptedData.data()), static_cast<int>(encryptedData.size()));
 
   int finalLen = 0;
@@ -347,6 +280,46 @@ QString Helper_t::decrypt(const QString& encryptedText, const QByteArray& key, c
   EVP_CIPHER_CTX_free(ctx);
 
   return QString::fromUtf8(decryptedData.left(decryptedLen));
+}
+
+
+void Helper_t::saveDbConfig(const DbConfig& config) noexcept {
+
+  QSettings settings(qApp->organizationName(), qApp->applicationName());
+  settings.beginGroup(QStringLiteral("Database"));
+
+  settings.setValue(QStringLiteral("host"),     config.host);
+  settings.setValue(QStringLiteral("port"),     config.port);
+  settings.setValue(QStringLiteral("dbName"),   config.dbName);
+  settings.setValue(QStringLiteral("userName"), config.userName);
+
+  // Password cifrado con clave derivada del hardware
+  settings.setValue(QStringLiteral("password"),
+					config.password.isEmpty() ? QString() : encrypt(config.password));
+
+  settings.endGroup();
+}
+
+DbConfig Helper_t::loadDbConfig() noexcept{
+
+  QSettings settings(qApp->organizationName(), qApp->applicationName());
+  settings.beginGroup("Database");
+  DbConfig config;
+  config.host     = settings.value("host",     "localhost").toString();
+  config.port     = settings.value("port",     5432).toInt();
+  config.dbName   = settings.value("dbName",   "xdatabase").toString();
+  config.userName = settings.value("userName", "postgres").toString();
+  config.password = decrypt(settings.value("password", "").toString());
+  settings.endGroup();
+  return config;
+
+}
+
+bool Helper_t::hasDbConfig() noexcept{
+
+  QSettings settings(qApp->organizationName(), appName());
+  return settings.contains("Database/host");
+
 }
 
 QString Helper_t::getLastOpenedDirectory(){

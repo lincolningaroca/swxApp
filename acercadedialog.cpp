@@ -125,25 +125,6 @@ void AcercaDeDialog::setImage(Qt::ColorScheme colorMode) {
   ui->lblLogo->setAlignment(Qt::AlignCenter);
 }
 
-// void AcercaDeDialog::setImage(Qt::ColorScheme colorMode){
-
-  // const QString logoPath = (colorMode == Qt::ColorScheme::Dark)
-  // ? ":/img/logoEmpresa_1.png"
-  // : ":/img/logoEmpresa.png";
-
-  // QPixmap logoSw(logoPath);
-
-  // if(logoSw.isNull()){
-  //   qWarning() << "Logo no disponible para el tema actual: " << logoPath;
-  //   return;
-  // }
-
-  // ui->lblLogo->setPixmap(logoSw);
-  // ui->lblLogo->setFixedSize(logoSw.size());
-  // ui->lblLogo->setAlignment(Qt::AlignCenter);
-
-// }
-
 
 void AcercaDeDialog::setupCustomFont() {
   bool fontLoaded = false;
@@ -201,8 +182,7 @@ void AcercaDeDialog::showLicense(){
 
   QDialog licenciaDlg(this);
   licenciaDlg.setWindowTitle(SW::Helper_t::appName() + " - Licencia");
-  // auto width = qRound(this->width() *1.1);
-  // licenciaDlg.setFixedSize(width, this->size().height());
+
   licenciaDlg.setFixedSize(this->size());
 
   auto* teLicencia = new QTextBrowser(&licenciaDlg);

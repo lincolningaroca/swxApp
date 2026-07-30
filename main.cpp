@@ -1,6 +1,7 @@
 #include "mainform.hpp"
 #include "util/helper.hpp"
 
+#include "configdialog.hpp"
 #include <QApplication>
 #include <QDir>
 #include <QFontDatabase>
@@ -49,24 +50,72 @@ struct SingleIntsanceManager{
  * Establece la conexión a la base de datos PostgreSQL existente
  * @return true si la conexión fue exitosa
  */
+
+// bool connectToDatabase(){
+//   // Si no hay config guardada, usar valores por defecto
+//   // y guardarlos para la próxima vez
+//   if(!SW::Helper_t::hasDbConfig()){
+// 	DbConfig defaultConfig{};
+// 	SW::Helper_t::saveDbConfig(defaultConfig);
+//   }
+
+//   const auto config = SW::Helper_t::loadDbConfig();
+
+//   QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
+
+//   db.setHostName(config.host);
+//   db.setPort(config.port);
+//   db.setDatabaseName(config.dbName);
+//   db.setUserName(config.userName);
+//   db.setPassword(config.password);
+
+//   if(!db.open()){
+// 	QMessageBox::critical(nullptr, qApp->applicationName(),
+// 						  QStringLiteral("Error al conectar con PostgreSQL:\n") + db.lastError().text());
+// 	return false;
+//   }
+//   return true;
+// }
 bool connectToDatabase(){
-  QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
+  // Intenta conectar con la configuración existente
+  auto tryConnect = []() -> bool {
+	const auto config = SW::Helper_t::loadDbConfig();
 
-  // TODO: Cargar estas credenciales desde QSettings o archivo de configuración
-  db.setHostName("localhost");
-  db.setPort(5432);
-  db.setDatabaseName("xdatabase");
-  db.setUserName("postgres");
-  db.setPassword(qEnvironmentVariable("SW_DB_PASSWORD", "2311046"));  // ← CAMBIAR
+	if (QSqlDatabase::contains(QStringLiteral("xxxConection"))) {
+	  QSqlDatabase::removeDatabase(QStringLiteral("xxxConection"));
+	}
 
-  if(!db.open()){
-	QMessageBox::critical(nullptr, qApp->applicationName(),
-						  "Error al conectar con PostgreSQL:\n" + db.lastError().text());
-	return false;
+	QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
+	db.setHostName(config.host);
+	db.setPort(config.port);
+	db.setDatabaseName(config.dbName);
+	db.setUserName(config.userName);
+	db.setPassword(config.password);
+
+	return db.open();
+  };
+
+  if (tryConnect()) {
+	return true;
   }
 
-  qInfo() << "Conexión exitosa a PostgreSQL!";
-  return true;
+  // Si no pudo conectar, abrir el diálogo de configuración para pedir credenciales
+  QMessageBox::warning(nullptr, qApp->applicationName(),
+					   QStringLiteral("No se pudo conectar a la base de datos. Por favor revise las credenciales."));
+
+  ConfigDialog dlg(SW::Helper_t::detectSystemColorScheme(), true);
+  dlg.setCurrentPage(2); // Abre en la pestaña 2 (Base de datos)
+
+  if (dlg.exec() == QDialog::Accepted) {
+	// Reintentar conexión con los nuevos datos guardados
+	if (tryConnect()) {
+	  return true;
+	}
+  }
+
+  QMessageBox::critical(nullptr, qApp->applicationName(),
+						QStringLiteral("Imposible continuar sin conexión a la base de datos."));
+  return false;
 }
 
 /**
@@ -130,91 +179,51 @@ bool initializeDefaultData(){
 
 int main(int argc, char *argv[])
 {
- //  QApplication a(argc, argv);
+  QApplication a(argc, argv);
+  a.setApplicationName(QStringLiteral("SWUrlManager"));
+  a.setApplicationVersion(QStringLiteral("1.0"));
+  a.setOrganizationName(QStringLiteral("SWSystem's"));
 
- //  a.setApplicationName(QStringLiteral("SWUrlManager"));
- //  a.setApplicationVersion(QStringLiteral("1.0"));
- //  a.setOrganizationName(QStringLiteral("SWSystem's"));
+  const QString serverName{a.applicationName()};
+  if(SingleIntsanceManager::isRunning(serverName)){
+	return -1;
+  }
+  if(!SingleIntsanceManager::initServer(serverName)){
+	QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
+	return -1;
+  }
 
- //  const QString serverName{a.applicationName()};
- //  if(SingleIntsanceManager::isRunning(serverName)){
-	// // QMessageBox::warning(nullptr, qApp->applicationName(), "Ya existe una instancia de la aplicación corriendo.");
-	// return -1;
- //  }
+  // 1. Conectar a la base de datos PostgreSQL
+  qInfo() << "Conectando a PostgreSQL...";
+  if(!connectToDatabase()){
+	return -1;
+  }
 
- //  if(!SingleIntsanceManager::initServer(serverName)){
-	// QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
-	// return -1;
- //  }
+  // 2. Verificar e inicializar datos por defecto (usuario 'public')
+  qInfo() << "Verificando usuario 'public'...";
+  if(!initializeDefaultData()){
+	return -1;
+  }
 
- //  // 1. Conectar a la base de datos PostgreSQL
- //  if(!connectToDatabase()){
-	// return -1;
- //  }
+  //Creacion de la carpeta de la aplicación
+  QDir dir(SW::Helper_t::AppLocalDataLocation());
+  if(!dir.exists()){
+	if(SW::Helper_t::createDataBase_dir())
+	  qInfo() << "Carpeta del sistema creado!";
+  }
 
- //  // 2. Verificar e inicializar datos por defecto (usuario 'public')
- //  if(!initializeDefaultData()){
-	// return -1;
- //  }
+  qInfo() << "Creando MainForm...";
+  MainForm w;
+  qInfo() << "MainForm creado. Estableciendo título...";
 
- //  //Creacion de la carpeta de la aplicación
- //  QDir dir(SW::Helper_t::AppLocalDataLocation());
- //  if(!dir.exists()){
-	// if(SW::Helper_t::createDataBase_dir())
-	//   qInfo() << "Carpeta del sistema creado!";
- //  }
+  w.setWindowTitle(a.applicationName());
+  qInfo() << "Mostrando MainForm...";
 
+  w.show();
+  qInfo() << "MainForm mostrado. Iniciando event loop...";
 
+  int result = a.exec();
+  qInfo() << "Event loop terminado con código:" << result;
 
- //  MainForm w;
- //  w.setWindowTitle(a.applicationName());
- //  w.show();
- //  return a.exec();
- QApplication a(argc, argv);
- a.setApplicationName(QStringLiteral("SWUrlManager"));
- a.setApplicationVersion(QStringLiteral("1.0"));
- a.setOrganizationName(QStringLiteral("SWSystem's"));
-
- const QString serverName{a.applicationName()};
- if(SingleIntsanceManager::isRunning(serverName)){
-   return -1;
- }
- if(!SingleIntsanceManager::initServer(serverName)){
-   QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
-   return -1;
- }
-
- // 1. Conectar a la base de datos PostgreSQL
- qInfo() << "Conectando a PostgreSQL...";
- if(!connectToDatabase()){
-   return -1;
- }
-
- // 2. Verificar e inicializar datos por defecto (usuario 'public')
- qInfo() << "Verificando usuario 'public'...";
- if(!initializeDefaultData()){
-   return -1;
- }
-
- //Creacion de la carpeta de la aplicación
- QDir dir(SW::Helper_t::AppLocalDataLocation());
- if(!dir.exists()){
-   if(SW::Helper_t::createDataBase_dir())
-	 qInfo() << "Carpeta del sistema creado!";
- }
-
- qInfo() << "Creando MainForm...";
- MainForm w;
- qInfo() << "MainForm creado. Estableciendo título...";
-
- w.setWindowTitle(a.applicationName());
- qInfo() << "Mostrando MainForm...";
-
- w.show();
- qInfo() << "MainForm mostrado. Iniciando event loop...";
-
- int result = a.exec();
- qInfo() << "Event loop terminado con código:" << result;
-
- return result;
+  return result;
 }

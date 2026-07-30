@@ -42,7 +42,6 @@ LogInDialog::LogInDialog(QWidget *parent, OpenMode op) :
       return;
     }
 
-    //    qInfo() << getUser_id();
     userName_ = ui->txtUser->text();
     accept();
   });
@@ -228,14 +227,11 @@ void LogInDialog::setToggledToButton(bool op){
 
   setWindowTitle("Crear nuevo usuario.");
   ui->groupBox->setDisabled(op);
-  // ui->btnOtherOptions->setChecked(op);
   ui->btnOtherOptions->toggle();
   ui->btnOtherOptions->setDisabled(op);
   ui->btnResetPassword->setVisible(!op);
 
 }
-
-
 
 void LogInDialog::setUp_Form() noexcept{
 

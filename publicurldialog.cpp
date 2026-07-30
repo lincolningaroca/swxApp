@@ -127,8 +127,6 @@ void PublicUrlDialog::on_deleteUrl(){
 
 }
 
-
-
 void PublicUrlDialog::on_showMaintenanceDialog(SW::OpenMode mode){
 
   QList<QVariant> dataUrl{};
@@ -235,6 +233,7 @@ void PublicUrlDialog::writeSettings(){
 void PublicUrlDialog::readSettings(){
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
+
   settings.beginGroup("Public_url_dialog");
   const auto formGeometry = settings.value("form_geometry", QByteArray()).toByteArray();
   const auto headerState = settings.value("Header_state", QByteArray()).toByteArray();
@@ -268,7 +267,6 @@ void PublicUrlDialog::setupContextMenu(){
   connect(editUrl_, &QAction::triggered, this, [this](){on_showMaintenanceDialog(SW::OpenMode::Edit);});
   connect(deleteUrl_, &QAction::triggered, this, &PublicUrlDialog::on_deleteUrl);
   connect(openUrl_, &QAction::triggered, this, &PublicUrlDialog::on_openUrl);
-
 
 }
 

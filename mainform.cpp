@@ -108,7 +108,7 @@ MainForm::MainForm(QWidget *parent)
    */
   QObject::connect(exportToExcelFile_, &QAction::triggered, this, &MainForm::on_exportToExcel);
 
-/**
+  /**
    * @brief QObject::connect
    * btnDeleteCategory
    */
@@ -188,7 +188,7 @@ MainForm::MainForm(QWidget *parent)
 
   setCboCategoryToolTip();
   hastvUrlData();
-   /**
+  /**
    * @brief QObject::connect
    */
   QObject::connect(ui->btnLogIn, &QAction::triggered, this, &MainForm::on_loadLoginForm);
@@ -569,22 +569,8 @@ void MainForm::on_quitUrl(){
 
 }
 
-// void MainForm::on_btnEdit(){
-
-//   if( !validateSelectedRow() ) return;
-
-//   auto currentRow = ui->tvUrl->currentIndex().row();
-
-//   midleWidget->setUrl(ui->tvUrl->model()->index(currentRow,1).data().toString());
-//   midleWidget->setDescription(ui->tvUrl->model()->index(currentRow,2).data().toString());
-
-//   editAction(true);
-
-//   midleWidget->selectAndFocus();
-//   ui->btnAdd->setText(QStringLiteral("Actualizar"));
-
-// }
 void MainForm::on_btnEdit(){
+
   if(!validateSelectedRow()) return;
   auto currentRow = ui->tvUrl->currentIndex().row();
   midleWidget->setUrl(ui->tvUrl->model()->index(currentRow, 1).data().toString());
@@ -598,7 +584,7 @@ void MainForm::on_btnEdit(){
   query.addBindValue(helperdb_.encryptionKey());
 
   if(query.exec() && query.next()){
-	// query.value(2) es url_desc ya descifrada
+
 	midleWidget->setDescription(query.value(2).toString());
   } else {
 	qDebug() << "Error en fn_get_urls_by_id:" << query.lastError().text();
@@ -647,132 +633,126 @@ void MainForm::on_callLogout(){
   ui->toolBar->setVisible(false);
   ui->actionVer_url_s_publicas->setVisible(false);
 
-
-
 }
 
-/**
- * @brief esta funcion sera reemplazada, por una de postgreql
- */
+
 void MainForm::on_makeBackup(){
 
-  QProcess process(this);
-  const auto path_app {SW::Helper_t::app_pathLocation()+"/tools/sqlite-tools-win-x64-3450100/sqlite3.exe"};
-  //
+  const auto filePath = QFileDialog::getSaveFileName(
+	this,
+	QStringLiteral("Crear una copia de seguridad"),
+	SW::Helper_t::getLastOpenedDirectory(),
+	QStringLiteral("Archivos de copia de seguridad (*.backup)"));
 
-  const auto databasePath = SW::Helper_t::AppLocalDataLocation()+"/xdatabase.db";
-  const auto filePath = QFileDialog::getSaveFileName(this, QStringLiteral("Crear una copia de seguridad"), SW::Helper_t::getLastOpenedDirectory(),
-													 QStringLiteral("Archivos de copia de seguridad (*.bak)"));
-
-
-  if(filePath.isEmpty())
-	return;
-
-  if(filePath.contains(' ')){
-	QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("El nombre del archivo no puede contener espacios."));
-	return;
-  }
+  if(filePath.isEmpty()) return;
 
   const QFileInfo fileInfo(filePath);
+  SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
 
+  const auto config = SW::Helper_t::loadDbConfig();
 
-  const auto absolutePath{fileInfo.absolutePath()};
-  const auto baseName{fileInfo.baseName()};
-  const auto extension{fileInfo.suffix()};
+  const QStringList args{
+	QStringLiteral("--host=%1").arg(config.host),
+	QStringLiteral("--port=%1").arg(config.port),
+	QStringLiteral("--username=%1").arg(config.userName),
+	QStringLiteral("--format=custom"),
+	QStringLiteral("--file=%1").arg(filePath),
+	config.dbName
+  };
 
-  const auto fecha{QDateTime::currentDateTime().toString("yyyy-MM-dd_hhmmss")};
-  // QString path{".backup %1/%2-%3.%4"};
-  const auto backupCommand = QString(".backup '%1/%2-%3.%4'").arg(absolutePath, baseName, fecha, extension);
+  QProcess process(this);
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  env.insert("PGPASSWORD", config.password);
+  process.setProcessEnvironment(env);
+  process.start(QStringLiteral("pg_dump"), args);
 
-  // Verificar si el ejecutable sqlite3 existe
-  if(!QFile::exists(path_app)) {
-	QMessageBox::critical(this, SW::Helper_t::appName(), QStringLiteral("No se encontró el ejecutable sqlite3"));
+  if(!process.waitForFinished(30000)){
+	QMessageBox::critical(this, SW::Helper_t::appName(),
+						  QStringLiteral("Error al crear la copia de seguridad:\n%1")
+							.arg(process.errorString()));
 	return;
   }
 
-  SW::Helper_t::setLastOpenedDirectory(absolutePath);
-
-  QStringList argv{};
-
-  argv << databasePath << backupCommand;
-  qDebug() << "Ejecutando:" << path_app << argv;  // Para depuración
-
-  qint64 pid = 0;
-  bool started = QProcess::startDetached(path_app, argv, QDir::currentPath(), &pid);
-
-
-  if(!started || pid == 0) {
-	QMessageBox::critical(this, SW::Helper_t::appName(), tr("Error al crear la copia de seguridad.\n").arg(process.errorString()));
+  if(process.exitCode() != 0){
+	QMessageBox::critical(this, SW::Helper_t::appName(),
+						  QStringLiteral("Error en pg_dump:\n%1")
+							.arg(QString::fromUtf8(process.readAllStandardError())));
 	return;
   }
 
-  QMessageBox::information(this, SW::Helper_t::appName(), tr("La copia de seguridad fue creada en:\n%1").arg(filePath));
-
+  QMessageBox::information(this, SW::Helper_t::appName(),
+						   QStringLiteral("Copia de seguridad creada en:\n%1").arg(filePath));
 }
 
 void MainForm::on_restoreDatabase(){
 
-  const auto dbasePath{SW::Helper_t::AppLocalDataLocation()+"/xdatabase.db"};
-
+  // Mostrar advertencia SOLO si hay datos
   if(!helperdb_.isDataBase_empty()){
-
-	QMessageBox msg{this};
+	QMessageBox msg(this);
 	msg.setWindowTitle(SW::Helper_t::appName());
 	msg.setIcon(QMessageBox::Warning);
-	msg.setText(QStringLiteral("<span>"
-							   "En éste momento hay una instancia de la base de datos en uso.<br/>"
-							   "<em>Tenga en cuenta que al restaurar la base de datos con una cópia de seguridad,<br/>"
-							   "se perderan todos los datos que tengan en éste momento, y seran reemplazados por los datos de la cópia.</em><br/><br/>"
-							   "<cite><strong>Consejo:</strong></cite>"
-							   "<ul><li>Tal vez antes de restaurar, una cópia de seguridad, quiera crear un backup, de la base de datos actual, para no perder los datos.</li></ul><br/>"
-							   "</span>"));
-
+	msg.setText(QStringLiteral(
+	  "<span>"
+	  "Al restaurar la base de datos se perderán todos los datos actuales<br/>"
+	  "y serán reemplazados por los datos de la copia de seguridad.<br/><br/>"
+	  "<strong>Consejo:</strong>"
+	  "<ul><li>Antes de restaurar, considere crear un backup de la base de datos actual.</li></ul>"
+	  "</span>"));
 	msg.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	msg.button(QMessageBox::Yes)->setText("Restaurar la base de datos");
+	msg.button(QMessageBox::Yes)->setText("Restaurar");
 	msg.button(QMessageBox::No)->setText("Cancelar");
-	if(msg.exec() == QMessageBox::No)
-	  return;
+	if(msg.exec() == QMessageBox::No) return;
   }
 
-  const auto pathBackup{QFileDialog::getOpenFileName(this, "Abrir archivo de respaldo", SW::Helper_t::getLastOpenedDirectory(),
-													 QStringLiteral("Archivo backup (*.bak)"))};
-  if(pathBackup.isEmpty())
+  const auto pathBackup = QFileDialog::getOpenFileName(
+	this,
+	QStringLiteral("Abrir archivo de respaldo"),
+	SW::Helper_t::getLastOpenedDirectory(),
+	QStringLiteral("Archivo backup (*.backup)"));
+
+  if(pathBackup.isEmpty()) return;
+
+  SW::Helper_t::setLastOpenedDirectory(QFileInfo(pathBackup).absolutePath());
+  const auto config = SW::Helper_t::loadDbConfig();
+
+  const QStringList args{
+	QStringLiteral("--host=%1").arg(config.host),
+	QStringLiteral("--port=%1").arg(config.port),
+	QStringLiteral("--username=%1").arg(config.userName),
+	config.dbName,
+	QStringLiteral("--clean"),
+	QStringLiteral("--if-exists"),
+	pathBackup
+  };
+
+  QProcess process(this);
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  env.insert("PGPASSWORD", config.password);
+  process.setProcessEnvironment(env);
+  process.start(QStringLiteral("pg_restore"), args);
+
+  if(!process.waitForFinished(60000)){
+	QMessageBox::critical(this, SW::Helper_t::appName(),
+						  QStringLiteral("Error al restaurar:\n%1").arg(process.errorString()));
 	return;
-
-  auto db{QSqlDatabase::database("xxxConection")};
-
-  if(db.isOpen())
-	db.close();
-
-
-  QStringList args{};
-  QString cmd {".restore %1"};
-
-  args << dbasePath << cmd.arg(pathBackup);
-
-  const auto app{SW::Helper_t::app_pathLocation()+"/tools/sqlite-tools-win-x64-3450100/sqlite3.exe"};
-
-  QProcess process{this};
-
-  const QFileInfo fileInfo{pathBackup};
-  SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
-
-  if(!process.startDetached(app, args)){
-	QMessageBox::critical(this, SW::Helper_t::appName(), tr("Error en la ejecución.\n%1").arg(process.errorString()));
-	return;
-
   }
-  QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("La base de datos, fue restaurada"));
-  db.open();
 
-  loadListCategory(userId_);
-  setUpTable(currentCategoryId());
-  has_data();
-  canCreateBackUp();
-  canStartSession();
+  if(process.exitCode() != 0){
+	QMessageBox::critical(this, SW::Helper_t::appName(),
+						  QStringLiteral("Error en pg_restore:\n%1")
+							.arg(QString::fromUtf8(process.readAllStandardError())));
+	return;
+  }
 
+  QMessageBox::information(this, SW::Helper_t::appName(),
+						   QStringLiteral(
+							 "Base de datos restaurada correctamente.<br/><br/>"
+							 "<strong>La aplicación se reiniciará automáticamente.</strong>"
+							 ));
 
-
+  // Relanzar la app y cerrar la instancia actual
+  QProcess::startDetached(qApp->applicationFilePath(), qApp->arguments());
+  qApp->quit();
 }
 
 void MainForm::on_cancelAction(){
@@ -806,7 +786,7 @@ void MainForm::on_showAllDescription(){
 void MainForm::on_showPublicUrlDialog(){
 
   PublicUrlDialog publicDialog(currentScheme_, this);
-  publicDialog.setWindowTitle("Direcciones url públicas");
+  publicDialog.setWindowTitle("Url públicas");
 
   publicDialog.setShowGrid(ui->tvUrl->showGrid());
 
@@ -954,6 +934,7 @@ void MainForm::setUpStatusBar(){
 }
 
 void MainForm::updateLblInfo() noexcept{
+
   const auto linkColor = qApp->palette().color(QPalette::Active, QPalette::Link);
   lblInfo_->setText(QString("<a href='about dialog' style='color:%1;'>"
 							"<span>SWSystem's - Lincoln Ingaroca</span>"
@@ -990,7 +971,6 @@ void MainForm::applyIcons(Qt::ColorScheme scheme) noexcept{
   if (showPublicUrl_) showPublicUrl_->setIcon(SW::Helper_t::svgIcon(":/img/public-url.svg", iconColor));
 
   midleWidget->applyIcons(iconColor);
-
 
 }
 
@@ -1035,39 +1015,9 @@ void MainForm::initFrm() noexcept{
 									" aparte del usario por defecto\"</cite></p>");
 
 
-
-
 }
 
-// void MainForm::setUpTable(uint32_t categoryId) noexcept {
 
-//   xxxModel_ = new SWTableModel(this);
-
-//   QSqlQuery qry(db_);
-//   qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
-//   qry.addBindValue(categoryId);
-//   qry.addBindValue(helperdb_.encryptionKey());
-//   // qry.exec();
-//   if(!qry.exec()){
-// 	qDebug() << "fn_get_urls error:" << qry.lastError().text();
-//   } else {
-// 	qDebug() << "fn_get_urls OK, filas:" << qry.size();
-//   }
-
-//   // Poblar urlList_ con los datos descifrados
-//   urlList_.clear();
-//   QSqlQuery listQry = qry;
-//   listQry.seek(-1);
-//   while(listQry.next()){
-// 	urlList_.insert(listQry.value(0).toUInt(), listQry.value(1).toString());
-//   }
-
-//   xxxModel_->setQuery(std::move(qry));
-//   qDebug() << "rowCount:" << xxxModel_->rowCount();
-//   ui->tvUrl->setModel(xxxModel_);
-//   setUpTableHeaders();
-//   ui->tvUrl->setMouseTracking(true);
-// }
 void MainForm::setUpTable(uint32_t categoryId) noexcept {
 
   xxxModel_ = new SWTableModel(this);
@@ -1141,7 +1091,6 @@ void MainForm::canStartSession() noexcept{
 
 void MainForm::setUptvUrlContextMenu() noexcept{
 
-
   openUrl_ = new QAction(QStringLiteral("Abrir url en el navegador"), this);
 
   editUrl_ = new QAction(QStringLiteral("Editar url"), this);
@@ -1157,9 +1106,7 @@ void MainForm::setUptvUrlContextMenu() noexcept{
   const auto exportToExcelFileIcon = QIcon(QStringLiteral(":/img/excelDocument.png"));
   exportToExcelFile_ = new QAction(exportToExcelFileIcon, QStringLiteral("Exportar datos a excel"), this);
 
-
   checkStatusContextMenu();
-
 
 }
 
@@ -1213,7 +1160,6 @@ void MainForm::openUrl() noexcept{
 }
 
 void MainForm::readSettings() noexcept{
-
 
   QSettings settings(qApp->organizationName(), SW::Helper_t::appName());
 
@@ -1316,24 +1262,13 @@ void MainForm::setCboCategoryToolTip() noexcept{
 
 }
 
+bool MainForm::hasValidTableData() const noexcept {
 
-//revisar esta funcion, puede ser eliminada, ya que se cambio a postgresql
-bool MainForm::hasValidTableData() const noexcept{
-
-  const auto tables = db_.tables(QSql::Tables);
-  const QStringList excludedTables{"users", "sqlite_sequence"};
-
-  return std::any_of(tables.cbegin(), tables.cend(),
-					 [&excludedTables, this](const QString& tableName) -> bool {
-					   if (excludedTables.contains(tableName)) {
-						 return false;
-					   }
-
-					   QSqlQuery query(db_);
-					   return query.exec(QString("SELECT 1 FROM %1 LIMIT 1").arg(tableName)) &&
-							  query.next();
-					 });
-
+  // Con PostgreSQL verificamos si hay URLs en la BD
+  QSqlQuery query(db_);
+  return query.exec("SELECT EXISTS(SELECT 1 FROM urls LIMIT 1)")
+		 && query.next()
+		 && query.value(0).toBool();
 }
 
 bool MainForm::validateSelectedRow() noexcept{

@@ -20,10 +20,8 @@ MaintenanceUrlDialog::MaintenanceUrlDialog(Qt::ColorScheme colorScheme, SW::Open
 
   const auto iconColor = SW::Helper_t::currentIconColor(colorScheme);
 
-  // if (ui->descTextEdit) {
   midleWidget->applyIcons(iconColor);
   midleWidget->setPlacesHolders();
-  // }
 
   readSettings();
 

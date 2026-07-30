@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util/helper.hpp"
 #include <QDialog>
 
 namespace Ui { class ConfigDialog; }
@@ -14,6 +15,11 @@ public:
 
   // Retorna el esquema seleccionado por el usuario
   Qt::ColorScheme selectedScheme() const noexcept;
+
+  DbConfig getDbConfig() const noexcept;
+  void setDbConfig(const DbConfig& config) noexcept;
+
+  void setCurrentPage(int index);
 
 
 private:
@@ -41,9 +47,12 @@ private slots:
   void on_btnCancel_clicked();
   void on_listMenu_currentRowChanged(int row);
 
+  void on_btnTestDB_clicked();
+
 signals:
   void themeChanged(Qt::ColorScheme scheme);
   void styleChanged(bool style);
+  void dbConfigSaved(const DbConfig& config);
 
   // QWidget interface
 protected:

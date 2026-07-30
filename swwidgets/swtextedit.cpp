@@ -28,7 +28,6 @@ SWTextEdit::SWTextEdit(QWidget *parent):
   toolBar_->setIconSize(QSize(16, 16));
   toolBar_->setFixedHeight(28);
 
-  // editor_ = new QTextEdit(this);
   editor_ = new SWInnerEdit(this);
 
   layout->addWidget(toolBar_);
@@ -45,8 +44,6 @@ SWTextEdit::SWTextEdit(QWidget *parent):
 
 void SWTextEdit::initToolBar()
 {
-  // const auto style = qApp->style();
-
   // --- Negrita ---
   boldAction_ = toolBar_->addAction("B");
   boldAction_->setCheckable(true);

@@ -2,7 +2,10 @@
 #include "ui_configdialog.h"
 
 #include <QCloseEvent>
+#include <QMessageBox>
 #include <QSettings>
+#include <QSqlDatabase>
+#include <QSqlError>
 
 ConfigDialog::ConfigDialog(Qt::ColorScheme currentScheme, bool isFusionActive, QWidget *parent)
   : QDialog(parent), ui(new Ui::ConfigDialog),
@@ -11,16 +14,21 @@ ConfigDialog::ConfigDialog(Qt::ColorScheme currentScheme, bool isFusionActive, Q
   selectedStyle_(isFusionActive),
   originalStyle_(isFusionActive)
 {
+
   ui->setupUi(this);
 
+  ui->txtPassword->setEchoMode(QLineEdit::Password);
+
   setWindowTitle(QStringLiteral("Configuración"));
-  // setFixedSize(480, 380);
+
   setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 
   initDialog();
   setCurrentTheme(selectedScheme_);
 
   ui->chkFusionStyle->setChecked(selectedStyle_);
+
+  setDbConfig(SW::Helper_t::loadDbConfig());
 
   restoreLastSelection();
 
@@ -51,6 +59,74 @@ ConfigDialog::ConfigDialog(Qt::ColorScheme currentScheme, bool isFusionActive, Q
 ConfigDialog::~ConfigDialog()
 {
   delete ui;
+}
+
+DbConfig ConfigDialog::getDbConfig() const noexcept {
+
+  DbConfig cfg;
+  cfg.host     = ui->txtHost->text().trimmed();
+  cfg.port     = ui->txtPort->text().toInt();
+  cfg.dbName   = ui->txtDbName->text().trimmed();
+  cfg.userName = ui->txtUser->text().trimmed();
+  cfg.password = ui->txtPassword->text();
+  return cfg;
+}
+
+void ConfigDialog::setDbConfig(const DbConfig& config) noexcept {
+
+  ui->txtHost->setText(config.host);
+  ui->txtPort->setText(QString::number(config.port));
+  ui->txtDbName->setText(config.dbName);
+  ui->txtUser->setText(config.userName);
+  ui->txtPassword->setText(config.password);
+}
+
+void ConfigDialog::setCurrentPage(int index) {
+
+  if (index >= 0 && index < ui->listMenu->count()) {
+	ui->listMenu->setCurrentRow(index);
+  }
+}
+
+void ConfigDialog::on_btnTestDB_clicked() {
+
+  const DbConfig cfg = getDbConfig();
+  const QString tempConnName = QStringLiteral("TestDbConnection");
+
+  // Si por alguna razón la conexión previa quedó en memoria, la removemos
+  if (QSqlDatabase::contains(tempConnName)) {
+	QSqlDatabase::removeDatabase(tempConnName);
+  }
+
+  bool success = false;
+  QString errorMsg;
+
+  // Bloque para aislar la instancia de QSqlDatabase y asegurar su destrucción antes del QMessageBox
+  {
+	QSqlDatabase testDb = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), tempConnName);
+	testDb.setHostName(cfg.host);
+	testDb.setPort(cfg.port);
+	testDb.setDatabaseName(cfg.dbName);
+	testDb.setUserName(cfg.userName);
+	testDb.setPassword(cfg.password);
+
+	success = testDb.open();
+	if (!success) {
+	  errorMsg = testDb.lastError().text();
+	} else {
+	  testDb.close();
+	}
+  } // 'testDb' se destruye completamente aquí
+
+  // Limpiar el recurso de la lista de conexiones de Qt
+  QSqlDatabase::removeDatabase(tempConnName);
+
+  // Mostrar la notificación exactamente una vez
+  if (success) {
+	QMessageBox::information(this, windowTitle(), QStringLiteral("¡Conexión a la base de datos exitosa!"));
+  } else {
+	QMessageBox::critical(this, windowTitle(), QStringLiteral("Error al conectar a la base de datos:\n") + errorMsg);
+  }
 }
 
 Qt::ColorScheme ConfigDialog::selectedScheme() const noexcept{
@@ -84,6 +160,10 @@ void ConfigDialog::initDialog() noexcept{
   ui->lblImagen->setPixmap(QPixmap(":/img/style-fusion.png").scaled(
 	256, 256, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   ui->lblImagen->setAlignment(Qt::AlignCenter);
+
+  auto *itemDbConexion = new QListWidgetItem(QIcon(":/img/dbConfig.png"), "Base de datos");
+  itemDbConexion->setSizeHint(QSize(130, 40));
+  ui->listMenu->addItem(itemDbConexion);
 }
 
 
@@ -196,6 +276,7 @@ void ConfigDialog::on_btnOk_clicked(){
 
   applyThemeSelection();
   emit styleChanged(selectedStyle_);
+  SW::Helper_t::saveDbConfig(getDbConfig());
   saveLastSelection();
   accept();
 
@@ -205,6 +286,7 @@ void ConfigDialog::on_btnApply_clicked(){
 
   applyThemeSelection();
   emit styleChanged(selectedStyle_);
+  SW::Helper_t::saveDbConfig(getDbConfig());
   // No cierra el diálogo
 
 }

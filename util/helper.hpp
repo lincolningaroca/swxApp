@@ -7,7 +7,13 @@
 #include <QStandardPaths>
 #include <QStringView>
 
-class QTableView;
+struct DbConfig {
+  QString host{"localhost"};
+  QString dbName{"xdatabase"};
+  QString userName{"postgres"};
+  QString password{};
+  int     port{5432};
+};
 
 namespace SW {
 
@@ -34,7 +40,6 @@ struct Helper_t{
   [[nodiscard]]static bool open_Url(const QUrl& url) noexcept{return QDesktopServices::openUrl(url);}
   [[nodiscard]]static bool urlValidate(QStringView url) noexcept;
 
-  // En util/helper.hpp — agregar método
   [[nodiscard]] static QString deriveEncryptionKey() noexcept;
 
 
@@ -47,23 +52,17 @@ struct Helper_t{
   [[nodiscard]]static QByteArray setColorReg(const QString &color) noexcept;
   [[nodiscard]]static QString getColorReg(QByteArray dataColor) noexcept;
 
-  [[nodiscard]]static QString hashGenerator(const QByteArray&) noexcept;
-
   static void set_Theme(Qt::ColorScheme theme) noexcept;
   [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
 									 const QColor& color) noexcept;
 
-  // [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
-		// 							 const QColor& color,
-		// 							 const QSize& size) noexcept;
+
   [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
 									 const QColor& color,
 									 const QSize &size) noexcept;
 
-  // [[nodiscard]]static Qt::ColorScheme checkSystemColorScheme() noexcept;
-  [[nodiscard]]static Qt::ColorScheme detectSystemColorScheme();
-  // static void applyManjaroDarkColor(QTableView* table);
 
+  [[nodiscard]]static Qt::ColorScheme detectSystemColorScheme();
 
   [[nodiscard]]static QString AppLocalDataLocation(){return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).append(dbDir_name);}
   [[nodiscard]]static QString app_pathLocation(){return QApplication::applicationDirPath();}
@@ -79,16 +78,22 @@ struct Helper_t{
 
   //encryp/decrypt metods
 
-  static QString encrypt(const QString& plainText, const QByteArray& key = hashKey, const QByteArray& iv = hashIv);
-  static QString decrypt(const QString& encryptedText, const QByteArray& key = hashKey, const QByteArray& iv = hashIv);
+  static QString encrypt(const QString& plainText, const QByteArray& key = QByteArray(),
+						 const QByteArray& iv = QByteArray());
+  static QString decrypt(const QString& encryptedText, const QByteArray& key = QByteArray(),
+						 const QByteArray& iv = QByteArray());
   inline static const QHash<SW::User, QString> currentUser_{
-    {SW::User::U_public, "PUBLIC"},
-    {SW::User::U_user, "USER"}
+	{SW::User::U_public, "PUBLIC"},
+	{SW::User::U_user, "USER"}
   };
 
   inline static const QString defaultUser{QStringLiteral("public")};
   inline static QString current_user_{defaultUser};
   inline static SW::SessionStatus sessionStatus_{SW::SessionStatus::Session_closed};
+
+  static void saveDbConfig(const DbConfig& config) noexcept;
+  static DbConfig loadDbConfig() noexcept;
+  static bool hasDbConfig() noexcept;
 
 
 private:
@@ -96,12 +101,21 @@ private:
   inline static const QString dbDir_name{"/xxxdatabase"};
   inline static const QPalette standardPalette_{QGuiApplication::palette()};
 
-  //variables y constantes de encriptacion
+  static const QByteArray& encryptKey() noexcept {
+	static const QByteArray key = QByteArray::fromHex(
+	  deriveEncryptionKey().toLatin1()
+	  );
+	return key;
+  }
 
-  inline static const QString key {"AbCdEfGhIjKlMnOpQrStUvWxYz@!#$%&/()=?¡1234567890"};
-  inline static const QString iv {"lincoln_carolina@m1am0r"};
-  inline static const QByteArray hashKey {QCryptographicHash::hash(key.toLatin1(), QCryptographicHash::Sha256)};
-  inline static const QByteArray hashIv {QCryptographicHash::hash(iv.toLatin1(), QCryptographicHash::Md5)};
+  static const QByteArray& encryptIv() noexcept {
+	// IV derivado como hash del machineUniqueId
+	static const QByteArray iv = QCryptographicHash::hash(
+	  QSysInfo::machineUniqueId(),
+	  QCryptographicHash::Md5
+	  );
+	return iv;
+  }
 
 };
 
