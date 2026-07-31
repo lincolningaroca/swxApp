@@ -1,15 +1,22 @@
 #include "helper.hpp"
 
+#include <QDesktopServices>
 #include <QDir>
+#include <QDir>
+#include <QFileInfo>
 #include <QIODevice>
+#include <QMutex>
+#include <QMutex>
 #include <QPainter>
 #include <QPixmap>
+#include <QProcess>
 #include <QRegularExpression>
 #include <QSettings>
 #include <QStyle>
 #include <QStyleFactory>
 #include <QStyleHints>
 #include <QSvgRenderer>
+#include <QTextStream>
 #include <random>
 
 extern "C"{
@@ -17,6 +24,8 @@ extern "C"{
 }
 
 namespace SW {
+
+
 
 // En util/helper.cpp
 QString Helper_t::deriveEncryptionKey() noexcept {
@@ -68,6 +77,61 @@ QColor Helper_t::currentIconColor() noexcept {
   const QColor windowColor = qApp->palette().color(QPalette::Window);
   return (windowColor.lightness() < 128) ? QColor(220, 220, 220) : QColor(30, 30, 30);
 }
+
+PgCheckResult Helper_t::checkPostgresqlInstallation() noexcept {
+  PgCheckResult result;
+
+  // 1. Determinar la ruta ejecutable de psql
+  QString psqlExecutable = QStringLiteral("psql");
+
+#ifdef Q_OS_WIN
+  // Si no está en el PATH, buscar en los directorios por defecto en Windows
+  QProcess checkPath;
+  checkPath.start(psqlExecutable, {QStringLiteral("--version")});
+  if (!checkPath.waitForStarted(1000)) {
+	// Buscar versiones comunes (18, 17, 16, 15...) en Program Files
+	const QString programFiles = qEnvironmentVariable("ProgramFiles", QStringLiteral("C:\\Program Files"));
+	for (int ver = 20; ver >= 14; --ver) {
+	  QString candidate = QStringLiteral("%1/PostgreSQL/%2/bin/psql.exe").arg(programFiles).arg(ver);
+	  if (QFileInfo::exists(candidate)) {
+		psqlExecutable = candidate;
+		break;
+	  }
+	}
+  }
+#endif
+
+  // 2. Ejecutar la comprobación con el binario hallado
+  QProcess process;
+  process.start(psqlExecutable, {QStringLiteral("--version")});
+
+  if (!process.waitForStarted(1000) || !process.waitForFinished(3000)) {
+	result.isInstalled = false;
+	return result;
+  }
+
+  if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+	result.isInstalled = false;
+	return result;
+  }
+
+  QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  result.rawOutput = output;
+
+  static QRegularExpression rxVersion(R"(psql\s+\(PostgreSQL\)\s+(\d+)\.)", QRegularExpression::CaseInsensitiveOption);
+  auto match = rxVersion.match(output);
+
+  if (match.hasMatch()) {
+	result.isInstalled = true;
+	result.majorVersion = match.captured(1).toInt();
+  } else {
+	result.isInstalled = true;
+	result.majorVersion = 0;
+  }
+
+  return result;
+}
+
 
 Qt::ColorScheme Helper_t::detectSystemColorScheme() {
 
@@ -123,7 +187,7 @@ QString Helper_t::generateSecurePassword(uint32_t length) noexcept{
   // Generar bytes aleatorios
   QByteArray randomBytes(length, 0);
   if (RAND_bytes(reinterpret_cast<unsigned char*>(randomBytes.data()), length) != 1) {
-    qFatal("Error al generar bytes aleatorios con OpenSSL");
+	qFatal("Error al generar bytes aleatorios con OpenSSL");
   }
 
   // Asegurar un carácter de cada tipo
@@ -134,7 +198,7 @@ QString Helper_t::generateSecurePassword(uint32_t length) noexcept{
 
   // Llenar el resto de la contraseña
   for (uint32_t i = 4; i < length; ++i) {
-    password += chars[static_cast<unsigned char>(randomBytes[i]) % chars.length()];
+	password += chars[static_cast<unsigned char>(randomBytes[i]) % chars.length()];
   }
 
   // Mezclar los caracteres
@@ -365,6 +429,59 @@ QVariant Helper_t::readData(QByteArray &&data){
   return data_;
 
 }
+
+void customLogHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg){
+
+  static QMutex mutex;
+  QMutexLocker locker(&mutex);
+
+  // Carpeta de logs dentro de la ubicación local de la app
+  const QString logDirPath = Helper_t::AppLocalDataLocation() + QStringLiteral("/logs");
+  QDir dir(logDirPath);
+  if (!dir.exists()) {
+	dir.mkpath(QStringLiteral("."));
+  }
+
+  // Nombre de archivo diario: app_YYYY-MM-DD.log
+  const QString fileName = QStringLiteral("%1/app_%2.log")
+							 .arg(logDirPath, QDate::currentDate().toString(QStringLiteral("yyyy-MM-dd")));
+
+  QFile logFile(fileName);
+  if (!logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+	return;
+  }
+
+  QTextStream out(&logFile);
+  out.setEncoding(QStringConverter::Utf8);
+
+  const QString timeStamp = QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"));
+
+  QString levelTxt;
+  switch (type) {
+	case QtDebugMsg:    levelTxt = QStringLiteral("DEBUG"); break;
+	case QtInfoMsg:     levelTxt = QStringLiteral("INFO "); break;
+	case QtWarningMsg:  levelTxt = QStringLiteral("WARN "); break;
+	case QtCriticalMsg: levelTxt = QStringLiteral("CRIT "); break;
+	case QtFatalMsg:    levelTxt = QStringLiteral("FATAL"); break;
+  }
+
+  out << QStringLiteral("[%1] [%2] %3\n").arg(timeStamp, levelTxt, msg);
+
+#ifndef NDEBUG
+  if (context.file) {
+	out << QStringLiteral("    (En %1:%2, %3)\n")
+	.arg(QString::fromUtf8(context.file))
+	  .arg(context.line)
+	  .arg(QString::fromUtf8(context.function));
+  }
+#endif
+
+  out.flush();
+  logFile.close();
+
+}
+
+
 
 
 } // namespace SW

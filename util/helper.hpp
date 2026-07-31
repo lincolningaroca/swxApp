@@ -3,9 +3,12 @@
 #include <QApplication>
 #include <QCryptographicHash>
 #include <QDesktopServices>
+#include <QMessageLogContext>
 #include <QPalette>
 #include <QStandardPaths>
 #include <QStringView>
+#include <QStringView>
+#include <QtGlobal>
 
 struct DbConfig {
   QString host{"localhost"};
@@ -13,6 +16,12 @@ struct DbConfig {
   QString userName{"postgres"};
   QString password{};
   int     port{5432};
+};
+
+struct PgCheckResult {
+  bool isInstalled{false};
+  int majorVersion{0};
+  QString rawOutput{};
 };
 
 namespace SW {
@@ -23,6 +32,11 @@ enum class User{ U_public, U_user };
 enum class AuthType{ Numeric_pin, Secret_Question };
 
 enum class OpenMode{ New, Edit};
+
+/**
+ * @brief Manejador personalizado de mensajes para redirigir qInfo, qWarning, etc. a un archivo .log
+ */
+void customLogHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 struct Helper_t{
 
@@ -35,6 +49,11 @@ struct Helper_t{
 
   static QColor currentIconColor(Qt::ColorScheme scheme) noexcept;
   static QColor currentIconColor() noexcept; // sobrecarga sin parámetro
+
+  /**
+   * @brief Verifica si PostgreSQL está instalado en el sistema cliente y obtiene su versión.
+   */
+  [[nodiscard]] static PgCheckResult checkPostgresqlInstallation() noexcept;
 
   [[nodiscard]]static bool verify_Values(const QStringView text1, const QStringView text2) noexcept{return (text1.toString() == text2.toString());}
   [[nodiscard]]static bool open_Url(const QUrl& url) noexcept{return QDesktopServices::openUrl(url);}

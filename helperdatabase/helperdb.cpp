@@ -1,5 +1,11 @@
 #include "helperdb.hpp"
 
+#include "util/helper.hpp"
+#include <QDir>
+#include <QFile>
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QSettings>
 #include <QSqlError>
 #include <QStringView>
 
@@ -10,6 +16,172 @@ HelperDataBase_t::HelperDataBase_t()
   qry_(db_),
 encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
 {
+}
+
+bool HelperDataBase_t::ensureDatabaseAndSchemaReady(DbConfig& config, QWidget* parent) {
+  const QString adminConnName = QStringLiteral("AdminConnection");
+  bool adminConnected = false;
+
+  // -------------------------------------------------------------------------
+  // PASO 1: Validar conexión a 'postgres' y crear BD si no existe
+  // -------------------------------------------------------------------------
+  while (!adminConnected) {
+	{ // Scope delimitado para dbAdmin y queries asociadas
+	  QSqlDatabase dbAdmin = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), adminConnName);
+	  dbAdmin.setHostName(config.host);
+	  dbAdmin.setPort(config.port);
+	  dbAdmin.setUserName(config.userName);
+	  dbAdmin.setPassword(config.password);
+	  dbAdmin.setDatabaseName(QStringLiteral("postgres"));
+
+	  if (dbAdmin.open()) {
+		adminConnected = true;
+
+		QSqlQuery checkQuery(dbAdmin);
+		checkQuery.prepare(QStringLiteral("SELECT 1 FROM pg_database WHERE datname = ?"));
+		checkQuery.addBindValue(config.dbName);
+
+		if (checkQuery.exec() && !checkQuery.next()) {
+		  qDebug() << "Creando base de datos:" << config.dbName;
+		  QSqlQuery createDbQuery(dbAdmin);
+		  QString createSql = QStringLiteral("CREATE DATABASE \"%1\" ENCODING 'UTF8';").arg(config.dbName);
+
+		  if (!createDbQuery.exec(createSql)) {
+			qCritical() << "Error creando la base de datos:" << createDbQuery.lastError().text();
+			dbAdmin.close();
+			// IMPORTANTE: No llamar a removeDatabase aquí; dejar que finalice el scope
+			return false;
+		  }
+		}
+		dbAdmin.close();
+	  }
+	} // dbAdmin, checkQuery y createDbQuery se destruyen al salir de este bloque
+
+	QSqlDatabase::removeDatabase(adminConnName); // Ahora es seguro remover la conexión
+
+	if (!adminConnected) {
+
+
+	  const QString dialogTitle = SW::Helper_t::appName();
+	  const QString dialogLabel = QStringLiteral(
+		"<b>Se requiere la contraseña de PostgreSQL</b><br><br>"
+		"Por favor, ingrese la contraseña que asignó durante el <b>proceso de instalación</b> del servidor.<br>"
+		"<i>(Si no conoce esta contraseña o el servidor fue configurado por otra persona, "
+		"contacte al Administrador de Sistemas o de Base de Datos).</i>"
+		);
+
+	  bool ok = false;
+	  QString pwd = QInputDialog::getText(
+		parent, dialogTitle, dialogLabel, QLineEdit::Password, config.password, &ok
+		);
+
+	  if (ok && !pwd.isEmpty()) {
+		config.password = pwd;
+		SW::Helper_t::saveDbConfig(config);
+	  } else {
+		return false;
+	  }
+	}
+  }
+
+  // -------------------------------------------------------------------------
+  // PASO 2: Conectar a la BD de la app y ejecutar script de tablas/funciones
+  // -------------------------------------------------------------------------
+  const QString appConnName = QStringLiteral("InitConnection");
+  {
+	QSqlDatabase dbApp = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), appConnName);
+	dbApp.setHostName(config.host);
+	dbApp.setPort(config.port);
+	dbApp.setUserName(config.userName);
+	dbApp.setPassword(config.password);
+	dbApp.setDatabaseName(config.dbName);
+
+	if (!dbApp.open()) {
+	  qCritical() << "Error al conectar con la BD de la app:" << dbApp.lastError().text();
+	  return false;
+	}
+
+	QFile scriptFile(QStringLiteral(":/database/tableAndFunctions.sql"));
+	if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+	  qCritical() << "No se pudo abrir :/database/tableAndFunctions.sql";
+	  dbApp.close();
+	  return false;
+	}
+
+	QString scriptContent = QString::fromUtf8(scriptFile.readAll());
+	scriptFile.close();
+
+	QSqlQuery query(dbApp);
+	if (!query.exec(scriptContent)) {
+	  qCritical() << "Error al ejecutar el script de inicialización:" << query.lastError().text();
+	  dbApp.close();
+	  return false;
+	}
+
+	dbApp.close();
+  }
+  QSqlDatabase::removeDatabase(appConnName);
+
+  qDebug() << "Base de datos y esquema verificados correctamente.";
+  return true;
+}
+
+QString HelperDataBase_t::getPostgresToolPath(const QString &toolName){
+
+  QString exeName = toolName;
+#ifdef Q_OS_WIN
+  if (!exeName.endsWith(QStringLiteral(".exe"), Qt::CaseInsensitive)) {
+	exeName += QStringLiteral(".exe");
+  }
+#endif
+
+  // 1. Verificar si está en el PATH de Windows/Sistema
+  QString systemPath = QStandardPaths::findExecutable(exeName);
+  if (!systemPath.isEmpty()) {
+	return systemPath;
+  }
+
+#ifdef Q_OS_WIN
+  // 2. Consultar el Registro de Windows (Instalaciones oficiales)
+  QSettings registry(QStringLiteral("HKEY_LOCAL_MACHINE\\SOFTWARE\\PostgreSQL\\Installations"), QSettings::NativeFormat);
+  const QStringList keys = registry.childGroups();
+
+  for (const QString& key : keys) {
+	registry.beginGroup(key);
+	QString baseDir = registry.value(QStringLiteral("Base Directory")).toString();
+	registry.endGroup();
+
+	if (!baseDir.isEmpty()) {
+	  QString fullPath = QDir(baseDir).filePath(QStringLiteral("bin/") + exeName);
+	  if (QFile::exists(fullPath)) {
+		return fullPath;
+	  }
+	}
+  }
+
+  // 3. Escaneo dinámico de carpetas en Program Files (Compatible con versión 18, 19, 20...)
+  QDir pgParentDir(QStringLiteral("C:/Program Files/PostgreSQL"));
+  if (pgParentDir.exists()) {
+	// Ordena las carpetas de versión inversamente para tomar siempre la más reciente
+	QStringList versionDirs = pgParentDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name | QDir::Reversed);
+
+	for (const QString& versionFolder : std::as_const(versionDirs)) {
+	  QString fullPath = pgParentDir.filePath(versionFolder + QStringLiteral("/bin/") + exeName);
+	  if (QFile::exists(fullPath)) {
+		return fullPath;
+	  }
+	}
+  }
+
+  // 4. Fallback a psqlODBC
+  QString odbcPath = QStringLiteral("C:/Program Files/PostgreSQL/psqlODBC/bin/") + exeName;
+  if (QFile::exists(odbcPath)) {
+	return odbcPath;
+  }
+#endif
+
+  return exeName; // Retorno por defecto para que QProcess intente ejecutarlo
+
 }
 
 bool HelperDataBase_t::userExists(QStringView user) noexcept {

@@ -655,16 +655,20 @@ void MainForm::on_makeBackup(){
 	QStringLiteral("--host=%1").arg(config.host),
 	QStringLiteral("--port=%1").arg(config.port),
 	QStringLiteral("--username=%1").arg(config.userName),
+	QStringLiteral("--no-password"),
 	QStringLiteral("--format=custom"),
 	QStringLiteral("--file=%1").arg(filePath),
 	config.dbName
   };
 
+  const QString pgDumpPath = SW::HelperDataBase_t::getPostgresToolPath(QStringLiteral("pg_dump"));
+
   QProcess process(this);
+
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
   env.insert("PGPASSWORD", config.password);
   process.setProcessEnvironment(env);
-  process.start(QStringLiteral("pg_dump"), args);
+  process.start(pgDumpPath, args);
 
   if(!process.waitForFinished(30000)){
 	QMessageBox::critical(this, SW::Helper_t::appName(),
@@ -719,17 +723,20 @@ void MainForm::on_restoreDatabase(){
 	QStringLiteral("--host=%1").arg(config.host),
 	QStringLiteral("--port=%1").arg(config.port),
 	QStringLiteral("--username=%1").arg(config.userName),
-	config.dbName,
+	QStringLiteral("--dbname=%1").arg(config.dbName),
+	QStringLiteral("--no-password"),
 	QStringLiteral("--clean"),
 	QStringLiteral("--if-exists"),
 	pathBackup
   };
 
+  const QString pgRestorePath = SW::HelperDataBase_t::getPostgresToolPath(QStringLiteral("pg_restore"));
+
   QProcess process(this);
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
   env.insert("PGPASSWORD", config.password);
   process.setProcessEnvironment(env);
-  process.start(QStringLiteral("pg_restore"), args);
+  process.start(pgRestorePath, args);
 
   if(!process.waitForFinished(60000)){
 	QMessageBox::critical(this, SW::Helper_t::appName(),

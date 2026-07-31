@@ -45,5 +45,6 @@
         <file>img/style-fusion.png</file>
         <file>database/seed.sql</file>
         <file>img/dbConfig.png</file>
+        <file>database/tableAndFunctions.sql</file>
     </qresource>
 </RCC>

@@ -25,6 +25,12 @@ struct HelperDataBase_t{
   HelperDataBase_t& operator=(HelperDataBase_t&&) = delete;
 
 
+   static bool ensureDatabaseAndSchemaReady(DbConfig& config, QWidget* parent = nullptr);
+  /**
+	 * @brief Encuentra la ruta absoluta de ejecutable de Postgres (pg_dump, pg_restore)
+	 * dinámicamente mediante Registro de Windows, PATH o escaneo de directorios.
+	 */
+  static QString getPostgresToolPath(const QString& toolName);
   // helperdb.hpp — en la sección public
   [[nodiscard]] QString encryptionKey() const noexcept { return encryptionKey_; }
   bool userExists(QStringView user) noexcept;

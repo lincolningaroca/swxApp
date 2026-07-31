@@ -1,7 +1,8 @@
+#include "configdialog.hpp"
+#include "helperdatabase/helperdb.hpp"
 #include "mainform.hpp"
 #include "util/helper.hpp"
 
-#include "configdialog.hpp"
 #include <QApplication>
 #include <QDir>
 #include <QFontDatabase>
@@ -10,7 +11,63 @@
 #include <QMessageBox>
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <QUrl>
 
+constexpr int MIN_POSTGRESQL_VERSION = 17;
+const QString PG_DOWNLOAD_URL = QStringLiteral("https://www.postgresql.org/download/");
+
+/**
+ * @brief Comprueba la existencia y versión mínima del motor PostgreSQL en el cliente.
+ * @return true si la verificación es exitosa; false si debe cerrarse el programa.
+ */
+bool verifyPostgreSQLRequirement() {
+
+  auto pgStatus = SW::Helper_t::checkPostgresqlInstallation();
+
+  if (!pgStatus.isInstalled) {
+	QMessageBox msgBox;
+	msgBox.setIcon(QMessageBox::Critical);
+	msgBox.setWindowTitle(qApp->applicationName());
+	msgBox.setText(QStringLiteral("<b>PostgreSQL no está instalado en el sistema.</b>"));
+	msgBox.setInformativeText(
+	  QStringLiteral("Esta aplicación requiere el motor de base de datos PostgreSQL (versión %1 o superior) para funcionar.\n\n"
+					 "¿Desea abrir el sitio oficial de PostgreSQL para descargarlo?")
+		.arg(MIN_POSTGRESQL_VERSION));
+	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	msgBox.setDefaultButton(QMessageBox::Yes);
+
+	if (msgBox.exec() == QMessageBox::Yes) {
+	  if(!SW::Helper_t::open_Url(QUrl(PG_DOWNLOAD_URL))){
+		qWarning() << "No se pudo abrir el navegador web predeterminado.";
+	  }
+	}
+	return false;
+  }
+
+  if (pgStatus.majorVersion > 0 && pgStatus.majorVersion < MIN_POSTGRESQL_VERSION) {
+	QMessageBox msgBox;
+	msgBox.setIcon(QMessageBox::Warning);
+	msgBox.setWindowTitle(qApp->applicationName());
+	msgBox.setText(QStringLiteral("<b>Versión de PostgreSQL incompatible.</b>"));
+	msgBox.setInformativeText(
+	  QStringLiteral("Se detectó PostgreSQL versión %1 en su equipo.\n"
+					 "Esta aplicación requiere como mínimo la versión %2.\n\n"
+					 "Por favor, actualice su instalación de PostgreSQL desde el sitio oficial.")
+		.arg(pgStatus.majorVersion)
+		.arg(MIN_POSTGRESQL_VERSION));
+	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	msgBox.setDefaultButton(QMessageBox::Yes);
+
+	if (msgBox.exec() == QMessageBox::Yes) {
+	  if(!SW::Helper_t::open_Url(QUrl(PG_DOWNLOAD_URL))){
+		qWarning() << "No se pudo abrir el navegador web predeterminado.";
+	  }
+	}
+	return false;
+  }
+
+  return true;
+}
 
 /**
  * @brief The SingleIntsanceManager class
@@ -31,9 +88,9 @@ struct SingleIntsanceManager{
 	return false;
   }
 
-  static bool initServer(const QString & serverName){
+  static bool initServer(const QString& serverName, QObject* parent = nullptr){
 
-	auto* server = new QLocalServer();
+	auto* server = new QLocalServer(parent);
 	QLocalServer::removeServer(serverName);
 
 	if(!server->listen(serverName)){
@@ -52,70 +109,70 @@ struct SingleIntsanceManager{
  */
 
 // bool connectToDatabase(){
-//   // Si no hay config guardada, usar valores por defecto
-//   // y guardarlos para la próxima vez
-//   if(!SW::Helper_t::hasDbConfig()){
-// 	DbConfig defaultConfig{};
-// 	SW::Helper_t::saveDbConfig(defaultConfig);
+//   // Intenta conectar con la configuración existente
+//   auto tryConnect = []() -> bool {
+// 	const auto config = SW::Helper_t::loadDbConfig();
+
+// 	if (QSqlDatabase::contains(QStringLiteral("xxxConection"))) {
+// 	  QSqlDatabase::removeDatabase(QStringLiteral("xxxConection"));
+// 	}
+
+// 	QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
+// 	db.setHostName(config.host);
+// 	db.setPort(config.port);
+// 	db.setDatabaseName(config.dbName);
+// 	db.setUserName(config.userName);
+// 	db.setPassword(config.password);
+
+// 	return db.open();
+//   };
+
+  // if (tryConnect()) {
+// 	return true;
 //   }
 
-//   const auto config = SW::Helper_t::loadDbConfig();
+//   // Si no pudo conectar, abrir el diálogo de configuración para pedir credenciales
+//   QMessageBox::warning(nullptr, qApp->applicationName(),
+// 					   QStringLiteral("No se pudo conectar a la base de datos. Por favor revise las credenciales."));
 
-//   QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
+//   ConfigDialog dlg(SW::Helper_t::detectSystemColorScheme(), true);
+//   dlg.setCurrentPage(2); // Abre en la pestaña 2 (Base de datos)
 
-//   db.setHostName(config.host);
-//   db.setPort(config.port);
-//   db.setDatabaseName(config.dbName);
-//   db.setUserName(config.userName);
-//   db.setPassword(config.password);
-
-//   if(!db.open()){
-// 	QMessageBox::critical(nullptr, qApp->applicationName(),
-// 						  QStringLiteral("Error al conectar con PostgreSQL:\n") + db.lastError().text());
-// 	return false;
+//   if (dlg.exec() == QDialog::Accepted) {
+// 	// Reintentar conexión con los nuevos datos guardados
+// 	if (tryConnect()) {
+// 	  return true;
+// 	}
 //   }
-//   return true;
+
+//   QMessageBox::critical(nullptr, qApp->applicationName(),
+// 						QStringLiteral("Imposible continuar sin conexión a la base de datos."));
+//   return false;
 // }
-bool connectToDatabase(){
-  // Intenta conectar con la configuración existente
-  auto tryConnect = []() -> bool {
-	const auto config = SW::Helper_t::loadDbConfig();
+/**
+ * @brief connectToDatabase
+ * Establece la conexión principal de la app usando la configuración guardada
+ */
+bool connectToDatabase(const DbConfig& config) {
+  const QString connectionName = QStringLiteral("xxxConection");
 
-	if (QSqlDatabase::contains(QStringLiteral("xxxConection"))) {
-	  QSqlDatabase::removeDatabase(QStringLiteral("xxxConection"));
-	}
-
-	QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
-	db.setHostName(config.host);
-	db.setPort(config.port);
-	db.setDatabaseName(config.dbName);
-	db.setUserName(config.userName);
-	db.setPassword(config.password);
-
-	return db.open();
-  };
-
-  if (tryConnect()) {
-	return true;
+  if (QSqlDatabase::contains(connectionName)) {
+	QSqlDatabase::removeDatabase(connectionName);
   }
 
-  // Si no pudo conectar, abrir el diálogo de configuración para pedir credenciales
-  QMessageBox::warning(nullptr, qApp->applicationName(),
-					   QStringLiteral("No se pudo conectar a la base de datos. Por favor revise las credenciales."));
+  QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), connectionName);
+  db.setHostName(config.host);
+  db.setPort(config.port);
+  db.setDatabaseName(config.dbName);
+  db.setUserName(config.userName);
+  db.setPassword(config.password);
 
-  ConfigDialog dlg(SW::Helper_t::detectSystemColorScheme(), true);
-  dlg.setCurrentPage(2); // Abre en la pestaña 2 (Base de datos)
-
-  if (dlg.exec() == QDialog::Accepted) {
-	// Reintentar conexión con los nuevos datos guardados
-	if (tryConnect()) {
-	  return true;
-	}
+  if (!db.open()) {
+	qCritical() << "Error abriendo conexión principal:" << db.lastError().text();
+	return false;
   }
 
-  QMessageBox::critical(nullptr, qApp->applicationName(),
-						QStringLiteral("Imposible continuar sin conexión a la base de datos."));
-  return false;
+  return true;
 }
 
 /**
@@ -132,7 +189,7 @@ bool publicUserExists(){
   qry.addBindValue(QStringLiteral("public"));
 
   if(qry.exec() && qry.next()){
-	return (qry.value(0).toInt() > 0);
+	return qry.value(0).toBool();
   }
 
   return false;
@@ -184,22 +241,51 @@ int main(int argc, char *argv[])
   a.setApplicationVersion(QStringLiteral("1.0"));
   a.setOrganizationName(QStringLiteral("SWSystem's"));
 
+
+  // Instalar el interceptor de Logs de Qt
+  qInstallMessageHandler(SW::customLogHandler);
+
+  qInfo() << "============================================";
+  qInfo() << "Iniciando aplicación:" << a.applicationName() << a.applicationVersion();
+
   const QString serverName{a.applicationName()};
   if(SingleIntsanceManager::isRunning(serverName)){
 	return -1;
   }
-  if(!SingleIntsanceManager::initServer(serverName)){
+
+  if(!SingleIntsanceManager::initServer(serverName, &a)){
 	QMessageBox::critical(nullptr, qApp->applicationName(), "No se pudo iniciar el control de instancia única.");
 	return -1;
   }
 
+
   // 1. Conectar a la base de datos PostgreSQL
-  qInfo() << "Conectando a PostgreSQL...";
-  if(!connectToDatabase()){
+  if(!verifyPostgreSQLRequirement()){
 	return -1;
   }
 
-  // 2. Verificar e inicializar datos por defecto (usuario 'public')
+  auto config = SW::Helper_t::loadDbConfig();
+
+  qDebug() << "config.host:"     << config.host;
+  qDebug() << "config.port:"     << config.port;
+  qDebug() << "config.dbName:"   << config.dbName;
+  qDebug() << "config.userName:" << config.userName;
+  qDebug() << "config.password está vacío:" << config.password.isEmpty();
+  qDebug() << "hasDbConfig:"     << SW::Helper_t::hasDbConfig();
+
+  if (!SW::HelperDataBase_t::ensureDatabaseAndSchemaReady(config)) {
+	QMessageBox::critical(nullptr, SW::Helper_t::appName(),
+						  QStringLiteral("No se pudo preparar la base de datos para la aplicación. El programa se cerrará."));
+	return -1;
+  }
+
+  // 2. Conectar a la base de datos PostgreSQL
+  qInfo() << "Conectando a PostgreSQL...";
+  if(!connectToDatabase(config)){
+	return -1;
+  }
+
+  // 3. Verificar e inicializar datos por defecto (usuario 'public')
   qInfo() << "Verificando usuario 'public'...";
   if(!initializeDefaultData()){
 	return -1;
