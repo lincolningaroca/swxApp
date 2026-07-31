@@ -260,30 +260,52 @@ void MainForm::has_data() noexcept{
 
 }
 
-void MainForm::hastvUrlData() noexcept{
+// void MainForm::hastvUrlData() noexcept{
 
-  if(ui->tvUrl->model()->rowCount() == 0){
-	openUrl_->setDisabled(true);
-	ui->btnopen->setDisabled(true);
-	ui->btnEdit->setDisabled(true);
-	ui->btnQuit->setDisabled(true);
-	editUrl_->setDisabled(true);
-	quitUrl_->setDisabled(true);
-	moveUrl_->setVisible(false);
-	showDescDetail_->setVisible(false);
-	exportToExcelFile_->setVisible(false);
-  }else{
-	openUrl_->setEnabled(true);
-	ui->btnopen->setEnabled(true);
-	ui->btnEdit->setEnabled(true);
-	ui->btnQuit->setEnabled(true);
-	editUrl_->setEnabled(true);
-	quitUrl_->setEnabled(true);
-	moveUrl_->setVisible(true);
-	showDescDetail_->setVisible(true);
-	exportToExcelFile_->setVisible(true);
-  }
+//   if(ui->tvUrl->model()->rowCount() == 0){
+// 	openUrl_->setDisabled(true);
+// 	ui->btnopen->setDisabled(true);
+// 	ui->btnEdit->setDisabled(true);
+// 	ui->btnQuit->setDisabled(true);
+// 	editUrl_->setDisabled(true);
+// 	quitUrl_->setDisabled(true);
+// 	moveUrl_->setVisible(false);
+// 	showDescDetail_->setVisible(false);
+// 	exportToExcelFile_->setVisible(false);
+//   }else{
+// 	openUrl_->setEnabled(true);
+// 	ui->btnopen->setEnabled(true);
+// 	ui->btnEdit->setEnabled(true);
+// 	ui->btnQuit->setEnabled(true);
+// 	editUrl_->setEnabled(true);
+// 	quitUrl_->setEnabled(true);
+// 	moveUrl_->setVisible(true);
+// 	showDescDetail_->setVisible(true);
+// 	exportToExcelFile_->setVisible(true);
+//   }
 
+// }
+void MainForm::hastvUrlData() noexcept {
+  // Aseguramos que la tabla y el botón cancelar estén en estado operacional estándar
+  // para evitar que la interfaz quede congelada en un modo de edición previo.
+  editAction(false);
+
+  const bool hasRows = (ui->tvUrl->model() && ui->tvUrl->model()->rowCount() > 0);
+
+  // Botones y acciones de URL
+  openUrl_->setEnabled(hasRows);
+  ui->btnopen->setEnabled(hasRows);
+  ui->btnEdit->setEnabled(hasRows);
+  ui->btnQuit->setEnabled(hasRows);
+  editUrl_->setEnabled(hasRows);
+  quitUrl_->setEnabled(hasRows);
+
+  // Visibilidad de opciones en el menú contextual
+  showDescDetail_->setVisible(hasRows);
+  exportToExcelFile_->setVisible(hasRows);
+
+  // moveUrl_ solo debe ser visible si HAY filas Y además MÁS DE UNA categoría
+  moveUrl_->setVisible(hasRows && (categoryList_.count() > 1));
 }
 
 void MainForm::on_showNewCategoryDialog(){
@@ -445,14 +467,18 @@ void MainForm::on_deleteCategory(){
 
   if(msgBox.exec() == QMessageBox::No)
 	return;
+
   if(deleteAll()){
 	QMessageBox::information(this, SW::Helper_t::appName(),QStringLiteral("Datos eliminados."));
+
+	midleWidget->clearInputs();
+	ui->btnAdd->setText(QStringLiteral("Agregar"));
 
 	loadListCategory(userId_);
 	setUpTable(currentCategoryId());
 	has_data();
+	hastvUrlData();
 	checkStatusContextMenu();
-
 
   }
 
@@ -1132,7 +1158,9 @@ void MainForm::on_showTableContextMenu(const QPoint& p){
 	tableMenu.addAction(showDescDetail_);
 	tableMenu.addAction(showPublicUrl_);
 	tableMenu.addSeparator();
-	tableMenu.addAction(moveUrl_);
+	if(categoryList_.count() > 1){
+	  tableMenu.addAction(moveUrl_);
+	}
 	tableMenu.addSeparator();
 	tableMenu.addAction(exportToExcelFile_);
 
