@@ -90,12 +90,15 @@ MainForm::MainForm(QWidget *parent)
   /// ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //context menu implementation
 
+  setUpMainContextMenu();
   setUptvUrlContextMenu();
   canRestoreDataBase();
 
 
   ui->tvUrl->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(ui->tvUrl, &QTableView::customContextMenuRequested, this, &MainForm::on_showTableContextMenu);
+  setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(this, &MainForm::customContextMenuRequested, this, &MainForm::on_showMainContextMenu);
 
   /**
    * @brief QObject::connect
@@ -260,31 +263,6 @@ void MainForm::has_data() noexcept{
 
 }
 
-// void MainForm::hastvUrlData() noexcept{
-
-//   if(ui->tvUrl->model()->rowCount() == 0){
-// 	openUrl_->setDisabled(true);
-// 	ui->btnopen->setDisabled(true);
-// 	ui->btnEdit->setDisabled(true);
-// 	ui->btnQuit->setDisabled(true);
-// 	editUrl_->setDisabled(true);
-// 	quitUrl_->setDisabled(true);
-// 	moveUrl_->setVisible(false);
-// 	showDescDetail_->setVisible(false);
-// 	exportToExcelFile_->setVisible(false);
-//   }else{
-// 	openUrl_->setEnabled(true);
-// 	ui->btnopen->setEnabled(true);
-// 	ui->btnEdit->setEnabled(true);
-// 	ui->btnQuit->setEnabled(true);
-// 	editUrl_->setEnabled(true);
-// 	quitUrl_->setEnabled(true);
-// 	moveUrl_->setVisible(true);
-// 	showDescDetail_->setVisible(true);
-// 	exportToExcelFile_->setVisible(true);
-//   }
-
-// }
 void MainForm::hastvUrlData() noexcept {
   // Aseguramos que la tabla y el botón cancelar estén en estado operacional estándar
   // para evitar que la interfaz quede congelada en un modo de edición previo.
@@ -334,7 +312,8 @@ void MainForm::on_showNewCategoryDialog(){
 void MainForm::checkStatusContextMenu(){
 
   const bool sessionActive = (SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_start);
-  showPublicUrl_->setVisible(sessionActive);
+  if(showPublicUrl_)
+	showPublicUrl_->setVisible(sessionActive);
 
 }
 
@@ -1131,14 +1110,17 @@ void MainForm::setUptvUrlContextMenu() noexcept{
 
   showDescDetail_ = new QAction(QStringLiteral("Ver descripción de URL completa"), this);
 
-  showPublicUrl_ = new QAction(QStringLiteral("Ver url's públicas"));
-
   moveUrl_ = new QAction(QStringLiteral("Mover url, a otra categoría"), this);
 
 
   const auto exportToExcelFileIcon = QIcon(QStringLiteral(":/img/excelDocument.png"));
   exportToExcelFile_ = new QAction(exportToExcelFileIcon, QStringLiteral("Exportar datos a excel"), this);
 
+}
+
+void MainForm::setUpMainContextMenu() noexcept{
+
+  showPublicUrl_ = new QAction(QStringLiteral("Ver url's públicas"), this);
   checkStatusContextMenu();
 
 }
@@ -1156,17 +1138,26 @@ void MainForm::on_showTableContextMenu(const QPoint& p){
 	tableMenu.addAction(quitUrl_);
 	tableMenu.addSeparator();
 	tableMenu.addAction(showDescDetail_);
-	tableMenu.addAction(showPublicUrl_);
 	tableMenu.addSeparator();
-	if(categoryList_.count() > 1){
+	if(categoryList_.count() > 1)
 	  tableMenu.addAction(moveUrl_);
-	}
+
 	tableMenu.addSeparator();
 	tableMenu.addAction(exportToExcelFile_);
 
   }
 
   tableMenu.exec(ui->tvUrl->mapToGlobal(p));
+
+}
+
+void MainForm::on_showMainContextMenu(const QPoint &p){
+
+  QMenu mainMenu(this);
+
+  mainMenu.addAction(showPublicUrl_);
+
+  mainMenu.exec(mapToGlobal(p));
 
 }
 

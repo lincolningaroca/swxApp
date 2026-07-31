@@ -48,6 +48,7 @@ private:
   void canStartSession() noexcept;
 
   void setUptvUrlContextMenu() noexcept;
+  void setUpMainContextMenu() noexcept;
   void verifyContextMenu() noexcept;
   void openUrl() noexcept;
   void readSettings() noexcept;
@@ -124,6 +125,7 @@ private slots:
   void on_showSettingsDialog();
   void on_showChangePasswordDialog();
   void on_showTableContextMenu(const QPoint &p);
+  void on_showMainContextMenu(const QPoint &p);
   void on_styleChanged(bool style);
 
 
