@@ -7,7 +7,6 @@
 #include <QPalette>
 #include <QStandardPaths>
 #include <QStringView>
-#include <QStringView>
 #include <QtGlobal>
 
 struct DbConfig {

@@ -1,11 +1,8 @@
 #include "helper.hpp"
 
-#include <QDesktopServices>
-#include <QDir>
 #include <QDir>
 #include <QFileInfo>
 #include <QIODevice>
-#include <QMutex>
 #include <QMutex>
 #include <QPainter>
 #include <QPixmap>

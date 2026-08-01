@@ -1,12 +1,14 @@
 -- =============================================================================
 -- SCRIPT DE INICIALIZACIÓN AUTOMÁTICA
--- Habilita pgcrypto, crea las tablas, índices, llaves y funciones PL/pgSQL.
+-- Habilita pgcrypto, crea esquemas, tablas, índices, llaves y funciones PL/pgSQL.
 -- =============================================================================
 
 -- 1. EXTENSIÓN DE ENCRIPTACIÓN
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
--- 2. CREACIÓN DE TABLAS (Sin dependencias iniciales)
+-- 2. CREACIÓN DE ESQUEMAS Y TABLAS
+CREATE SCHEMA IF NOT EXISTS sys_audit;
+
 CREATE TABLE IF NOT EXISTS public.users (
     user_id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     user_name text NOT NULL,
@@ -39,6 +41,18 @@ CREATE TABLE IF NOT EXISTS public.urls (
     CONSTRAINT fk_category_urls FOREIGN KEY (categoryid) REFERENCES public.category(category_id)
 );
 
+-- Tabla de Auditoría (Oculta en esquema sys_audit)
+CREATE TABLE IF NOT EXISTS sys_audit.user_sessions (
+    session_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY,
+    user_id integer NOT NULL,
+    login_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    logout_at timestamp with time zone,
+    client_info text,
+    details jsonb DEFAULT '{}'::jsonb,
+    CONSTRAINT pk_user_sessions PRIMARY KEY (session_id),
+    CONSTRAINT fk_user_sessions_users FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE
+);
+
 -- 3. ÍNDICES
 CREATE INDEX IF NOT EXISTS idx_url_hash ON public.urls USING btree (url_hash);
 
@@ -54,6 +68,31 @@ BEGIN
   FROM users
   WHERE user_name <> encode(digest('public'::BYTEA, 'sha512'), 'hex');
   RETURN (v_count > 0);
+END;
+$$;
+
+-- Funciones de Auditoría de Sesiones en su propio esquema
+CREATE OR REPLACE FUNCTION sys_audit.fn_audit_login(p_user_id integer, p_client_info text DEFAULT NULL::text, p_details jsonb DEFAULT '{}'::jsonb) RETURNS bigint
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+  v_session_id BIGINT;
+BEGIN
+  INSERT INTO sys_audit.user_sessions (user_id, client_info, details)
+  VALUES (p_user_id, p_client_info, p_details)
+  RETURNING session_id INTO v_session_id;
+
+  RETURN v_session_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys_audit.fn_audit_logout(p_session_id bigint) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE sys_audit.user_sessions
+  SET logout_at = CURRENT_TIMESTAMP
+  WHERE session_id = p_session_id AND logout_at IS NULL;
 END;
 $$;
 
@@ -153,7 +192,7 @@ DECLARE
   v_rescue_type TEXT;
   v_first_value BYTEA;
 BEGIN
-  SELECT rescue_type, first_value 
+  SELECT rescue_type, first_value
   INTO v_rescue_type, v_first_value
   FROM users
   WHERE user_id = p_userid;
@@ -263,7 +302,7 @@ BEGIN
     UPDATE urls
     SET categoryid = p_new_categoryid
     WHERE url_id = p_url_id;
-    
+
     RETURN FOUND;
 EXCEPTION WHEN OTHERS THEN
     RAISE EXCEPTION '%', SQLERRM;
@@ -322,7 +361,7 @@ BEGIN
     SET category_name = UPPER(TRIM(p_name)),
         category_desc = UPPER(TRIM(p_desc))
     WHERE category_id = p_category_id AND userid = p_userid;
-    
+
     RETURN FOUND;
 EXCEPTION WHEN OTHERS THEN
     RAISE EXCEPTION '%', SQLERRM;
@@ -334,14 +373,14 @@ CREATE OR REPLACE FUNCTION public.fn_update_url(p_url text, p_desc text, p_url_i
     AS $$
 BEGIN
     UPDATE urls
-    SET 
+    SET
         url_text = pgp_sym_encrypt(TRIM(p_url), p_key),
         url_desc = pgp_sym_encrypt(p_desc, p_key),
         url_hash = encode(digest(TRIM(p_url)::BYTEA, 'sha256'), 'hex')
-    WHERE 
-        url_id = p_url_id 
+    WHERE
+        url_id = p_url_id
         AND categoryid = p_categoryid;
-    
+
     RETURN FOUND;
 EXCEPTION WHEN OTHERS THEN
     RAISE EXCEPTION '%', SQLERRM;

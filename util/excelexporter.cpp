@@ -1,18 +1,11 @@
 #include "excelexporter.hpp"
 
 #include "xlsxdocument.h"
-#include <QAbstractItemModel>
 
+#include <QAbstractItemModel>
 #include <QDir>
+#include <QFileInfo>
 #include <QHeaderView>
-#include <QFileInfo>
-#include <QSqlRecord>
-#include <QSqlTableModel>
-#include <QTableView>
-
-#include <QAbstractItemModel>
-#include <QDir>
-#include <QFileInfo>
 #include <QSqlRecord>
 #include <QSqlTableModel>
 #include <QTableView>
