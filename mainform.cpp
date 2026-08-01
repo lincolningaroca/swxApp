@@ -240,6 +240,20 @@ MainForm::~MainForm()
   delete ui;
 }
 
+int MainForm::warningMessage(QWidget *parent, const QString &title, const QString &text) {
+
+  QMessageBox msgBox(parent);
+  msgBox.setWindowTitle(SW::Helper_t::appName() + " - " + title);
+  msgBox.setText(text);
+  msgBox.setIcon(QMessageBox::Warning);
+
+  msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+  msgBox.button(QMessageBox::Yes)->setText(QStringLiteral("Borrar categoría"));
+  msgBox.button(QMessageBox::No)->setText(QStringLiteral("Cancelar"));
+
+  return msgBox.exec();
+}
+
 uint32_t MainForm::currentCategoryId() const noexcept{
 
   return ui->cboCategory->currentData().isValid() ? ui->cboCategory->currentData().toUInt() : 1;
@@ -264,8 +278,7 @@ void MainForm::has_data() noexcept{
 }
 
 void MainForm::hastvUrlData() noexcept {
-  // Aseguramos que la tabla y el botón cancelar estén en estado operacional estándar
-  // para evitar que la interfaz quede congelada en un modo de edición previo.
+
   editAction(false);
 
   const bool hasRows = (ui->tvUrl->model() && ui->tvUrl->model()->rowCount() > 0);
@@ -431,24 +444,21 @@ void MainForm::on_exportToExcel(){
 
 void MainForm::on_deleteCategory(){
 
-  QMessageBox msgBox(this);
-  msgBox.setWindowTitle(SW::Helper_t::appName()+" - Advertencia");
-  msgBox.setText(QStringLiteral("<p style='color:#FB4934;'>"
-								"<cite><strong>Esta a punto de eliminar ésta categoría y todo su contenido.<br>"
-								"Recuerde que al aceptar, eliminará de forma permanente estos datos.<br>"
-								"Desea continuar y eliminar los datos?</strong></cite></p>"));
+  const bool hasRows = (ui->tvUrl->model() && ui->tvUrl->model()->rowCount() > 0);
 
-  msgBox.setIcon(QMessageBox::Warning);
+  const QString msg = hasRows
+						? QStringLiteral("<p style='color:#FB4934;'>"
+										 "<cite><strong>Está a punto de eliminar esta categoría y todo su contenido.<br>"
+										 "Recuerde que al aceptar, eliminará de forma permanente estos datos.<br>"
+										 "¿Desea continuar y eliminar los datos?</strong></cite></p>")
+						: QStringLiteral("<p>¿Seguro que desea eliminar esta categoría?</p>");
 
-  msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-  msgBox.button(QMessageBox::Yes)->setText("Borrar categoría");
-  msgBox.button(QMessageBox::No)->setText("Cancelar");
-
-  if(msgBox.exec() == QMessageBox::No)
+  if (warningMessage(this, "Advertencia", msg) == QMessageBox::No) {
 	return;
+  }
 
-  if(deleteAll()){
-	QMessageBox::information(this, SW::Helper_t::appName(),QStringLiteral("Datos eliminados."));
+  if (deleteAll()) {
+	QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("Datos eliminados."));
 
 	midleWidget->clearInputs();
 	ui->btnAdd->setText(QStringLiteral("Agregar"));
@@ -458,7 +468,6 @@ void MainForm::on_deleteCategory(){
 	has_data();
 	hastvUrlData();
 	checkStatusContextMenu();
-
   }
 
 }

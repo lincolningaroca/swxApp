@@ -34,6 +34,8 @@ private:
 
   int loadSchemePreference();
 
+  int warningMessage(QWidget* parent, const QString& tittle, const QString& Msg);
+
   void loadListCategory(uint32_t user_id) noexcept;
   void applyPreferredTheme(Qt::ColorScheme scheme);
   void has_data() noexcept;
