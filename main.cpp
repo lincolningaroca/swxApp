@@ -101,54 +101,6 @@ struct SingleIntsanceManager{
   }
 };
 
-
-/**
- * @brief connectToDatabase
- * Establece la conexión a la base de datos PostgreSQL existente
- * @return true si la conexión fue exitosa
- */
-
-// bool connectToDatabase(){
-//   // Intenta conectar con la configuración existente
-//   auto tryConnect = []() -> bool {
-// 	const auto config = SW::Helper_t::loadDbConfig();
-
-// 	if (QSqlDatabase::contains(QStringLiteral("xxxConection"))) {
-// 	  QSqlDatabase::removeDatabase(QStringLiteral("xxxConection"));
-// 	}
-
-// 	QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("xxxConection"));
-// 	db.setHostName(config.host);
-// 	db.setPort(config.port);
-// 	db.setDatabaseName(config.dbName);
-// 	db.setUserName(config.userName);
-// 	db.setPassword(config.password);
-
-// 	return db.open();
-//   };
-
-  // if (tryConnect()) {
-// 	return true;
-//   }
-
-//   // Si no pudo conectar, abrir el diálogo de configuración para pedir credenciales
-//   QMessageBox::warning(nullptr, qApp->applicationName(),
-// 					   QStringLiteral("No se pudo conectar a la base de datos. Por favor revise las credenciales."));
-
-//   ConfigDialog dlg(SW::Helper_t::detectSystemColorScheme(), true);
-//   dlg.setCurrentPage(2); // Abre en la pestaña 2 (Base de datos)
-
-//   if (dlg.exec() == QDialog::Accepted) {
-// 	// Reintentar conexión con los nuevos datos guardados
-// 	if (tryConnect()) {
-// 	  return true;
-// 	}
-//   }
-
-//   QMessageBox::critical(nullptr, qApp->applicationName(),
-// 						QStringLiteral("Imposible continuar sin conexión a la base de datos."));
-//   return false;
-// }
 /**
  * @brief connectToDatabase
  * Establece la conexión principal de la app usando la configuración guardada
