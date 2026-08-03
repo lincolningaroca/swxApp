@@ -90,7 +90,8 @@ private:
     {Qt::ColorScheme::Dark, "Modo Oscuro"}
   };
 
-  QHash<uint32_t, QString> categoryList_{};
+  // QHash<uint32_t, QString> categoryList_{};
+  QList<QPair<uint32_t, QString>> categoryList_{};
   QHash<uint32_t, QString> urlList_{};
   SW::HelperDataBase_t helperdb_{};
   inline static uint32_t userId_{0};

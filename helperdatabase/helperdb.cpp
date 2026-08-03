@@ -376,22 +376,22 @@ bool HelperDataBase_t::deleteUrls(DeleteUrlMode op, uint32_t categoryId, uint32_
 }
 
 
-QHash<uint32_t, QString> HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept {
+// QHash<uint32_t, QString> HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept {
 
-  QHash<uint32_t, QString> categoryList{};
+//   QHash<uint32_t, QString> categoryList{};
 
-  qry_.prepare(R"(SELECT * FROM fn_load_category_list(?))");
-  qry_.addBindValue(user_id);
+//   qry_.prepare(R"(SELECT * FROM fn_load_category_list(?))");
+//   qry_.addBindValue(user_id);
 
-  if(qry_.exec()){
-	while(qry_.next()){
-	  categoryList.insert(qry_.value(0).toUInt(), qry_.value(1).toString());
-	}
-  } else {
-	errorMessage_ = qry_.lastError().text();
-  }
-  return categoryList;
-}
+//   if(qry_.exec()){
+// 	while(qry_.next()){
+// 	  categoryList.insert(qry_.value(0).toUInt(), qry_.value(1).toString());
+// 	}
+//   } else {
+// 	errorMessage_ = qry_.lastError().text();
+//   }
+//   return categoryList;
+// }
 
 
 bool HelperDataBase_t::deleteCategory(uint32_t categoryId) noexcept {
@@ -464,6 +464,24 @@ bool HelperDataBase_t::isDataBase_empty() noexcept {
 		}
 	}
 	return (count == tables.size()-1);
+}
+
+QList<QPair<uint32_t, QString> > HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept{
+
+  QList<QPair<uint32_t, QString>> categoryList{};
+
+  qry_.prepare(R"(SELECT * FROM fn_load_category_list(?))");
+  qry_.addBindValue(user_id);
+
+  if (qry_.exec()) {
+	while (qry_.next()) {
+	  categoryList.append({qry_.value(0).toUInt(), qry_.value(1).toString()});
+	}
+  } else {
+	errorMessage_ = qry_.lastError().text();
+  }
+  return categoryList;
+
 }
 
 

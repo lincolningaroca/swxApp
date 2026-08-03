@@ -348,11 +348,9 @@ void MainForm::loadListCategory(uint32_t user_id) noexcept{
   ui->cboCategory->clear();
   categoryList_ = helperdb_.loadList_Category(user_id);
 
-  // Recorremos el Hash e insertamos el nombre en el ComboBox guardando su respectivo ID en Qt::UserRole (oculto)
-  auto it = categoryList_.constBegin();
-  while (it != categoryList_.constEnd()) {
-	ui->cboCategory->addItem(it.value(), it.key());
-	++it;
+  // Recorremos la lista manteniendo el orden exacto
+  for (const auto& [id, name] : std::as_const(categoryList_)) {
+	ui->cboCategory->addItem(name, id);
   }
 
 }
@@ -820,10 +818,13 @@ void MainForm::on_moveUrl(){
   const auto currentRow_ = ui->tvUrl->currentIndex().row();
   const auto url_ = xxxModel_->index(currentRow_, 1).data().toString();
   const auto currentCategoryId_ =currentCategoryId();
-
   const auto urlid = xxxModel_->index(currentRow_, 0).data().toUInt();
+
   auto data_ = categoryList_;
-  data_.remove(currentCategoryId_);
+
+  data_.removeIf([currentCategoryId_](const QPair<uint32_t, QString>& item) {
+	return item.first == currentCategoryId_;
+  });
 
   CategoryDialog cDialog(data_, this);
   cDialog.setWindowTitle(QStringLiteral("Mover url a otra categoría"));

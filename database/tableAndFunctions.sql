@@ -273,7 +273,8 @@ BEGIN
     SELECT category_id, category_name
     FROM category
     WHERE userid = p_userid
-    ORDER BY category_name;
+    ORDER BY category_name ASC;
+
 END;
 $$;
 

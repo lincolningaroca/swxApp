@@ -26,7 +26,7 @@ private:
 
   Qt::ColorScheme colorScheme_{};
 
-  QHash<uint32_t, QString> data_{};
+  QList<QPair<uint32_t, QString>> data_{};
   const QSqlDatabase db_{};
   SW::HelperDataBase_t helperdb_{};
 

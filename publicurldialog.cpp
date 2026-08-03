@@ -78,16 +78,14 @@ void PublicUrlDialog::loadDataComboBox(){
   SW::HelperDataBase_t helperDb;
 
   QSignalBlocker blocker(ui->categoryComboBox);
+
   ui->categoryComboBox->clear();
+  auto user_id = helperDb.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
+  data_ = helperdb_.loadList_Category(user_id);
 
-  auto userId_ = helperDb.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
-  qDebug() << userId_;
-  data_ = helperDb.loadList_Category(userId_);
-
-  auto it = data_.constBegin();
-  while (it != data_.constEnd()) {
-	ui->categoryComboBox->addItem(it.value(), it.key());
-	++it;
+  // Recorremos la lista manteniendo el orden exacto
+  for (const auto& [id, name] : std::as_const(data_)) {
+	ui->categoryComboBox->addItem(name, id);
   }
 
 }

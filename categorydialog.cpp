@@ -1,7 +1,7 @@
 #include "categorydialog.hpp"
 #include "ui_categorydialog.h"
 
-CategoryDialog::CategoryDialog(const QHash<uint32_t, QString> &categoryList, QWidget *parent) :
+CategoryDialog::CategoryDialog(const QList<QPair<uint32_t, QString>> &categoryList, QWidget *parent) :
   QDialog(parent), ui(new Ui::CategoryDialog){
   ui->setupUi(this);
 
@@ -24,14 +24,14 @@ uint32_t CategoryDialog::getCategoryId() const noexcept{
 
 }
 
-void CategoryDialog::loadCategoryComboBox(const QHash<uint32_t, QString>& categoryList) noexcept {
+void CategoryDialog::loadCategoryComboBox(const QList<QPair<uint32_t, QString>>& categoryList) noexcept {
 
   QSignalBlocker blocker(ui->categoryComboBox);
+
   ui->categoryComboBox->clear();
 
-  auto it = categoryList.constBegin();
-  while (it != categoryList.constEnd()) {
-	ui->categoryComboBox->addItem(it.value(), it.key());
-	++it;
+  // Recorremos la lista manteniendo el orden exacto
+  for (const auto& [id, name] : categoryList) {
+	ui->categoryComboBox->addItem(name, id);
   }
 }
