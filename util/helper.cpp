@@ -23,12 +23,9 @@ extern "C"{
 namespace SW {
 
 
-
-// En util/helper.cpp
 QString Helper_t::deriveEncryptionKey() noexcept {
 
-  // Material único por instalación — no hardcodeado
-  const auto machineId  = QSysInfo::machineUniqueId();
+  const QByteArray machineId = QByteArray::fromHex("2ae14bf7be6ffc6b6dc4bd07e87b2bbb55c57a500ff79e104f71cc89891678da");
   const auto orgName    = qApp->organizationName().toLatin1();
   const auto appName    = qApp->applicationName().toLatin1();
 
@@ -36,7 +33,7 @@ QString Helper_t::deriveEncryptionKey() noexcept {
   const QByteArray salt = machineId + orgName + appName;
 
   // Passphrase base — no es la clave final
-  const QByteArray passphrase = machineId + QByteArray("SWSystem's_xApp");
+  const QByteArray passphrase = machineId + QByteArray::fromHex("4efbfcda9e5b67a25a651cd3847801de0b71c11369122c01cff3b20ca1db75a7");
 
   // Derivar clave con PBKDF2-SHA256 — 100000 iteraciones
   QByteArray derived(32, 0);  // 256 bits

@@ -314,11 +314,14 @@ void MainForm::on_showNewCategoryDialog(){
   }
 
   loadListCategory(userId_);
+  ui->cboCategory->setCurrentText(newCategory.category());
   setUpTable(currentCategoryId());
   has_data();
 
   hastvUrlData();
   checkStatusContextMenu();
+
+
 
 }
 
