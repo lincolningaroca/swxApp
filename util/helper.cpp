@@ -1,4 +1,6 @@
+
 #include "helper.hpp"
+#include "helperdatabase/helperdb.hpp"
 
 #include <QDir>
 #include <QFileInfo>
@@ -75,27 +77,16 @@ QColor Helper_t::currentIconColor() noexcept {
 PgCheckResult Helper_t::checkPostgresqlInstallation() noexcept {
   PgCheckResult result;
 
-  // 1. Determinar la ruta ejecutable de psql
-  QString psqlExecutable = QStringLiteral("psql");
+  // 1. Delegar la localización de la herramienta al nuevo motor de búsqueda
+  bool found = false;
+  auto psqlExecutable = HelperDataBase_t::getPostgresToolPath(QStringLiteral("psql"), &found);
 
-#ifdef Q_OS_WIN
-  // Si no está en el PATH, buscar en los directorios por defecto en Windows
-  QProcess checkPath;
-  checkPath.start(psqlExecutable, {QStringLiteral("--version")});
-  if (!checkPath.waitForStarted(1000)) {
-	// Buscar versiones comunes (18, 17, 16, 15...) en Program Files
-	const QString programFiles = qEnvironmentVariable("ProgramFiles", QStringLiteral("C:\\Program Files"));
-	for (int ver = 20; ver >= 14; --ver) {
-	  QString candidate = QStringLiteral("%1/PostgreSQL/%2/bin/psql.exe").arg(programFiles).arg(ver);
-	  if (QFileInfo::exists(candidate)) {
-		psqlExecutable = candidate;
-		break;
-	  }
-	}
+  if (!found) {
+	result.isInstalled = false;
+	return result;
   }
-#endif
 
-  // 2. Ejecutar la comprobación con el binario hallado
+  // 2. Ejecutar el binario encontrado para validar permisos/operatividad y extraer la versión
   QProcess process;
   process.start(psqlExecutable, {QStringLiteral("--version")});
 
@@ -109,10 +100,10 @@ PgCheckResult Helper_t::checkPostgresqlInstallation() noexcept {
 	return result;
   }
 
-  QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  auto output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
   result.rawOutput = output;
 
-  static QRegularExpression rxVersion(R"(psql\s+\(PostgreSQL\)\s+(\d+)\.)", QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression rxVersion(R"(psql\s+\(PostgreSQL\)\s+(\d+)\.)", QRegularExpression::CaseInsensitiveOption);
   auto match = rxVersion.match(output);
 
   if (match.hasMatch()) {
@@ -125,7 +116,6 @@ PgCheckResult Helper_t::checkPostgresqlInstallation() noexcept {
 
   return result;
 }
-
 
 Qt::ColorScheme Helper_t::detectSystemColorScheme() {
 
