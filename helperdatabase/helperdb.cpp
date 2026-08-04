@@ -3,18 +3,360 @@
 #include "util/helper.hpp"
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QLoggingCategory>
+#include <QProcess>
+#include <QProcessEnvironment>
 #include <QSettings>
 #include <QSqlError>
+#include <QStandardPaths>
 #include <QStringView>
+#include <QVersionNumber>
+#include <algorithm>
+
 
 namespace SW {
 
+Q_LOGGING_CATEGORY(lcPgToolFinder, "app.database.pgtoolfinder")
+static QString s_cachedPgBinDir;
+
+QString HelperDataBase_t::getPostgresToolPath(const QString &toolName, bool *found){
+  if (found)
+	*found = false;
+
+  QString exeName = toolName;
+#ifdef Q_OS_WIN
+  if (!exeName.endsWith(".exe", Qt::CaseInsensitive))
+	exeName += ".exe";
+#endif
+
+  // -------------------------------------------------------------------------
+  // 0. CACHÉ: si ya localizamos el bin/ de PostgreSQL antes, probarlo primero
+  // -------------------------------------------------------------------------
+  if (!s_cachedPgBinDir.isEmpty()) {
+	QString cachedPath = QDir(s_cachedPgBinDir).filePath(exeName);
+	if (QFile::exists(cachedPath)) {
+	  qCDebug(lcPgToolFinder) << "Encontrado via cache:" << cachedPath;
+	  if (found)
+		*found = true;
+	  return cachedPath;
+	}
+  }
+
+  // -------------------------------------------------------------------------
+  // 1. VARIABLES DE ENTORNO (prioridad máxima, permiten override del usuario)
+  // -------------------------------------------------------------------------
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
+  const QStringList envVars = {
+	"PGBIN", "PGHOME", "POSTGRES_HOME", "POSTGRESQL_HOME",
+	"PGROOT", "PG_DIR", "POSTGRES_DIR"
+  };
+  for (const QString &var : envVars) {
+	QString val = env.value(var);
+	if (val.isEmpty())
+	  continue;
+
+	QString fullPath = QDir(val).filePath(exeName);
+	if (QFile::exists(fullPath)) {
+	  qCDebug(lcPgToolFinder) << "Encontrado via variable de entorno" << var << ":" << fullPath;
+	  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+	  if (found) *found = true;
+	  return QDir::cleanPath(fullPath);
+	}
+	// Algunos usan la variable como base, no como bin/
+	fullPath = QDir(val).filePath("bin/" + exeName);
+	if (QFile::exists(fullPath)) {
+	  qCDebug(lcPgToolFinder) << "Encontrado via variable de entorno" << var << "(bin/):" << fullPath;
+	  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+	  if (found) *found = true;
+	  return QDir::cleanPath(fullPath);
+	}
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. PATH DEL SISTEMA
+  // -------------------------------------------------------------------------
+  QString systemPath = QStandardPaths::findExecutable(exeName);
+  if (!systemPath.isEmpty()) {
+	qCDebug(lcPgToolFinder) << "Encontrado via PATH del sistema:" << systemPath;
+	s_cachedPgBinDir = QFileInfo(systemPath).absolutePath();
+	if (found) *found = true;
+	return systemPath;
+  }
+
+#ifdef Q_OS_WIN
+  // -------------------------------------------------------------------------
+  // 3. REGISTRO DE WINDOWS - Múltiples hives y claves
+  // -------------------------------------------------------------------------
+  const QStringList registryPaths = {
+	// Instaladores oficiales de EDB (64-bit)
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\PostgreSQL\\Installations",
+	// Instaladores oficiales de EDB (32-bit en Windows 64-bit)
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\PostgreSQL\\Installations",
+	// BigSQL / PostgreSQL installer antiguos
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\PostgreSQL",
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\PostgreSQL",
+	// EnterpriseDB antiguo
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\EnterpriseDB",
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\EnterpriseDB",
+  };
+
+  for (const QString &regPath : registryPaths) {
+	QSettings reg(regPath, QSettings::NativeFormat);
+	// Caso A: claves con "Base Directory" directo
+	for (const QString &key : reg.childGroups()) {
+	  reg.beginGroup(key);
+	  QString baseDir = reg.value("Base Directory").toString();
+	  if (baseDir.isEmpty())
+		baseDir = reg.value("Installation Directory").toString();
+	  if (baseDir.isEmpty())
+		baseDir = reg.value("InstallLocation").toString();
+	  reg.endGroup();
+
+	  if (!baseDir.isEmpty()) {
+		QString fullPath = QDir(baseDir).filePath("bin/" + exeName);
+		if (QFile::exists(fullPath)) {
+		  qCDebug(lcPgToolFinder) << "Encontrado via registro" << regPath << "/" << key << ":" << fullPath;
+		  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		  if (found) *found = true;
+		  return QDir::cleanPath(fullPath);
+		}
+	  }
+	}
+	// Caso B: valor directo en la raíz de la clave
+	QString baseDir = reg.value("Base Directory").toString();
+	if (baseDir.isEmpty())
+	  baseDir = reg.value("Installation Directory").toString();
+	if (!baseDir.isEmpty()) {
+	  QString fullPath = QDir(baseDir).filePath("bin/" + exeName);
+	  if (QFile::exists(fullPath)) {
+		qCDebug(lcPgToolFinder) << "Encontrado via registro (raiz)" << regPath << ":" << fullPath;
+		s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		if (found) *found = true;
+		return QDir::cleanPath(fullPath);
+	  }
+	}
+  }
+
+  // 3b. Registro de desinstalación (donde Windows guarda TODAS las apps instaladas)
+  const QStringList uninstallPaths = {
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+	"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+	"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+  };
+  for (const QString &regPath : uninstallPaths) {
+	QSettings reg(regPath, QSettings::NativeFormat);
+	for (const QString &key : reg.childGroups()) {
+	  reg.beginGroup(key);
+	  QString displayName = reg.value("DisplayName").toString();
+	  bool isPostgresEntry = displayName.contains("PostgreSQL", Qt::CaseInsensitive) ||
+							 displayName.contains("pgAdmin", Qt::CaseInsensitive) ||
+							 key.contains("PostgreSQL", Qt::CaseInsensitive);
+
+	  QString installLoc;
+	  if (isPostgresEntry) {
+		installLoc = reg.value("InstallLocation").toString();
+		// FIX: solo recurrimos a UninstallString (y solo entonces recortamos
+		// el nombre de archivo con QFileInfo::path()) cuando InstallLocation
+		// vino vacío. Antes esto se ejecutaba SIEMPRE, y le quitaba el último
+		// componente a un InstallLocation ya válido (ej. ".../PostgreSQL/15"
+		// se convertía incorrectamente en ".../PostgreSQL").
+		if (installLoc.isEmpty()) {
+		  QString uninstallString = reg.value("UninstallString").toString();
+		  // El UninstallString suele ser algo como
+		  // "C:\Program Files\PostgreSQL\15\unins000.exe"
+		  if (!uninstallString.isEmpty()) {
+			QFileInfo fi(uninstallString);
+			installLoc = fi.path(); // directorio padre del desinstalador
+		  }
+		}
+	  }
+	  reg.endGroup();
+
+	  if (isPostgresEntry && !installLoc.isEmpty()) {
+		QString fullPath = QDir(installLoc).filePath("bin/" + exeName);
+		if (QFile::exists(fullPath)) {
+		  qCDebug(lcPgToolFinder) << "Encontrado via registro de desinstalacion:" << fullPath;
+		  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		  if (found) *found = true;
+		  return QDir::cleanPath(fullPath);
+		}
+		// A veces el uninstall está en la raíz, no en bin/
+		fullPath = QDir(installLoc).filePath(exeName);
+		if (QFile::exists(fullPath)) {
+		  qCDebug(lcPgToolFinder) << "Encontrado via registro de desinstalacion (raiz):" << fullPath;
+		  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		  if (found) *found = true;
+		  return QDir::cleanPath(fullPath);
+		}
+	  }
+	}
+  }
+
+  // -------------------------------------------------------------------------
+  // 4. BÚSQUEDA HEURÍSTICA EN DISCO (Windows)
+  // -------------------------------------------------------------------------
+  const QStringList searchRoots = {
+	qEnvironmentVariable("ProgramW6432"),      /*C:\Program Files*/
+	qEnvironmentVariable("ProgramFiles(x86)"), /*C:\Program Files (x86)*/
+	qEnvironmentVariable("ProgramFiles"),      /*Fallback*/
+	  qEnvironmentVariable("SystemDrive") + "/", /*C:\*/
+	qEnvironmentVariable("LOCALAPPDATA"),      /*%LOCALAPPDATA%*/
+	qEnvironmentVariable("APPDATA"),           /*%APPDATA%*/
+  };
+
+  auto sortVersionsDescending = [](QStringList &versions) {
+	std::sort(versions.begin(), versions.end(), [](const QString &a, const QString &b) {
+	  return QVersionNumber::fromString(a) > QVersionNumber::fromString(b);
+	});
+  };
+
+  for (const QString &root : searchRoots) {
+	if (root.isEmpty()) continue;
+
+	// A) PostgreSQL oficial: <root>\PostgreSQL\<version>\bin
+	QDir pgDir(root + "/PostgreSQL");
+	if (pgDir.exists()) {
+	  QStringList versions = pgDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+	  sortVersionsDescending(versions);
+	  for (const QString &v : std::as_const(versions)) {
+		QString fullPath = pgDir.filePath(v + "/bin/" + exeName);
+		if (QFile::exists(fullPath)) {
+		  qCDebug(lcPgToolFinder) << "Encontrado via heuristica de disco (PostgreSQL):" << fullPath;
+		  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		  if (found) *found = true;
+		  return QDir::cleanPath(fullPath);
+		}
+	  }
+	}
+
+	// B) Búsqueda en carpetas con nombre *postgres*/*pgsql*/*edb* (1 nivel)
+	QDir rootDir(root);
+	QStringList postgresLike = rootDir.entryList(QStringList() << "*postgres*" << "*pgsql*" << "*edb*",
+												 QDir::Dirs | QDir::NoDotAndDotDot);
+	for (const QString &folder : std::as_const(postgresLike)) {
+	  QDir candidate(rootDir.filePath(folder));
+	  // Buscar bin/ directo o <version>/bin
+	  QString fullPath = candidate.filePath("bin/" + exeName);
+	  if (QFile::exists(fullPath)) {
+		qCDebug(lcPgToolFinder) << "Encontrado via heuristica de disco:" << fullPath;
+		s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		if (found) *found = true;
+		return QDir::cleanPath(fullPath);
+	  }
+
+	  QStringList subDirs = candidate.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+	  sortVersionsDescending(subDirs);
+	  for (const QString &sub : std::as_const(subDirs)) {
+		fullPath = candidate.filePath(sub + "/bin/" + exeName);
+		if (QFile::exists(fullPath)) {
+		  qCDebug(lcPgToolFinder) << "Encontrado via heuristica de disco (subdir):" << fullPath;
+		  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		  if (found) *found = true;
+		  return QDir::cleanPath(fullPath);
+		}
+	  }
+	}
+  }
+
+  // C) psqlODBC
+  const QStringList appDirs = QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
+  for (const QString &baseDir : appDirs) {
+	QString odbcPath = baseDir + "/PostgreSQL/psqlODBC/bin/" + exeName;
+	if (QFile::exists(odbcPath)) {
+	  qCDebug(lcPgToolFinder) << "Encontrado via psqlODBC:" << odbcPath;
+	  s_cachedPgBinDir = QFileInfo(odbcPath).absolutePath();
+	  if (found) *found = true;
+	  return QDir::cleanPath(odbcPath);
+	}
+  }
+
+#else // Linux / macOS
+  // -------------------------------------------------------------------------
+  // 5. RUTAS ESTÁNDAR EN LINUX / macOS
+  // -------------------------------------------------------------------------
+  const QStringList unixPaths = {
+	"/usr/lib/postgresql",           // Debian/Ubuntu: /usr/lib/postgresql/16/bin
+	"/usr/pgsql",                    // RHEL/CentOS/Fedora: /usr/pgsql-16/bin
+	"/opt/PostgreSQL",               // Instalador EDB oficial
+	"/opt/postgres",                 // Instalaciones manuales
+	"/usr/local/pgsql",              // Compilación desde fuentes
+	"/usr/local/postgres",
+	"/var/lib/pgsql",                // Algunas distros
+	"/Applications/Postgres.app/Contents/Versions", // macOS Postgres.app
+	"/opt/homebrew/opt/postgresql",  // macOS Homebrew (Apple Silicon)
+	"/usr/local/opt/postgresql",     // macOS Homebrew (Intel)
+  };
+
+  for (const QString &base : unixPaths) {
+	QDir d(base);
+	if (!d.exists()) continue;
+
+	// Si la ruta ya termina en bin/, probar directo
+	QString direct = d.filePath(exeName);
+	if (QFile::exists(direct)) {
+	  qCDebug(lcPgToolFinder) << "Encontrado via ruta estandar unix:" << direct;
+	  s_cachedPgBinDir = QFileInfo(direct).absolutePath();
+	  if (found) *found = true;
+	  return QDir::cleanPath(direct);
+	}
+
+	// Buscar subdirectorios de versión, priorizando la más reciente
+	QStringList entries = d.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+	std::sort(entries.begin(), entries.end(), [](const QString &a, const QString &b) {
+	  static const QRegularExpression numRe("(\\d+(\\.\\d+)?)");
+	  auto extract = [](const QString &s) -> double {
+		auto m = numRe.match(s);
+		return m.hasMatch() ? m.captured(1).toDouble() : -1.0;
+	  };
+	  return extract(a) > extract(b);
+	});
+	for (const QString &entry : entries) {
+	  // Filtrar solo carpetas que parecen versiones (números o versiones)
+	  static const QRegularExpression re("^\\d+(\\.\\d+)?$");
+	  if (re.match(entry).hasMatch() || entry.contains("sql", Qt::CaseInsensitive)) {
+		QString fullPath = d.filePath(entry + "/bin/" + exeName);
+		if (QFile::exists(fullPath)) {
+		  qCDebug(lcPgToolFinder) << "Encontrado via ruta estandar unix (version):" << fullPath;
+		  s_cachedPgBinDir = QFileInfo(fullPath).absolutePath();
+		  if (found) *found = true;
+		  return QDir::cleanPath(fullPath);
+		}
+	  }
+	}
+  }
+
+  // macOS/Linux: buscar con `which` como último recurso
+  QProcess which;
+  which.start("which", QStringList() << toolName);
+  if (which.waitForFinished(2000) && which.exitCode() == 0) {
+	QString path = QString::fromUtf8(which.readAllStandardOutput()).trimmed();
+	if (!path.isEmpty() && QFile::exists(path)) {
+	  qCDebug(lcPgToolFinder) << "Encontrado via which:" << path;
+	  s_cachedPgBinDir = QFileInfo(path).absolutePath();
+	  if (found) *found = true;
+	  return path;
+	}
+  }
+#endif
+
+  // -------------------------------------------------------------------------
+  // 6. ÚLTIMO RECURSO: devolver el nombre tal cual y que el SO resuelva
+  //    (found queda en false: el llamador puede distinguir "no encontrado"
+  //    de "encontrado", en vez de asumir éxito por tener un QString no vacío)
+  // -------------------------------------------------------------------------
+  qCWarning(lcPgToolFinder) << "No se pudo localizar" << exeName << "; se devuelve el nombre desnudo como ultimo recurso";
+  return exeName;
+}
+
+
 HelperDataBase_t::HelperDataBase_t()
-:db_{QSqlDatabase::database(QStringLiteral("xxxConection"))},
+  :db_{QSqlDatabase::database(QStringLiteral("xxxConection"))},
   qry_(db_),
-encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
+  encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
 {
 }
 
@@ -126,63 +468,8 @@ bool HelperDataBase_t::ensureDatabaseAndSchemaReady(DbConfig& config, QWidget* p
   return true;
 }
 
-QString HelperDataBase_t::getPostgresToolPath(const QString &toolName){
 
-  QString exeName = toolName;
-#ifdef Q_OS_WIN
-  if (!exeName.endsWith(QStringLiteral(".exe"), Qt::CaseInsensitive)) {
-	exeName += QStringLiteral(".exe");
-  }
-#endif
 
-  // 1. Verificar si está en el PATH de Windows/Sistema
-  QString systemPath = QStandardPaths::findExecutable(exeName);
-  if (!systemPath.isEmpty()) {
-	return systemPath;
-  }
-
-#ifdef Q_OS_WIN
-  // 2. Consultar el Registro de Windows (Instalaciones oficiales)
-  QSettings registry(QStringLiteral("HKEY_LOCAL_MACHINE\\SOFTWARE\\PostgreSQL\\Installations"), QSettings::NativeFormat);
-  const QStringList keys = registry.childGroups();
-
-  for (const QString& key : keys) {
-	registry.beginGroup(key);
-	QString baseDir = registry.value(QStringLiteral("Base Directory")).toString();
-	registry.endGroup();
-
-	if (!baseDir.isEmpty()) {
-	  QString fullPath = QDir(baseDir).filePath(QStringLiteral("bin/") + exeName);
-	  if (QFile::exists(fullPath)) {
-		return fullPath;
-	  }
-	}
-  }
-
-  // 3. Escaneo dinámico de carpetas en Program Files (Compatible con versión 18, 19, 20...)
-  QDir pgParentDir(QStringLiteral("C:/Program Files/PostgreSQL"));
-  if (pgParentDir.exists()) {
-	// Ordena las carpetas de versión inversamente para tomar siempre la más reciente
-	QStringList versionDirs = pgParentDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name | QDir::Reversed);
-
-	for (const QString& versionFolder : std::as_const(versionDirs)) {
-	  QString fullPath = pgParentDir.filePath(versionFolder + QStringLiteral("/bin/") + exeName);
-	  if (QFile::exists(fullPath)) {
-		return fullPath;
-	  }
-	}
-  }
-
-  // 4. Fallback a psqlODBC
-  QString odbcPath = QStringLiteral("C:/Program Files/PostgreSQL/psqlODBC/bin/") + exeName;
-  if (QFile::exists(odbcPath)) {
-	return odbcPath;
-  }
-#endif
-
-  return exeName; // Retorno por defecto para que QProcess intente ejecutarlo
-
-}
 
 bool HelperDataBase_t::userExists(QStringView user) noexcept {
 
@@ -375,25 +662,6 @@ bool HelperDataBase_t::deleteUrls(DeleteUrlMode op, uint32_t categoryId, uint32_
   return qry_.first() ? qry_.value(0).toBool() : false;
 }
 
-
-// QHash<uint32_t, QString> HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept {
-
-//   QHash<uint32_t, QString> categoryList{};
-
-//   qry_.prepare(R"(SELECT * FROM fn_load_category_list(?))");
-//   qry_.addBindValue(user_id);
-
-//   if(qry_.exec()){
-// 	while(qry_.next()){
-// 	  categoryList.insert(qry_.value(0).toUInt(), qry_.value(1).toString());
-// 	}
-//   } else {
-// 	errorMessage_ = qry_.lastError().text();
-//   }
-//   return categoryList;
-// }
-
-
 bool HelperDataBase_t::deleteCategory(uint32_t categoryId) noexcept {
 
   qry_.prepare(R"(SELECT fn_delete_category(?))");
@@ -451,19 +719,19 @@ bool HelperDataBase_t::moveUrlToOtherCategory(uint32_t categoryId, uint32_t urlI
 
 bool HelperDataBase_t::isDataBase_empty() noexcept {
 
-	auto tables = db_.tables();
-	uint32_t count{0};
-	foreach (const auto& table, tables) {
-		if(table == "users"){
-			continue;
-		}
-		qry_.prepare(QString("SELECT COUNT(*) FROM %1").arg(table));
-		if(qry_.exec()){
-			qry_.next();
-			if(qry_.value(0).toInt() == 0) ++count;
-		}
+  auto tables = db_.tables();
+  uint32_t count{0};
+  foreach (const auto& table, tables) {
+	if(table == "users"){
+	  continue;
 	}
-	return (count == tables.size()-1);
+	qry_.prepare(QString("SELECT COUNT(*) FROM %1").arg(table));
+	if(qry_.exec()){
+	  qry_.next();
+	  if(qry_.value(0).toInt() == 0) ++count;
+	}
+  }
+  return (count == tables.size()-1);
 }
 
 QList<QPair<uint32_t, QString> > HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept{

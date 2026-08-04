@@ -30,7 +30,7 @@ struct HelperDataBase_t{
 	 * @brief Encuentra la ruta absoluta de ejecutable de Postgres (pg_dump, pg_restore)
 	 * dinámicamente mediante Registro de Windows, PATH o escaneo de directorios.
 	 */
-  static QString getPostgresToolPath(const QString& toolName);
+  static QString getPostgresToolPath(const QString& toolName, bool* found = nullptr);
   // helperdb.hpp — en la sección public
   [[nodiscard]] QString encryptionKey() const noexcept { return encryptionKey_; }
   bool userExists(QStringView user) noexcept;
