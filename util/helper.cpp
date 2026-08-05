@@ -122,26 +122,6 @@ Qt::ColorScheme Helper_t::detectSystemColorScheme() {
   return QGuiApplication::styleHints()->colorScheme();
 }
 
-QByteArray Helper_t::setColorReg(const QString& color) noexcept
-{
-  QByteArray data;
-  QDataStream dataStream(&data, QIODevice::WriteOnly);
-  dataStream << color;
-  return data;
-
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-QString Helper_t::getColorReg(QByteArray dataColor) noexcept
-{
-  QDataStream dataStream(&dataColor, QIODevice::ReadOnly);
-  QString color;
-  dataStream >> color;
-
-  return color;
-
-}
-
 bool Helper_t::urlValidate(QStringView url) noexcept
 {
   static QRegularExpression regex(

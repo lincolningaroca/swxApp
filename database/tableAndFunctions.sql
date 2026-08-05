@@ -66,7 +66,7 @@ DECLARE
 BEGIN
   SELECT COUNT(*) INTO v_count
   FROM users
-  WHERE user_name <> encode(digest('public'::BYTEA, 'sha512'), 'hex');
+  WHERE user_name <> 'public';
   RETURN (v_count > 0);
 END;
 $$;
@@ -110,9 +110,12 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.fn_create_user(p_username text, p_password text, p_profile text, p_rescue_type text, p_first_value text, p_confirm_value text, p_key text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $$
+-- DROP FUNCTION public.fn_create_user(text, text, text, text, text, text, text);
+
+CREATE OR REPLACE FUNCTION public.fn_create_user(p_username text, p_password text, p_profile text, p_rescue_type text, p_first_value text, p_confirm_value text, p_key text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
 BEGIN
   INSERT INTO users(
     user_name,
@@ -123,7 +126,7 @@ BEGIN
     confirm_value
   )
   VALUES(
-    encode(digest(p_username::BYTEA, 'sha512'), 'hex'),
+    p_username,
     crypt(p_password, gen_salt('bf', 12)),
     p_profile,
     p_rescue_type,
@@ -139,7 +142,9 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
   RETURN FALSE;
 END;
-$$;
+$function$
+;
+
 
 CREATE OR REPLACE FUNCTION public.fn_delete_category(p_category_id integer) RETURNS boolean
     LANGUAGE plpgsql
@@ -251,19 +256,21 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.fn_get_user_id(p_username text, p_profile text) RETURNS integer
-    LANGUAGE plpgsql
-    AS $$
+CREATE OR REPLACE FUNCTION public.fn_get_user_id(p_username text, p_profile text)
+ RETURNS integer
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
   v_id INTEGER;
 BEGIN
   SELECT user_id INTO v_id
   FROM users
-  WHERE user_name    = encode(digest(p_username::BYTEA, 'sha512'), 'hex')
+  WHERE user_name    = p_username
   AND   user_profile = p_profile;
   RETURN COALESCE(v_id, 0);
 END;
-$$;
+$function$
+;
 
 CREATE OR REPLACE FUNCTION public.fn_load_category_list(p_userid integer) RETURNS TABLE(cat_id integer, cat_name text)
     LANGUAGE plpgsql
@@ -278,15 +285,16 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.fn_login(p_username text, p_password text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $$
+CREATE OR REPLACE FUNCTION public.fn_login(p_username text, p_password text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
   v_stored_password TEXT;
 BEGIN
   SELECT user_password INTO v_stored_password
   FROM users
-  WHERE user_name = encode(digest(p_username::BYTEA, 'sha512'), 'hex');
+  WHERE user_name = p_username;
 
   IF NOT FOUND THEN
     RETURN FALSE;
@@ -294,7 +302,9 @@ BEGIN
 
   RETURN (crypt(p_password, v_stored_password) = v_stored_password);
 END;
-$$;
+$function$
+;
+
 
 CREATE OR REPLACE FUNCTION public.fn_move_url_to_category(p_url_id integer, p_new_categoryid integer) RETURNS boolean
     LANGUAGE plpgsql
@@ -416,18 +426,21 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.fn_user_exists(p_username text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $$
+CREATE OR REPLACE FUNCTION public.fn_user_exists(p_username text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
   v_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO v_count
   FROM users
-  WHERE user_name = encode(digest(p_username::BYTEA, 'sha512'), 'hex');
+  WHERE user_name = p_username;
   RETURN (v_count > 0);
 END;
-$$;
+$function$
+;
+
 
 CREATE OR REPLACE FUNCTION public.fn_validate_answer(p_userid integer, p_answer text) RETURNS boolean
     LANGUAGE plpgsql

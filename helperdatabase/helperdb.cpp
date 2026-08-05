@@ -22,6 +22,13 @@ namespace SW {
 Q_LOGGING_CATEGORY(lcPgToolFinder, "app.database.pgtoolfinder")
 static QString s_cachedPgBinDir;
 
+HelperDataBase_t::HelperDataBase_t()
+  :db_{QSqlDatabase::database(QStringLiteral("xxxConection"))},
+  qry_(db_),
+  encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
+{
+}
+
 QString HelperDataBase_t::getPostgresToolPath(const QString &toolName, bool *found){
   if (found)
 	*found = false;
@@ -350,14 +357,6 @@ QString HelperDataBase_t::getPostgresToolPath(const QString &toolName, bool *fou
   // -------------------------------------------------------------------------
   qCWarning(lcPgToolFinder) << "No se pudo localizar" << exeName << "; se devuelve el nombre desnudo como ultimo recurso";
   return exeName;
-}
-
-
-HelperDataBase_t::HelperDataBase_t()
-  :db_{QSqlDatabase::database(QStringLiteral("xxxConection"))},
-  qry_(db_),
-  encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
-{
 }
 
 bool HelperDataBase_t::ensureDatabaseAndSchemaReady(DbConfig& config, QWidget* parent) {

@@ -32,8 +32,6 @@ private:
   //metodos privados de la aplicacion
 private:
 
-  int loadSchemePreference();
-
   int warningMessage(QWidget* parent, const QString& tittle, const QString& Msg);
 
   void loadListCategory(uint32_t user_id) noexcept;
@@ -51,7 +49,6 @@ private:
 
   void setUptvUrlContextMenu() noexcept;
   void setUpMainContextMenu() noexcept;
-  void verifyContextMenu() noexcept;
   void openUrl() noexcept;
   void readSettings() noexcept;
   void setCboCategoryToolTip() noexcept;

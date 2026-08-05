@@ -66,10 +66,6 @@ struct Helper_t{
   [[nodiscard]]static QString generateSecurePassword(uint32_t length = 8) noexcept;
   [[nodiscard]]static bool isPasswordSecure(const QString& password) noexcept;
 
-
-  [[nodiscard]]static QByteArray setColorReg(const QString &color) noexcept;
-  [[nodiscard]]static QString getColorReg(QByteArray dataColor) noexcept;
-
   static void set_Theme(Qt::ColorScheme theme) noexcept;
   [[nodiscard]] static QIcon svgIcon(const QString& resourcePath,
 									 const QColor& color) noexcept;
