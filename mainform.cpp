@@ -1047,6 +1047,10 @@ void MainForm::initFrm() noexcept{
 
   midleWidget->setPlacesHolders();
 
+  ui->tvUrl->setAcceptDrops(true);
+  ui->tvUrl->viewport()->setAcceptDrops(true);
+  ui->tvUrl->viewport()->installEventFilter(this);
+
   ui->btnNewCategory->setToolTip(QStringLiteral("New Category!"));
   ui->btnEditCategory->setToolTip(QStringLiteral("Edit Category Data!"));
   //btnAdd disabled
@@ -1509,23 +1513,58 @@ void MainForm::showEvent(QShowEvent *event){
 
 void MainForm::processImportFile(const QString& filePath) {
 
-  const auto catId = currentCategoryId();
-
-  // Llamada al nuevo módulo unificado
-  QList<SW::UrlImportData> items = SW::DataImporterExporter::importFromFile(filePath);
-
-  if (items.isEmpty()) {
-	QString errorMsg = SW::DataImporterExporter::lastError();
-	if (errorMsg.isEmpty()) {
-	  errorMsg = tr("El archivo no contiene registros válidos o está vacío.");
-	}
-	QMessageBox::information(this, tr("Importación"), errorMsg);
+  // 1. Validar extensión permitida
+  if (!isSupportedImportFile(filePath)) {
+	QMessageBox::warning(
+	  this,
+	  tr("Formato no soportado"),
+	  tr("El archivo seleccionado no tiene una extensión válida para la importación.\n\n"
+		 "Formatos soportados: .xlsx, .csv, .tsv, .txt")
+	  );
 	return;
   }
 
-  // Detectar duplicados con helperdb_.urlExists()
+  // 2. Leer registros crudos del archivo
+  QList<SW::UrlImportData> rawItems = SW::DataImporterExporter::importFromFile(filePath);
+
+  if (rawItems.isEmpty()) {
+	QMessageBox::warning(
+	  this,
+	  tr("Archivo vacío"),
+	  tr("El archivo seleccionado está vacío o no se pudieron extraer registros.")
+	  );
+	return;
+  }
+
+  // 3. Validar la estructura interna: filtrar y conservar solo filas con URLs válidas
+  QList<SW::UrlImportData> validItems;
+  for (const auto& item : std::as_const(rawItems)) {
+	const QString cleanedUrl = item.url.trimmed();
+	if (cleanedUrl.isEmpty()) continue;
+
+	// Verificar si el texto realmente tiene formato de URL (omite encabezados como "N°", "URL", etc.)
+	if (SW::Helper_t::urlValidate(cleanedUrl)) {
+	  validItems.append({cleanedUrl, item.description});
+	}
+  }
+
+  // Si ninguna fila del archivo contenía una URL válida, rechazar la importación
+  if (validItems.isEmpty()) {
+	QMessageBox::warning(
+	  this,
+	  tr("Estructura de archivo no válida"),
+	  tr("El archivo no contiene un formato de datos adecuado para la importación.\n\n"
+		 "Asegúrese de que la primera columna contenga direcciones URL válidas "
+		 "(ej. http://..., https://..., ftp://...).")
+	  );
+	return;
+  }
+
+  const auto catId = currentCategoryId();
+
+  // 4. Detectar duplicados únicamente sobre los registros válidos
   QStringList duplicateUrls;
-  for (const auto& item : std::as_const(items)) {
+  for (const auto& item : std::as_const(validItems)) {
 	if (helperdb_.urlExists(item.url, catId)) {
 	  duplicateUrls.append(item.url.trimmed());
 	}
@@ -1556,31 +1595,36 @@ void MainForm::processImportFile(const QString& filePath) {
 	}
   }
 
+  // 5. Proceder a la inserción en BD con los elementos validados
   int insertedCount = 0;
   int updatedCount = 0;
 
-  if (helperdb_.importUrlsBatch(catId, items, action, &insertedCount, &updatedCount)) {
+  if (helperdb_.importUrlsBatch(catId, validItems, action, &insertedCount, &updatedCount)) {
 	QMessageBox::information(
 	  this,
 	  tr("Importación Exitosa"),
 	  tr("Proceso completado correctamente.\n\n"
-		 "• Registros leídos: %1\n"
+		 "• Registros válidos procesados: %1\n"
 		 "• Insertados: %2\n"
 		 "• Actualizados: %3\n"
 		 "• Omitidos: %4")
-		.arg(items.size())
+		.arg(validItems.size())
 		.arg(insertedCount)
 		.arg(updatedCount)
-		.arg(items.size() - (insertedCount + updatedCount))
+		.arg(validItems.size() - (insertedCount + updatedCount))
 	  );
 
 	setUpTable(catId);
 	hastvUrlData();
   } else {
-	QMessageBox::critical(this, tr("Error"), tr("Ocurrió un error al ejecutar la importación en la base de datos:\n%1").arg(helperdb_.errorMessage()));
+	QMessageBox::critical(
+	  this,
+	  tr("Error de Importación"),
+	  tr("No se pudieron guardar los datos en la base de datos.\n"
+		 "Verifique el contenido del archivo e inténtelo nuevamente.")
+	  );
   }
 }
-
 
 
 void MainForm::onImportFromExcelFileTriggered() {
@@ -1609,3 +1653,48 @@ void MainForm::changeEvent(QEvent *event){
 
   QMainWindow::changeEvent(event);
 }
+
+bool MainForm::eventFilter(QObject *watched, QEvent *event) {
+
+  if (watched == ui->tvUrl->viewport()) {
+	const bool hasCategories = !categoryList_.isEmpty();
+
+	if (event->type() == QEvent::DragEnter || event->type() == QEvent::DragMove) {
+
+	  auto *dragEvent = static_cast<QDragMoveEvent*>(event);
+
+	  if (hasCategories && dragEvent->mimeData()->hasUrls()) {
+		const QList<QUrl> urls = dragEvent->mimeData()->urls();
+		// Solo aceptar si el archivo arrastrado es de un formato soportado
+		for (const QUrl &url : urls) {
+		  if (isSupportedImportFile(url.toLocalFile())) {
+			dragEvent->acceptProposedAction();
+			return true;
+		  }
+		}
+	  }
+	  // Si el formato no es válido, se ignora (muestra cursor de no permitido)
+	  dragEvent->ignore();
+	  return true;
+	}
+	else if (event->type() == QEvent::Drop) {
+	  auto *dropEvent = static_cast<QDropEvent*>(event);
+
+	  if (hasCategories && dropEvent->mimeData()->hasUrls()) {
+		const QList<QUrl> urls = dropEvent->mimeData()->urls();
+		for (const QUrl &url : urls) {
+		  const QString filePath = url.toLocalFile();
+		  if (isSupportedImportFile(filePath)) {
+			dropEvent->acceptProposedAction();
+			processImportFile(filePath);
+			return true;
+		  }
+		}
+	  }
+	}
+  }
+
+  return QMainWindow::eventFilter(watched, event);
+}
+
+

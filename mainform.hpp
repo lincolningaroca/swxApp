@@ -4,8 +4,13 @@
 #include "util/dataimporterexporter.hpp"
 #include "util/helper.hpp"
 
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QFileInfo>
 #include <QMainWindow>
+#include <QMimeData>
 #include <QSqlDatabase>
+#include <QUrl>
 
 class QAction;
 class QLabel;
@@ -58,11 +63,20 @@ private:
   void setUpShowMenuAction();
   void setUpStatusBar();
 
+  static bool isSupportedImportFile(const QString& filePath) {
+
+	const QFileInfo info(filePath);
+	const QString ext = info.suffix().toLower();
+	return (ext == QStringLiteral("xlsx") ||
+			ext == QStringLiteral("csv")  ||
+			ext == QStringLiteral("tsv")  ||
+			ext == QStringLiteral("txt"));
+  }
+
+  void processImportFile(const QString& filePath);
   void exportData(SW::DataImporterExporter::ExportFormat format);
 
   void updateLblInfo() noexcept;
-
-  void processImportFile(const QString& filePath);
 
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 
@@ -146,4 +160,6 @@ protected:
   virtual void closeEvent(QCloseEvent *event) override;
   virtual void showEvent(QShowEvent *event) override;
   virtual void changeEvent(QEvent *event) override;
+
+  bool eventFilter(QObject *watched, QEvent *event) override;
 };
