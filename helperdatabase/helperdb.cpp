@@ -110,8 +110,8 @@ bool HelperDataBase_t::importUrlsBatch(uint32_t categoryId,
 
   db_.commit();
 
-  if (insertedCount) *insertedCount = toInsert.size();
-  if (updatedCount) *updatedCount = toUpdate.size();
+  if (insertedCount) *insertedCount = static_cast<int>(toInsert.size());
+  if (updatedCount) *updatedCount = static_cast<int>(toUpdate.size());
 
   return true;
 }
