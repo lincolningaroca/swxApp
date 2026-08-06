@@ -229,8 +229,16 @@ MainForm::MainForm(QWidget *parent)
 
   });
 
+  // Conectar acciones de importación/exportación de la QToolBar principal
+  using Format = SW::DataImporterExporter::ExportFormat;
+  QObject::connect(ui->excelExportAction, &QAction::triggered, this, [this]() { exportData(Format::Xlsx); });
+  QObject::connect(ui->csvExportAction,   &QAction::triggered, this, [this]() { exportData(Format::Csv); });
+  QObject::connect(ui->tsvExportAction,   &QAction::triggered, this, [this]() { exportData(Format::Tsv); });
+  QObject::connect(ui->txtExportAction,   &QAction::triggered, this, [this]() { exportData(Format::Txt); });
+  QObject::connect(ui->importAction,      &QAction::triggered, this, &MainForm::onImportFromExcelFileTriggered);
 
-}
+
+}//fin del constructor
 
 MainForm::~MainForm()
 {
@@ -257,21 +265,20 @@ uint32_t MainForm::currentCategoryId() const noexcept{
 
 }
 
-void MainForm::has_data() noexcept{
 
-  if(categoryList_.isEmpty()){
-	ui->btnEditCategory->setDisabled(true);
-	ui->btnDeleteCategory->setDisabled(true);
+void MainForm::has_data() noexcept {
 
-	midleWidget->setInputsEnabled(false);
+  const bool hasCategories = !categoryList_.isEmpty();
 
-  }else{
-	ui->btnEditCategory->setEnabled(true);
-	ui->btnDeleteCategory->setEnabled(true);
+  ui->btnEditCategory->setEnabled(hasCategories);
+  ui->btnDeleteCategory->setEnabled(hasCategories);
+  midleWidget->setInputsEnabled(hasCategories);
 
-	midleWidget->setInputsEnabled(true);
+  // La acción de importar requiere que exista al menos una categoría
+  ui->importAction->setEnabled(hasCategories);
+  if (importFromFile_) {
+	importFromFile_->setEnabled(hasCategories);
   }
-
 }
 
 void MainForm::hastvUrlData() noexcept {
@@ -287,6 +294,11 @@ void MainForm::hastvUrlData() noexcept {
   ui->btnQuit->setEnabled(hasRows);
   editUrl_->setEnabled(hasRows);
   quitUrl_->setEnabled(hasRows);
+
+  ui->excelExportAction->setEnabled(hasRows);
+  ui->csvExportAction->setEnabled(hasRows);
+  ui->tsvExportAction->setEnabled(hasRows);
+  ui->txtExportAction->setEnabled(hasRows);
 
   // Visibilidad de opciones en el menú contextual
   showDescDetail_->setVisible(hasRows);
@@ -328,8 +340,11 @@ void MainForm::on_showNewCategoryDialog(){
 void MainForm::checkStatusContextMenu(){
 
   const bool sessionActive = (SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_start);
+
   if(showPublicUrl_)
 	showPublicUrl_->setVisible(sessionActive);
+
+  ui->actionVer_url_s_publicas->setVisible(sessionActive);
 
 }
 
@@ -405,12 +420,11 @@ void MainForm::on_loadLoginForm(){
 
 	setUpTable(currentCategoryId());
 	has_data();
+	hastvUrlData();
 	checkStatusContextMenu();
 	canRestoreDataBase();
 	verifyUserState();
 	ui->actionActualizar_password->setVisible(true);
-	ui->toolBar->setVisible(true);
-	ui->actionVer_url_s_publicas->setVisible(true);
 
   }
 
@@ -674,8 +688,6 @@ void MainForm::on_callLogout(){
   verifyUserState();
 
   ui->actionActualizar_password->setVisible(false);
-  ui->toolBar->setVisible(false);
-  ui->actionVer_url_s_publicas->setVisible(false);
 
 }
 
@@ -1056,10 +1068,7 @@ void MainForm::initFrm() noexcept{
 
   ui->actionActualizar_password->setVisible(false);
 
-  QTimer::singleShot(0, this, [this](){
-	ui->toolBar->setVisible(false);
-	ui->actionVer_url_s_publicas->setVisible(false);
-  });
+  checkStatusContextMenu();
 
   ui->btnResetPassword->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_P));
 
@@ -1260,6 +1269,7 @@ void MainForm::readSettings() noexcept{
   restoreGeometry(settings.value("position", QByteArray()).toByteArray());
   restoreState(settings.value("state", QByteArray()).toByteArray());
 
+  ui->toolBar->setVisible(true);
 
   settings.beginGroup("TableView");
   auto headerState = settings.value("columnLayout", QByteArray()).toByteArray();
