@@ -5,6 +5,7 @@
 #include "categorydialog.hpp"
 #include "changepwddialog.hpp"
 #include "configdialog.hpp"
+#include "util/dataimporterexporter.hpp"
 #include "dlgnewcategory.hpp"
 #include "logindialog.hpp"
 #include "midlewidget.hpp"
@@ -12,7 +13,6 @@
 #include "resetpassworddialog.hpp"
 #include "swwidgets/switemdelegate.hpp"
 #include "swwidgets/swtablemodel.hpp"
-#include "util/excelexporter.hpp"
 
 #include <QAction>
 #include <QFile>
@@ -106,10 +106,7 @@ MainForm::MainForm(QWidget *parent)
    */
   QObject::connect(ui->btnResetPassword, &QAction::triggered, this, &MainForm::on_showResetPasswordDialog);
 
-  /**
-   * @brief QObject::connect
-   */
-  QObject::connect(exportToExcelFile_, &QAction::triggered, this, &MainForm::on_exportToExcel);
+  QObject::connect(importFromFile_, &QAction::triggered, this, &MainForm::onImportFromExcelFileTriggered);
 
   /**
    * @brief QObject::connect
@@ -293,7 +290,10 @@ void MainForm::hastvUrlData() noexcept {
 
   // Visibilidad de opciones en el menú contextual
   showDescDetail_->setVisible(hasRows);
-  exportToExcelFile_->setVisible(hasRows);
+  if(exportMenu_){
+
+	exportMenu_->menuAction()->setVisible(hasRows);
+  }
 
   // moveUrl_ solo debe ser visible si HAY filas Y además MÁS DE UNA categoría
   moveUrl_->setVisible(hasRows && (categoryList_.count() > 1));
@@ -424,22 +424,51 @@ void MainForm::on_showResetPasswordDialog(){
 
 }
 
-void MainForm::on_exportToExcel(){
+void MainForm::exportData(SW::DataImporterExporter::ExportFormat format) {
 
-  const auto filePath = QFileDialog::getSaveFileName(this, "Guardar archivo excel", SW::Helper_t::getLastOpenedDirectory(), "Hojas de calculo (*.xlsx)" );
-  if(filePath.isEmpty())
-	return;
+  using Format = SW::DataImporterExporter::ExportFormat;
 
-  if(!SW::ExcelExporter::exportTableView(ui->tvUrl, filePath)){
+  QString filter;
+  QString defaultExt;
 
-	QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al exportar el archivo.\n").arg(SW::ExcelExporter::lastError()));
+  switch (format) {
+	case Format::Xlsx:
+	  filter = tr("Libro de Excel (*.xlsx)");
+	  defaultExt = QStringLiteral(".xlsx");
+	  break;
+	case Format::Csv:
+	  filter = tr("Texto separado por comas (*.csv)");
+	  defaultExt = QStringLiteral(".csv");
+	  break;
+	case Format::Tsv:
+	  filter = tr("Valores separados por tabulaciones (*.tsv)");
+	  defaultExt = QStringLiteral(".tsv");
+	  break;
+	case Format::Txt:
+	  filter = tr("Texto plano (*.txt)");
+	  defaultExt = QStringLiteral(".txt");
+	  break;
+  }
+
+  const QString filePath = QFileDialog::getSaveFileName(
+	this,
+	tr("Exportar datos"),
+	SW::Helper_t::getLastOpenedDirectory(),
+	filter
+	);
+
+  if (filePath.isEmpty()) return;
+
+  const QFileInfo fileInfo(filePath);
+  SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
+
+  if (!SW::DataImporterExporter::exportTableView(ui->tvUrl, filePath)) {
+	QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al exportar el archivo:\n%1").arg(SW::DataImporterExporter::lastError()));
 	return;
   }
 
-  const QFileInfo fileInfo(filePath);
 
-  SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
-  QMessageBox::information(this, SW::Helper_t::appName(), tr("El archivo fue guardado en:\n%1").arg(filePath));
+  QMessageBox::information(this, SW::Helper_t::appName(), tr("El archivo fue guardado correctamente en:\n%1").arg(filePath));
 
 }
 
@@ -1120,19 +1149,42 @@ void MainForm::setUptvUrlContextMenu() noexcept{
 
   editUrl_ = new QAction(QStringLiteral("Editar url"), this);
   quitUrl_ = new QAction(QStringLiteral("Quitar url"), this);
-
   showDescDetail_ = new QAction(QStringLiteral("Ver descripción de URL completa"), this);
-
   moveUrl_ = new QAction(QStringLiteral("Mover url, a otra categoría"), this);
 
+  // --- SUBMENÚ DE EXPORTACIÓN ---
 
-  const auto exportToExcelFileIcon = QIcon(QStringLiteral(":/img/excelDocument.png"));
-  exportToExcelFile_ = new QAction(exportToExcelFileIcon, QStringLiteral("Exportar datos a excel"), this);
+  exportMenu_ = new QMenu(QStringLiteral("Exportar datos"), this);
+  // exportMenu_->setIcon(exportIcon);
+
+  const auto exportToXlsxIcon = QIcon(QStringLiteral(":/img/xslx.png"));
+  exportToXlsx_ = new QAction(exportToXlsxIcon, tr("Como Libro de Excel (.xlsx)"), this);
+  const auto exportToCsvIcon = QIcon(QStringLiteral(":/img/csv.png"));
+  exportToCsv_  = new QAction(exportToCsvIcon, tr("Como Texto separado por comas (.csv)"), this);
+  const auto exportToTsvIcon = QIcon(QStringLiteral(":/img/tsv.png"));
+  exportToTsv_  = new QAction(exportToTsvIcon, tr("Como Valores separados por tabulaciones (.tsv)"), this);
+  const auto exportToTxtIcon = QIcon(QStringLiteral(":/img/txt.png"));
+  exportToTxt_  = new QAction(exportToTxtIcon, tr("Como Texto plano (.txt)"), this);
+
+  exportMenu_->addAction(exportToXlsx_);
+  exportMenu_->addAction(exportToCsv_);
+  exportMenu_->addAction(exportToTsv_);
+  exportMenu_->addAction(exportToTxt_);
+
+  // Conexiones para cada formato
+  using Format = SW::DataImporterExporter::ExportFormat;
+
+  QObject::connect(exportToXlsx_, &QAction::triggered, this, [this]() { exportData(Format::Xlsx); });
+  QObject::connect(exportToCsv_,  &QAction::triggered, this, [this]() { exportData(Format::Csv); });
+  QObject::connect(exportToTsv_,  &QAction::triggered, this, [this]() { exportData(Format::Tsv); });
+  QObject::connect(exportToTxt_,  &QAction::triggered, this, [this]() { exportData(Format::Txt); });
 
 }
 
 void MainForm::setUpMainContextMenu() noexcept{
 
+  const auto importFromFileIcon = QIcon(QStringLiteral(":/img/import.png"));
+  importFromFile_ = new QAction( importFromFileIcon,"Importar datos desde archivo", this);
   showPublicUrl_ = new QAction(QStringLiteral("Ver url's públicas"), this);
   checkStatusContextMenu();
 
@@ -1156,7 +1208,7 @@ void MainForm::on_showTableContextMenu(const QPoint& p){
 	  tableMenu.addAction(moveUrl_);
 
 	tableMenu.addSeparator();
-	tableMenu.addAction(exportToExcelFile_);
+	tableMenu.addMenu(exportMenu_);
 
   }
 
@@ -1168,6 +1220,9 @@ void MainForm::on_showMainContextMenu(const QPoint &p){
 
   QMenu mainMenu(this);
 
+  mainMenu.addAction(importFromFile_);
+
+  mainMenu.addSeparator();
   mainMenu.addAction(showPublicUrl_);
 
   mainMenu.exec(mapToGlobal(p));
@@ -1440,6 +1495,99 @@ void MainForm::showEvent(QShowEvent *event){
   }
 
 
+}
+
+void MainForm::processImportFile(const QString& filePath) {
+
+  const auto catId = currentCategoryId();
+
+  // Llamada al nuevo módulo unificado
+  QList<SW::UrlImportData> items = SW::DataImporterExporter::importFromFile(filePath);
+
+  if (items.isEmpty()) {
+	QString errorMsg = SW::DataImporterExporter::lastError();
+	if (errorMsg.isEmpty()) {
+	  errorMsg = tr("El archivo no contiene registros válidos o está vacío.");
+	}
+	QMessageBox::information(this, tr("Importación"), errorMsg);
+	return;
+  }
+
+  // Detectar duplicados con helperdb_.urlExists()
+  QStringList duplicateUrls;
+  for (const auto& item : std::as_const(items)) {
+	if (helperdb_.urlExists(item.url, catId)) {
+	  duplicateUrls.append(item.url.trimmed());
+	}
+  }
+
+  SW::DuplicateAction action = SW::DuplicateAction::Omit;
+
+  if (!duplicateUrls.isEmpty()) {
+	QMessageBox msgBox(this);
+	msgBox.setIcon(QMessageBox::Question);
+	msgBox.setWindowTitle(tr("URLs Duplicadas Detectadas"));
+	msgBox.setText(tr("Se encontraron <b>%1 URLs duplicadas</b> en la categoría actual.").arg(duplicateUrls.size()));
+	msgBox.setInformativeText(tr("¿Deseas reemplazar la descripción de las URLs existentes o simplemente omitirlas?"));
+	msgBox.setDetailedText(duplicateUrls.join(QStringLiteral("\n")));
+
+	QPushButton *btnReplace = msgBox.addButton(tr("Reemplazar"), QMessageBox::AcceptRole);
+	msgBox.addButton(tr("Omitir"), QMessageBox::RejectRole);
+	QPushButton *btnCancel = msgBox.addButton(tr("Cancelar"), QMessageBox::DestructiveRole);
+
+	msgBox.exec();
+
+	if (msgBox.clickedButton() == btnCancel) {
+	  return;
+	} else if (msgBox.clickedButton() == btnReplace) {
+	  action = SW::DuplicateAction::Replace;
+	} else {
+	  action = SW::DuplicateAction::Omit;
+	}
+  }
+
+  int insertedCount = 0;
+  int updatedCount = 0;
+
+  if (helperdb_.importUrlsBatch(catId, items, action, &insertedCount, &updatedCount)) {
+	QMessageBox::information(
+	  this,
+	  tr("Importación Exitosa"),
+	  tr("Proceso completado correctamente.\n\n"
+		 "• Registros leídos: %1\n"
+		 "• Insertados: %2\n"
+		 "• Actualizados: %3\n"
+		 "• Omitidos: %4")
+		.arg(items.size())
+		.arg(insertedCount)
+		.arg(updatedCount)
+		.arg(items.size() - (insertedCount + updatedCount))
+	  );
+
+	setUpTable(catId);
+	hastvUrlData();
+  } else {
+	QMessageBox::critical(this, tr("Error"), tr("Ocurrió un error al ejecutar la importación en la base de datos:\n%1").arg(helperdb_.errorMessage()));
+  }
+}
+
+
+
+void MainForm::onImportFromExcelFileTriggered() {
+
+  QString filePath = QFileDialog::getOpenFileName(
+	this,
+	tr("Importar URLs"),
+	SW::Helper_t::getLastOpenedDirectory(),
+	tr("Archivos de Excel y Texto (*.xlsx *.csv *.tsv *.txt);;Excel (*.xlsx);;Archivos de texto (*.csv *.tsv *.txt)")
+	);
+
+  const QFileInfo fileInfo(filePath);
+  SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
+
+  if (!filePath.isEmpty()) {
+	processImportFile(filePath);
+  }
 }
 
 void MainForm::changeEvent(QEvent *event){

@@ -29,6 +29,93 @@ HelperDataBase_t::HelperDataBase_t()
 {
 }
 
+bool HelperDataBase_t::importUrlsBatch(uint32_t categoryId,
+									   const QList<UrlImportData>& items,
+									   DuplicateAction action,
+									   int* insertedCount,
+									   int* updatedCount) noexcept {
+  if (items.isEmpty()) return true;
+
+  // Ahora db_.transaction() funcionará correctamente
+  if (!db_.transaction()) {
+	errorMessage_ = db_.lastError().text();
+	return false;
+  }
+
+  QList<UrlImportData> toInsert;
+  QList<UrlImportData> toUpdate;
+  QSet<QString> processedInFile;
+
+  for (const auto& item : items) {
+	QString cleanUrl = item.url.trimmed();
+	if (cleanUrl.isEmpty() || processedInFile.contains(cleanUrl)) {
+	  continue;
+	}
+	processedInFile.insert(cleanUrl);
+
+	if (urlExists(cleanUrl, categoryId)) {
+	  if (action == DuplicateAction::Replace) {
+		toUpdate.append(item);
+	  }
+	} else {
+	  toInsert.append(item);
+	}
+  }
+
+  // 1. Inserción masiva mediante fn_save_url
+  if (!toInsert.isEmpty()) {
+	QVariantList urls, descs, catIds, keys;
+	for (const auto& item : std::as_const(toInsert)) {
+	  urls << item.url.trimmed();
+	  descs << item.description.trimmed();
+	  catIds << categoryId;
+	  keys << encryptionKey_;
+	}
+
+	qry_.prepare(QStringLiteral("SELECT public.fn_save_url(?, ?, ?, ?)"));
+	qry_.addBindValue(urls);
+	qry_.addBindValue(descs);
+	qry_.addBindValue(catIds);
+	qry_.addBindValue(keys);
+
+	if (!qry_.execBatch()) {
+	  errorMessage_ = qry_.lastError().text();
+	  db_.rollback();
+	  return false;
+	}
+  }
+
+  // 2. Actualización masiva mediante fn_update_url_by_text
+  if (!toUpdate.isEmpty()) {
+	QVariantList urls, descs, catIds, keys;
+	for (const auto& item : std::as_const(toUpdate)) {
+	  urls << item.url.trimmed();
+	  descs << item.description.trimmed();
+	  catIds << categoryId;
+	  keys << encryptionKey_;
+	}
+
+	qry_.prepare(QStringLiteral("SELECT public.fn_update_url_by_text(?, ?, ?, ?)"));
+	qry_.addBindValue(urls);
+	qry_.addBindValue(descs);
+	qry_.addBindValue(catIds);
+	qry_.addBindValue(keys);
+
+	if (!qry_.execBatch()) {
+	  errorMessage_ = qry_.lastError().text();
+	  db_.rollback();
+	  return false;
+	}
+  }
+
+  db_.commit();
+
+  if (insertedCount) *insertedCount = toInsert.size();
+  if (updatedCount) *updatedCount = toUpdate.size();
+
+  return true;
+}
+
 QString HelperDataBase_t::getPostgresToolPath(const QString &toolName, bool *found){
   if (found)
 	*found = false;

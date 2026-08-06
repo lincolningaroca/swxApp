@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>img/excelDocument.png</file>
         <file>font/FiraCode-Regular.ttf</file>
         <file>licencia/licencia.txt</file>
         <file>licencia/gnu-gpl-v3-license.html</file>
@@ -46,5 +45,10 @@
         <file>database/seed.sql</file>
         <file>img/dbConfig.png</file>
         <file>database/tableAndFunctions.sql</file>
+        <file>img/xslx.png</file>
+        <file>img/csv.png</file>
+        <file>img/txt.png</file>
+        <file>img/tsv.png</file>
+        <file>img/import.png</file>
     </qresource>
 </RCC>

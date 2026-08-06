@@ -5,14 +5,24 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 
-
 class QStringView;
 namespace SW {
+
+struct UrlImportData {
+  QString url;
+  QString description;
+};
 
 // En helperdb.hpp, antes del struct
 enum class DeleteUrlMode : uint8_t {
   ByCategory = 1,
   ByUrlId    = 2
+};
+
+
+enum class DuplicateAction {
+  Omit,
+  Replace
 };
 
 struct HelperDataBase_t{
@@ -24,6 +34,12 @@ struct HelperDataBase_t{
   HelperDataBase_t& operator=(const HelperDataBase_t&) = delete;
   HelperDataBase_t& operator=(HelperDataBase_t&&) = delete;
 
+
+  bool importUrlsBatch(uint32_t categoryId,
+					   const QList<UrlImportData>& items,
+					   DuplicateAction action,
+					   int* insertedCount = nullptr,
+					   int* updatedCount = nullptr) noexcept;
 
    static bool ensureDatabaseAndSchemaReady(DbConfig& config, QWidget* parent = nullptr);
   /**
@@ -63,7 +79,7 @@ struct HelperDataBase_t{
   const QString& errorMessage() const noexcept {return errorMessage_;}
 
 private:
-  const QSqlDatabase db_{};
+  QSqlDatabase db_{};
   QString errorMessage_{};
   QSqlQuery qry_{};
 

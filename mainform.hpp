@@ -1,6 +1,7 @@
 #pragma once
 
 #include "helperdatabase/helperdb.hpp"
+#include "util/dataimporterexporter.hpp"
 #include "util/helper.hpp"
 
 #include <QMainWindow>
@@ -57,7 +58,11 @@ private:
   void setUpShowMenuAction();
   void setUpStatusBar();
 
+  void exportData(SW::DataImporterExporter::ExportFormat format);
+
   void updateLblInfo() noexcept;
+
+  void processImportFile(const QString& filePath);
 
   void applyIcons(Qt::ColorScheme scheme) noexcept;
 
@@ -79,7 +84,14 @@ private:
   QAction* showDescDetail_{ nullptr };
   QAction* showPublicUrl_{ nullptr };
   QAction* moveUrl_{ nullptr };
-  QAction* exportToExcelFile_{nullptr};
+  QAction* importFromFile_{nullptr};
+
+
+  QMenu* exportMenu_{nullptr};
+  QAction* exportToXlsx_{nullptr};
+  QAction* exportToCsv_{nullptr};
+  QAction* exportToTsv_{nullptr};
+  QAction* exportToTxt_{nullptr};
 
   const QHash<Qt::ColorScheme, QString> themeType_{
     {Qt::ColorScheme::Unknown, "Predeterminado del sistema"},
@@ -107,7 +119,6 @@ private slots:
   void on_showNewCategoryDialog();
   void on_loadLoginForm();
   void on_showResetPasswordDialog();
-  void on_exportToExcel();
   void on_deleteCategory();
   void on_addNewUrl();
   void on_editCategory();
@@ -127,7 +138,7 @@ private slots:
   void on_showTableContextMenu(const QPoint &p);
   void on_showMainContextMenu(const QPoint &p);
   void on_styleChanged(bool style);
-
+  void onImportFromExcelFileTriggered();
 
 
   // QWidget interface

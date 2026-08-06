@@ -58,6 +58,26 @@ CREATE INDEX IF NOT EXISTS idx_url_hash ON public.urls USING btree (url_hash);
 
 -- 4. FUNCIONES ALMACENADAS (PL/pgSQL)
 
+CREATE OR REPLACE FUNCTION public.fn_update_url_by_text(
+    p_url text,
+    p_desc text,
+    p_categoryid integer,
+    p_key text
+) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE urls
+    SET url_desc = pgp_sym_encrypt(p_desc, p_key)
+    WHERE url_hash = encode(digest(TRIM(p_url)::BYTEA, 'sha256'), 'hex')
+      AND categoryid = p_categoryid;
+
+    RETURN FOUND;
+EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION '%', SQLERRM;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.fn_any_user_exists() RETURNS boolean
     LANGUAGE plpgsql
     AS $$
