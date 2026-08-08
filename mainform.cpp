@@ -395,16 +395,21 @@ void MainForm::applyPreferredTheme(Qt::ColorScheme scheme){
 void MainForm::on_loadLoginForm(){
 
   LogInDialog logDialog(this);
+
   if(logDialog.exec() == QDialog::Accepted){
 
 	SW::Helper_t::current_user_ = logDialog.userName();
 
 	const auto user = logDialog.userName();
+
 	qDebug() << "USER NAME: " << user;
 	userId_ = helperdb_.getUser_id(user, SW::User::U_user);
 	qDebug() << "USER ID: "<< userId_;
 
+	writeSettings();
+
 	loadListCategory(userId_);
+
 
 	ui->btnLogOut->setEnabled(true);
 	ui->btnLogIn->setDisabled(true);
@@ -417,6 +422,7 @@ void MainForm::on_loadLoginForm(){
 	lblIcon_->setPixmap(QPixmap(":/img/user-log.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
 	SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_start;
+	readUserPreferences();
 
 	setUpTable(currentCategoryId());
 	has_data();
@@ -425,6 +431,7 @@ void MainForm::on_loadLoginForm(){
 	canRestoreDataBase();
 	verifyUserState();
 	ui->actionActualizar_password->setVisible(true);
+
 
   }
 
@@ -675,10 +682,13 @@ void MainForm::on_callLogout(){
   ui->btnResetPassword->setVisible(true);
   setWindowTitle(QApplication::applicationName());
 
+  writeUserPreferences();
+
   loadListCategory(userId_);
   setUpTable(currentCategoryId());
 
   lblIcon_->setPixmap(QPixmap(":/img/user-public.png").scaled(16,16, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
   SW::Helper_t::sessionStatus_ = SW::SessionStatus::Session_closed;
   has_data();
   checkStatusContextMenu();
@@ -688,6 +698,7 @@ void MainForm::on_callLogout(){
   verifyUserState();
 
   ui->actionActualizar_password->setVisible(false);
+  readSettings();
 
 }
 
@@ -996,6 +1007,73 @@ void MainForm::setUpStatusBar(){
    * connect to lblInfo, an show abaout dialog
    */
   QObject::connect(lblInfo_, &QLabel::linkActivated, this, &MainForm::on_showAboutDialog);
+
+}
+
+void MainForm::readUserPreferences(){
+
+  QSettings settings(qApp->organizationName(), qApp->applicationName());
+
+  settings.beginGroup("userPreferences");
+
+  auto ret = SW::Helper_t::nativeRegistryKeyExists("userPreferences/uLastCategory");
+
+  if(ret && SW::Helper_t::sessionStatus_ == SW::SessionStatus::Session_start){
+
+	auto categoryName = settings.value("uLastCategory", QString()).toString();
+
+	if(!categoryName.isEmpty() && ui->cboCategory->count() > 1){
+
+	  auto foundIndex = ui->cboCategory->findText(categoryName);
+
+	  if(foundIndex != -1){
+		{
+
+		  QSignalBlocker signalBlocker(ui->cboCategory);
+		  ui->cboCategory->setCurrentIndex(foundIndex);
+		}
+		on_categorySelectedChanged(foundIndex);
+	  }
+
+	}
+  }
+
+  const auto fontFamily = settings.value(QStringLiteral("fontFamily"), "Arial").toString();
+  const auto fontSize = settings.value(QStringLiteral("fontSize"), 10).toInt();
+  const auto colorStr = settings.value(QStringLiteral("textColor"), "").toString();
+
+
+  QColor textColor{};
+
+  if (!colorStr.isEmpty() && QColor(colorStr).isValid()) {
+	// Ya existe un valor guardado, usarlo
+	textColor = QColor(colorStr);
+  } else {
+	// Primera vez: tomar el color de texto de la paleta activa
+	// igual que hace ConfigDialog con QPalette::ButtonText
+	textColor = qApp->palette().color(QPalette::Text);
+  }
+
+  midleWidget->restoreFont(fontFamily, fontSize, textColor);
+
+
+  settings.endGroup();
+
+}
+
+void MainForm::writeUserPreferences() const{
+
+  QSettings settings(qApp->organizationName(), qApp->applicationName());
+
+  settings.beginGroup("userPreferences");
+
+  settings.setValue("uLastCategory", ui->cboCategory->currentText());
+
+  settings.setValue(QStringLiteral("fontFamily"), midleWidget->currentFont());
+  settings.setValue(QStringLiteral("fontSize"), midleWidget->currentFontSize());
+  settings.setValue(QStringLiteral("textColor"), midleWidget->textColor());
+
+  settings.endGroup();
 
 }
 

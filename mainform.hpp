@@ -63,6 +63,9 @@ private:
   void setUpShowMenuAction();
   void setUpStatusBar();
 
+  void writeUserPreferences() const;
+  void readUserPreferences();
+
   static bool isSupportedImportFile(const QString& filePath) {
 
 	const QFileInfo info(filePath);
