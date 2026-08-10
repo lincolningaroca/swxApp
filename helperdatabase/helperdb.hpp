@@ -71,7 +71,7 @@ struct HelperDataBase_t{
   bool isDataBase_empty() noexcept;
 
   QList<QPair<uint32_t, QString>> loadList_Category(uint32_t user_id) noexcept;
-  int getUser_id(const QString &user, SW::User user_profile) noexcept;
+  uint32_t getUser_id(const QString &user, SW::User user_profile) noexcept;
   QStringList dataCategory(uint32_t category_id) noexcept;
   QString validateRescueType(uint32_t userId) noexcept;
   QString getQuestion(uint32_t userId) noexcept;

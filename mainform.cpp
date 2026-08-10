@@ -402,9 +402,7 @@ void MainForm::on_loadLoginForm(){
 
 	const auto user = logDialog.userName();
 
-	qDebug() << "USER NAME: " << user;
 	userId_ = helperdb_.getUser_id(user, SW::User::U_user);
-	qDebug() << "USER ID: "<< userId_;
 
 	writeSettings();
 

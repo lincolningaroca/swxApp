@@ -432,20 +432,6 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.fn_url_exists(p_url text, p_categoryid integer, p_key text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-  v_count INTEGER;
-BEGIN
-  SELECT COUNT(*) INTO v_count
-  FROM urls
-  WHERE url_text   = pgp_sym_encrypt(TRIM(p_url), p_key)
-  AND   categoryid = p_categoryid;
-  RETURN (v_count > 0);
-END;
-$$;
-
 CREATE OR REPLACE FUNCTION public.fn_user_exists(p_username text)
  RETURNS boolean
  LANGUAGE plpgsql

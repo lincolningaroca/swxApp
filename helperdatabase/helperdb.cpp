@@ -44,6 +44,9 @@ bool HelperDataBase_t::importUrlsBatch(uint32_t categoryId,
 
   QList<UrlImportData> toInsert;
   QList<UrlImportData> toUpdate;
+  toInsert.reserve(items.size());
+  toUpdate.reserve(items.size());
+
   QSet<QString> processedInFile;
 
   for (const auto& item : items) {
@@ -55,10 +58,10 @@ bool HelperDataBase_t::importUrlsBatch(uint32_t categoryId,
 
 	if (urlExists(cleanUrl, categoryId)) {
 	  if (action == DuplicateAction::Replace) {
-		toUpdate.append(item);
+		toUpdate.emplaceBack(item);
 	  }
 	} else {
-	  toInsert.append(item);
+	  toInsert.emplaceBack(item);
 	}
   }
 
@@ -820,26 +823,29 @@ bool HelperDataBase_t::isDataBase_empty() noexcept {
   return (count == tables.size()-1);
 }
 
-QList<QPair<uint32_t, QString> > HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept{
 
+QList<QPair<uint32_t, QString>> HelperDataBase_t::loadList_Category(uint32_t user_id) noexcept{
   QList<QPair<uint32_t, QString>> categoryList{};
 
+  qry_.setForwardOnly(false);   // ← garantiza que size() sea confiable, sin importar el estado previo del objeto compartido
   qry_.prepare(R"(SELECT * FROM fn_load_category_list(?))");
   qry_.addBindValue(user_id);
 
   if (qry_.exec()) {
+	if (const int rowCount = qry_.size(); rowCount > 0)
+	  categoryList.reserve(rowCount);
+
 	while (qry_.next()) {
-	  categoryList.append({qry_.value(0).toUInt(), qry_.value(1).toString()});
+	  categoryList.emplaceBack(qry_.value(0).toUInt(), qry_.value(1).toString());
 	}
   } else {
 	errorMessage_ = qry_.lastError().text();
   }
-  return categoryList;
 
+  return categoryList;
 }
 
-
-int HelperDataBase_t::getUser_id(const QString& user, SW::User user_profile) noexcept {
+uint32_t HelperDataBase_t::getUser_id(const QString& user, SW::User user_profile) noexcept {
 
   qry_.prepare(R"(SELECT fn_get_user_id(?, ?))");
   qry_.addBindValue(user);
@@ -847,7 +853,7 @@ int HelperDataBase_t::getUser_id(const QString& user, SW::User user_profile) noe
 
   if(!qry_.exec()){
 	errorMessage_ = qry_.lastError().text();
-	return 0;
+	return -1;
   }
 
   return qry_.first() ? qry_.value(0).toInt() : 0;

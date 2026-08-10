@@ -75,12 +75,10 @@ uint32_t PublicUrlDialog::currentCategoryId() const noexcept {
 
 void PublicUrlDialog::loadDataComboBox(){
 
-  SW::HelperDataBase_t helperDb;
-
   QSignalBlocker blocker(ui->categoryComboBox);
 
   ui->categoryComboBox->clear();
-  auto user_id = helperDb.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
+  auto user_id = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
   data_ = helperdb_.loadList_Category(user_id);
 
   // Recorremos la lista manteniendo el orden exacto

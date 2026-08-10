@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include <QTextEdit>
 #include <QWidget>
 
 class QAction;
@@ -9,7 +10,7 @@ class QSpinBox;
 class QTextCharFormat;
 class QToolBar;
 
-#include <QTextEdit>
+
 
 class SWInnerEdit : public QTextEdit {
   Q_OBJECT

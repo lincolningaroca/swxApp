@@ -181,9 +181,9 @@ void AcercaDeDialog::setupConnections(){
 void AcercaDeDialog::showLicense(){
 
   QDialog licenciaDlg(this);
-  licenciaDlg.setWindowTitle(SW::Helper_t::appName() + " - Licencia");
 
   licenciaDlg.setFixedSize(this->size());
+  licenciaDlg.setWindowTitle(SW::Helper_t::appName() + " - Licencia");
 
   auto* teLicencia = new QTextBrowser(&licenciaDlg);
 
@@ -203,13 +203,9 @@ void AcercaDeDialog::showLicense(){
   teLicencia->setHtml(fileName.readAll());
   fileName.close();
 
-  // Crear layout SIN padre inicialmente
-  auto* mainLayout = new QVBoxLayout();
+  auto* mainLayout = new QVBoxLayout(&licenciaDlg);
   mainLayout->addWidget(teLicencia);
   mainLayout->setContentsMargins(5,5,5,5);
-
-  // Asignar el layout al diálogo (ahora Qt toma ownership)
-  licenciaDlg.setLayout(mainLayout);
 
   licenciaDlg.exec();
 

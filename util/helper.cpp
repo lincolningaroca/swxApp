@@ -139,38 +139,43 @@ bool Helper_t::createDataBase_dir() noexcept{
 
 }
 
-QString Helper_t::generateSecurePassword(uint32_t length) noexcept{
+QString Helper_t::generateSecurePassword(uint32_t length) noexcept {
+  static constexpr uint32_t kMinLength = 4;
+  if (length < kMinLength) length = kMinLength;
 
   const QString chars = R"(abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*?:{}|<>~-_=+[]/;\)";
   const int lowercaseEnd = 26;
   const int uppercaseEnd = 52;
-  const int numbersEnd = 62;
+  const int numbersEnd   = 62;
+  const int totalChars   = static_cast<int>(chars.length());
+
+  QByteArray randomBytes(static_cast<int>(length), 0);
+  if (RAND_bytes(reinterpret_cast<unsigned char*>(randomBytes.data()), static_cast<int>(length)) != 1) {
+	qWarning() << "Error al generar bytes aleatorios con OpenSSL";
+	return QString();
+  }
+
+  auto pick = [&](int rangeStart, int rangeSize, unsigned char b) {
+	return chars[rangeStart + (b % rangeSize)];
+  };
 
   QString password;
+  password.reserve(static_cast<int>(length));
+  password += pick(0, lowercaseEnd, static_cast<unsigned char>(randomBytes[0]));
+  password += pick(lowercaseEnd, uppercaseEnd - lowercaseEnd, static_cast<unsigned char>(randomBytes[1]));
+  password += pick(uppercaseEnd, numbersEnd - uppercaseEnd, static_cast<unsigned char>(randomBytes[2]));
+  password += pick(numbersEnd, totalChars - numbersEnd, static_cast<unsigned char>(randomBytes[3]));
 
-  // Generar bytes aleatorios
-  QByteArray randomBytes(length, 0);
-  if (RAND_bytes(reinterpret_cast<unsigned char*>(randomBytes.data()), length) != 1) {
-	qFatal("Error al generar bytes aleatorios con OpenSSL");
-  }
+  for (uint32_t i = 4; i < length; ++i)
+	password += chars[static_cast<unsigned char>(randomBytes[i]) % totalChars];
 
-  // Asegurar un carácter de cada tipo
-  password += chars[static_cast<unsigned char>(randomBytes[0]) % lowercaseEnd];
-  password += chars[lowercaseEnd + (static_cast<unsigned char>(randomBytes[1]) % (uppercaseEnd - lowercaseEnd))];
-  password += chars[uppercaseEnd + (static_cast<unsigned char>(randomBytes[2]) % (numbersEnd - uppercaseEnd))];
-  password += chars[numbersEnd + (static_cast<unsigned char>(randomBytes[3]) % (chars.length() - numbersEnd))];
-
-  // Llenar el resto de la contraseña
-  for (uint32_t i = 4; i < length; ++i) {
-	password += chars[static_cast<unsigned char>(randomBytes[i]) % chars.length()];
-  }
-
-  // Mezclar los caracteres
-  std::shuffle(password.begin(), password.end(), std::default_random_engine(static_cast<unsigned long>(randomBytes[0])));
+  // Semilla derivada de TODOS los bytes aleatorios, no solo uno
+  std::vector<unsigned int> seedData(randomBytes.begin(), randomBytes.end());
+  std::seed_seq seedSeq(seedData.begin(), seedData.end());
+  std::mt19937 rng(seedSeq);
+  std::shuffle(password.begin(), password.end(), rng);
 
   return password;
-
-
 }
 
 bool Helper_t::isPasswordSecure(const QString &password) noexcept{
@@ -207,6 +212,7 @@ void  Helper_t::set_Theme(Qt::ColorScheme theme) noexcept{
 
 
 }
+
 QIcon SW::Helper_t::svgIcon(const QString& resourcePath,
 							const QColor& color,
 							const QSize& size) noexcept {
@@ -444,9 +450,6 @@ void customLogHandler(QtMsgType type, const QMessageLogContext &context, const Q
   logFile.close();
 
 }
-
-
-
 
 } // namespace SW
 
