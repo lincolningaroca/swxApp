@@ -26,11 +26,7 @@ public:
   ~LogInDialog();
 
   const QString& userName() const  noexcept{ return userName_;}
-
-  inline static const QHash<SW::AuthType, QString> authType{
-    {SW::AuthType::Numeric_pin, "Pin numérico"},
-    {SW::AuthType::Secret_Question, "Pregunta secreta"}
-  };
+  QString getTextForAuthType(SW::AuthType type) const;
 
   void setToggledToButton(bool op);
 

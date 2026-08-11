@@ -53,7 +53,7 @@ LogInDialog::LogInDialog(QWidget *parent, OpenMode op) :
   QObject::connect(ui->btnOtherOptions, &QToolButton::toggled, this, &LogInDialog::handleToggleAnimation);
 
   //coneccion de combo box metodo de recuperacion
-  QObject::connect(ui->cboRestoreType, &QComboBox::activated, this, &LogInDialog::setOptionsToComboBox);
+  QObject::connect(ui->cboRestoreType, &QComboBox::currentIndexChanged, this, &LogInDialog::setOptionsToComboBox);
 
 
   //connect to create user button
@@ -115,7 +115,8 @@ LogInDialog::LogInDialog(QWidget *parent, OpenMode op) :
       }
 
     }
-    if(ui->cboRestoreType->currentText() == authType.value(SW::AuthType::Numeric_pin)){
+	auto type = ui->cboRestoreType->currentData().value<SW::AuthType>();
+	if(type == SW::AuthType::Numeric_pin){
       if(ui->txtfirstValue->text().size() < 4 || ui->txtConfirmValue->text().size() <4){
         QMessageBox::warning(this, SW::Helper_t::appName(), QStringLiteral("<span><em>El PIN numérico debe contener 4 digitos!</em></span>"));
         ui->txtfirstValue->selectAll();
@@ -223,6 +224,14 @@ LogInDialog::~LogInDialog()
   delete ui;
 }
 
+QString LogInDialog::getTextForAuthType(SW::AuthType type) const {
+  for (int i = 0; i < ui->cboRestoreType->count(); ++i) {
+	if (ui->cboRestoreType->itemData(i).value<SW::AuthType>() == type) {
+	  return ui->cboRestoreType->itemText(i);
+	}
+  }
+  return QString();
+}
 void LogInDialog::setToggledToButton(bool op){
 
   setWindowTitle("Crear nuevo usuario.");
@@ -278,8 +287,8 @@ void LogInDialog::setUp_Form() noexcept{
   ui->txtConfirmValue->setEchoMode(QLineEdit::Password);
 
   //set the combo box options
-  ui->cboRestoreType->addItem(QIcon(QStringLiteral(":/img/paper_pin.svg")), authType.value(SW::AuthType::Secret_Question));
-  ui->cboRestoreType->addItem(QIcon(QStringLiteral(":/img/paper_pin.svg")), authType.value(SW::AuthType::Numeric_pin));
+  ui->cboRestoreType->addItem(QIcon(":/img/paper_pin.svg"), "Pin numérico", QVariant::fromValue(SW::AuthType::Numeric_pin));
+  ui->cboRestoreType->addItem(QIcon(":/img/paper_pin.svg"), "Pregunta secreta", QVariant::fromValue(SW::AuthType::Secret_Question));
   ui->checkBox->setChecked(true);
   ui->checkBox->setDisabled(true);
 
@@ -322,7 +331,11 @@ void LogInDialog::applyIcons() noexcept {
 
 void LogInDialog::setOptionsToComboBox(int index) noexcept{
 
-  if(index == 0){
+  if(index < 0) return;
+
+  auto type = ui->cboRestoreType->itemData(index).value<SW::AuthType>();
+
+  if(type == SW::AuthType::Secret_Question){
     ui->txtfirstValue->clear();
     ui->txtConfirmValue->clear();
     ui->txtfirstValue->setPlaceholderText("Ingrese una pregunta!");

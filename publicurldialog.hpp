@@ -11,6 +11,7 @@ class PublicUrlDialog;
 }
 
 class QAction;
+struct SWTableModel;
 
 class PublicUrlDialog : public QDialog{
   Q_OBJECT
@@ -26,9 +27,9 @@ private:
 
   Qt::ColorScheme colorScheme_{};
 
-  QList<QPair<uint32_t, QString>> data_{};
   const QSqlDatabase db_{};
   SW::HelperDataBase_t helperdb_{};
+  SWTableModel *model{nullptr};
 
   QAction *deleteUrl_{nullptr};
   QAction *editUrl_{nullptr};

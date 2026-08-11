@@ -268,7 +268,7 @@ uint32_t MainForm::currentCategoryId() const noexcept{
 
 void MainForm::has_data() noexcept {
 
-  const bool hasCategories = !categoryList_.isEmpty();
+  const bool hasCategories = ui->cboCategory->count() > 0;
 
   ui->btnEditCategory->setEnabled(hasCategories);
   ui->btnDeleteCategory->setEnabled(hasCategories);
@@ -308,7 +308,7 @@ void MainForm::hastvUrlData() noexcept {
   }
 
   // moveUrl_ solo debe ser visible si HAY filas Y además MÁS DE UNA categoría
-  moveUrl_->setVisible(hasRows && (categoryList_.count() > 1));
+  moveUrl_->setVisible(hasRows && (ui->cboCategory->count() > 1));
 }
 
 void MainForm::on_showNewCategoryDialog(){
@@ -364,10 +364,10 @@ void MainForm::loadListCategory(uint32_t user_id) noexcept{
   QSignalBlocker blocker(ui->cboCategory);
 
   ui->cboCategory->clear();
-  categoryList_ = helperdb_.loadList_Category(user_id);
+  const auto categoryList = helperdb_.loadList_Category(user_id);
 
   // Recorremos la lista manteniendo el orden exacto
-  for (const auto& [id, name] : std::as_const(categoryList_)) {
+  for (const auto& [id, name] : std::as_const(categoryList)) {
 	ui->cboCategory->addItem(name, id);
   }
 
@@ -704,7 +704,8 @@ void MainForm::on_quitUrl(){
   msgBox.button(QMessageBox::No)->setText("Cancelar");
 
   if(msgBox.exec() == QMessageBox::Yes){
-	const auto urlId=urlList_.key(url);
+	// const auto urlId=urlList_.key(url);
+	const auto urlId = ui->tvUrl->model()->index(currentRow, 0).data().toUInt();
 	if(helperdb_.deleteUrls(SW::DeleteUrlMode::ByUrlId, 0, urlId)){
 	  ui->tvUrl->model()->removeRow(ui->tvUrl->currentIndex().row());
 
@@ -957,7 +958,7 @@ void MainForm::on_moveUrl(){
   const auto currentCategoryId_ =currentCategoryId();
   const auto urlid = xxxModel_->index(currentRow_, 0).data().toUInt();
 
-  auto data_ = categoryList_;
+  auto data_ = helperdb_.loadList_Category(userId_);
 
   data_.removeIf([currentCategoryId_](const QPair<uint32_t, QString>& item) {
 	return item.first == currentCategoryId_;
@@ -1268,19 +1269,8 @@ void MainForm::setUpTable(uint32_t categoryId) noexcept {
   // 1. Reposicionar el cursor al principio de los resultados
   qry.seek(-1);
 
-  // 2. Poblar urlList_ usando el MISMO objeto qry
-  urlList_.clear();
-  while (qry.next()) {
-	urlList_.insert(qry.value(0).toUInt(), qry.value(1).toString());
-  }
-
-  // 3. AHORA SÍ, mover la consulta al modelo.
-  // El modelo tomará posesión de los datos y los mostrará.
   xxxModel_->setQuery(std::move(qry));
 
-  qDebug() << "rowCount:" << xxxModel_->rowCount();
-
-  // ui->tvUrl->setModel(xxxModel_);
   setUpTableHeaders();
   ui->tvUrl->setMouseTracking(true);
 }
@@ -1381,7 +1371,7 @@ void MainForm::on_showTableContextMenu(const QPoint& p){
 	tableMenu.addSeparator();
 	tableMenu.addAction(showDescDetail_);
 	tableMenu.addSeparator();
-	if(categoryList_.count() > 1)
+	if(ui->cboCategory->count() > 1)
 	  tableMenu.addAction(moveUrl_);
 
 	tableMenu.addSeparator();
@@ -1728,7 +1718,7 @@ void MainForm::changeEvent(QEvent *event){
 bool MainForm::eventFilter(QObject *watched, QEvent *event) {
 
   if (watched == ui->tvUrl->viewport()) {
-	const bool hasCategories = !categoryList_.isEmpty();
+	const bool hasCategories = (ui->cboCategory->count() > 0);
 
 	if (event->type() == QEvent::DragEnter || event->type() == QEvent::DragMove) {
 

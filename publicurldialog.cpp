@@ -23,13 +23,15 @@ PublicUrlDialog::PublicUrlDialog(Qt::ColorScheme colorScheme, QWidget *parent) :
   ui->setupUi(this);
 
   setMaximumSize(QSize(950,500));
+
+  model = new SWTableModel(this);
+  ui->urlTableView->setModel(model);
+
   loadDataComboBox();
 
   readSettings();
-  on_loadDataTableView();
 
   setupContextMenu();
-
   applyIcons(colorScheme);
 
   ui->urlTableView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -79,10 +81,10 @@ void PublicUrlDialog::loadDataComboBox(){
 
   ui->categoryComboBox->clear();
   auto user_id = helperdb_.getUser_id(SW::Helper_t::defaultUser, SW::User::U_public);
-  data_ = helperdb_.loadList_Category(user_id);
+ auto data_i = helperdb_.loadList_Category(user_id);
 
   // Recorremos la lista manteniendo el orden exacto
-  for (const auto& [id, name] : std::as_const(data_)) {
+  for (const auto& [id, name] : std::as_const(data_i)) {
 	ui->categoryComboBox->addItem(name, id);
   }
 
@@ -162,8 +164,6 @@ void PublicUrlDialog::on_loadDataTableView(){
 
   const auto categoryId_ = currentCategoryId();
 
-  auto* model = new SWTableModel(this);
-
   QSqlQuery qry(db_);
   qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
   qry.addBindValue(categoryId_);
@@ -176,7 +176,6 @@ void PublicUrlDialog::on_loadDataTableView(){
   model->setQuery(std::move(qry));
 
   ui->urlTableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-  ui->urlTableView->setModel(model);
 
   ui->urlTableView->hideColumn(0);  // url_id
 
@@ -237,7 +236,6 @@ void PublicUrlDialog::readSettings(){
   settings.endGroup();
 
   this->restoreGeometry(formGeometry);
-  ui->urlTableView->horizontalHeader()->restoreState(headerState);
 
   if(!lastCategory.isEmpty() && ui->categoryComboBox->count() > 1){
 
@@ -247,6 +245,12 @@ void PublicUrlDialog::readSettings(){
 	  QSignalBlocker blocker(ui->categoryComboBox);
 	  ui->categoryComboBox->setCurrentIndex(foundIndex);
 	}
+  }
+
+  on_loadDataTableView();
+
+  if (!headerState.isEmpty()) {
+	ui->urlTableView->horizontalHeader()->restoreState(headerState);
   }
 
 }

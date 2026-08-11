@@ -39,9 +39,11 @@ ResetPasswordDialog::ResetPasswordDialog(QWidget *parent)
     }
 	const auto user = ui->txtUser->text().simplified();
     userId_ = helper.getUser_id(user, SW::User::U_user);
-    const auto rescue_type = helper.validateRescueType(userId_);
+	const auto rescue_type = helper.validateRescueType(userId_);
 
-    if(rescue_type == LogInDialog::authType.value(SW::AuthType::Secret_Question)){
+	LogInDialog login(this);
+
+	if(rescue_type == login.getTextForAuthType(SW::AuthType::Secret_Question)){
       ui->stackedWidget->setCurrentIndex(1);
       ui->txtPregunta->setPlainText(helper.getQuestion(userId_));
       ui->btnRespuesta->setDefault(true);
