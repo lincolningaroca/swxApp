@@ -41,6 +41,7 @@ helperdatabase/helperdb.cpp helperdatabase/helperdb.hpp util/dataimporterexporte
 
     maintenanceurldialog.hpp maintenanceurldialog.cpp maintenanceurldialog.ui
     util/urlimportworker.hpp util/urlimportworker.cpp
+    util/urlimportworker.hpp
 
 
        )
