@@ -14,32 +14,32 @@
 
 namespace SW {
 
-QList<SW::UrlImportData> DataImporterExporter::importFromFile(const QString &filePath) {
+QList<SW::UrlImportData> DataImporterExporter::importFromFile(const QString &filePath, QString* errorOut) {
 
-  lastError_.clear();
+  if (errorOut) errorOut->clear();
   QFileInfo fi(filePath);
 
   if (!fi.exists()) {
-	lastError_ = "El archivo especificado no existe.";
+	if (errorOut) *errorOut = "El archivo especificado no existe.";
 	return {};
   }
 
   QString ext = fi.suffix().toLower();
 
   if (ext == QStringLiteral("xlsx")) {
-	return importFromXlsx(filePath);
+	return importFromXlsx(filePath, errorOut);
   } else {
-	return importFromTextFormat(filePath);
+	return importFromTextFormat(filePath, errorOut);
   }
 }
 
-QList<SW::UrlImportData> DataImporterExporter::importFromXlsx(const QString &filePath) {
+QList<SW::UrlImportData> DataImporterExporter::importFromXlsx(const QString &filePath, QString* errorOut) {
 
   QList<SW::UrlImportData> list;
   QXlsx::Document xlsx(filePath);
 
   if (!xlsx.load()) {
-	lastError_ = "No se pudo cargar el archivo Excel (.xlsx).";
+	if (errorOut) *errorOut = "No se pudo cargar el archivo Excel (.xlsx).";
 	return list;
   }
 
@@ -70,13 +70,13 @@ QList<SW::UrlImportData> DataImporterExporter::importFromXlsx(const QString &fil
   return list;
 }
 
-QList<SW::UrlImportData> DataImporterExporter::importFromTextFormat(const QString &filePath) {
+QList<SW::UrlImportData> DataImporterExporter::importFromTextFormat(const QString &filePath, QString* errorOut) {
 
   QList<SW::UrlImportData> list;
   QFile file(filePath);
 
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-	lastError_ = "Error: No se pudo abrir el archivo para lectura.";
+	if (errorOut) *errorOut = "Error: No se pudo abrir el archivo para lectura.";
 	return list;
   }
 
@@ -141,11 +141,11 @@ QString DataImporterExporter::escapeCsvField(const QString &field, QChar delimit
   return result;
 }
 
-bool DataImporterExporter::exportToTextFormat(QTableView *tableView, const QString &filePath, QChar delimiter) {
+bool DataImporterExporter::exportToTextFormat(QTableView *tableView, const QString &filePath, QChar delimiter, QString* errorOut) {
 
   QFile file(filePath);
   if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-	lastError_ = QString("Error al crear el archivo: %1").arg(file.errorString());
+	if (errorOut) *errorOut = QString("Error al crear el archivo: %1").arg(file.errorString());
 	return false;
   }
 
@@ -189,7 +189,7 @@ bool DataImporterExporter::exportToTextFormat(QTableView *tableView, const QStri
   return true;
 }
 
-bool DataImporterExporter::exportToXlsx(QTableView *tableView, const QString &filePath) {
+bool DataImporterExporter::exportToXlsx(QTableView *tableView, const QString &filePath, QString* errorOut) {
 
   auto *model = tableView->model();
   QSet<QString> excludedColumns = {"url_id", "categoryid"};
@@ -249,21 +249,26 @@ bool DataImporterExporter::exportToXlsx(QTableView *tableView, const QString &fi
 	xlsxDocument.setRowHeight(row + 2, excelRowHeight);
   }
 
-  return xlsxDocument.saveAs(filePath);
+  const bool saved = xlsxDocument.saveAs(filePath);
+
+  if (!saved && errorOut) {
+	*errorOut = QStringLiteral("No se pudo guardar el archivo Excel en la ruta indicada.");
+  }
+  return saved;
 }
 
-bool DataImporterExporter::exportTableView(QTableView *tableView, const QString &filePath) {
+bool DataImporterExporter::exportTableView(QTableView *tableView, const QString &filePath, QString* errorOut) {
 
-  lastError_.clear();
+  if (errorOut) errorOut->clear();
 
   if (!tableView) {
-	lastError_ = "Error: El TableView es nulo.";
+	if (errorOut) *errorOut = "Error: El TableView es nulo.";
 	return false;
   }
 
   auto *model = tableView->model();
   if (!model) {
-	lastError_ = "Error: La tabla no tiene un modelo de datos asignado.";
+	if (errorOut) *errorOut = "Error: La tabla no tiene un modelo de datos asignado.";
 	return false;
   }
 
@@ -271,13 +276,13 @@ bool DataImporterExporter::exportTableView(QTableView *tableView, const QString 
   QString ext = fi.suffix().toLower();
 
   if (ext == "csv") {
-	return exportToTextFormat(tableView, filePath, ',');
+	return exportToTextFormat(tableView, filePath, ',', errorOut);
   } else if (ext == "tsv" || ext == "txt") {
-	return exportToTextFormat(tableView, filePath, '\t');
+	return exportToTextFormat(tableView, filePath, '\t', errorOut);
   } else {
 	QString savePath = filePath;
 	if (ext.isEmpty()) savePath += ".xlsx";
-	return exportToXlsx(tableView, savePath);
+	return exportToXlsx(tableView, savePath, errorOut);
   }
 }
 

@@ -28,6 +28,7 @@ enum class DuplicateAction {
 struct HelperDataBase_t{
 
   explicit HelperDataBase_t();
+  explicit HelperDataBase_t(QSqlDatabase db) noexcept;
 
   HelperDataBase_t(const HelperDataBase_t&) = delete;
   HelperDataBase_t(HelperDataBase_t&&) = delete;
@@ -39,7 +40,8 @@ struct HelperDataBase_t{
 					   const QList<UrlImportData>& items,
 					   DuplicateAction action,
 					   int* insertedCount = nullptr,
-					   int* updatedCount = nullptr) noexcept;
+					   int* updatedCount = nullptr,
+					   const std::function<void (int, int)> &onProgress = nullptr) noexcept;
 
    static bool ensureDatabaseAndSchemaReady(DbConfig& config, QWidget* parent = nullptr);
   /**
@@ -71,7 +73,7 @@ struct HelperDataBase_t{
   bool isDataBase_empty() noexcept;
 
   QList<QPair<uint32_t, QString>> loadList_Category(uint32_t user_id) noexcept;
-  uint32_t getUser_id(const QString &user, SW::User user_profile) noexcept;
+  int getUser_id(const QString &user, SW::User user_profile) noexcept;
   QStringList dataCategory(uint32_t category_id) noexcept;
   QString validateRescueType(uint32_t userId) noexcept;
   QString getQuestion(uint32_t userId) noexcept;

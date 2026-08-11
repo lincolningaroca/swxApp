@@ -40,6 +40,7 @@ helperdatabase/helperdb.cpp helperdatabase/helperdb.hpp util/dataimporterexporte
     midlewidget.hpp midlewidget.cpp midlewidget.ui
 
     maintenanceurldialog.hpp maintenanceurldialog.cpp maintenanceurldialog.ui
+    util/urlimportworker.hpp util/urlimportworker.cpp
 
 
        )

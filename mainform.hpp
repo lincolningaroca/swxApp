@@ -3,13 +3,17 @@
 #include "helperdatabase/helperdb.hpp"
 #include "util/dataimporterexporter.hpp"
 #include "util/helper.hpp"
+#include "util/urlimportworker.hpp"
 
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileInfo>
 #include <QMainWindow>
 #include <QMimeData>
+#include <QPointer>
+#include <QProgressDialog>
 #include <QSqlDatabase>
+#include <QThread>
 #include <QUrl>
 
 class QAction;
@@ -79,6 +83,9 @@ private:
   void processImportFile(const QString& filePath);
   void exportData(SW::DataImporterExporter::ExportFormat format);
 
+  void startImportWorker(const QString& filePath);
+  Q_INVOKABLE int resolveDuplicatesDialog(const QStringList& duplicates);
+
   void updateLblInfo() noexcept;
 
   void applyIcons(Qt::ColorScheme scheme) noexcept;
@@ -120,7 +127,7 @@ private:
   QList<QPair<uint32_t, QString>> categoryList_{};
   QHash<uint32_t, QString> urlList_{};
   SW::HelperDataBase_t helperdb_{};
-  inline static uint32_t userId_{0};
+  inline static int userId_{0};
   SWTableModel* xxxModel_{ nullptr };
 
   QLabel *lblIcon_{nullptr};
@@ -128,7 +135,8 @@ private:
   QLabel *lblInfo_{nullptr};
   Qt::ColorScheme currentScheme_{Qt::ColorScheme::Unknown};
 
-
+  QThread* importThread_{nullptr};
+  QPointer<QProgressDialog> importProgressDialog_;
 
 private slots:
 

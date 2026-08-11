@@ -22,25 +22,23 @@ public:
   explicit DataImporterExporter() = default;
 
   // --- MÉTODOS DE EXPORTACIÓN ---
-  static bool exportTableView(QTableView *tableView, const QString &filePath);
+  [[nodiscard]] static bool exportTableView(QTableView *tableView, const QString &filePath, QString* errorOut = nullptr);
 
   // --- MÉTODOS DE IMPORTACIÓN ---
-  static QList<SW::UrlImportData> importFromFile(const QString &filePath);
+  [[nodiscard]] static QList<SW::UrlImportData> importFromFile(const QString &filePath, QString* errorOut = nullptr);
 
-  // --- MANEJO DE ERRORES ---
-  static const QString& lastError() { return lastError_; }
+
 
 private:
   // Auxiliares de Exportación
-  static bool exportToXlsx(QTableView *tableView, const QString &filePath);
-  static bool exportToTextFormat(QTableView *tableView, const QString &filePath, QChar delimiter);
+  static bool exportToXlsx(QTableView *tableView, const QString &filePath, QString* errorOut);
+  static bool exportToTextFormat(QTableView *tableView, const QString &filePath, QChar delimiter, QString* errorOut);
   static QString escapeCsvField(const QString &field, QChar delimiter);
 
   // Auxiliares de Importación
-  static QList<SW::UrlImportData> importFromXlsx(const QString &filePath);
-  static QList<SW::UrlImportData> importFromTextFormat(const QString &filePath);
+  static QList<SW::UrlImportData> importFromXlsx(const QString &filePath, QString* errorOut);
+  static QList<SW::UrlImportData> importFromTextFormat(const QString &filePath, QString* errorOut);
 
-  inline static QString lastError_{};
 };
 
 } // namespace SW

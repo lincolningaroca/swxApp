@@ -29,11 +29,21 @@ HelperDataBase_t::HelperDataBase_t()
 {
 }
 
+// Constructor para conexiones dedicadas a un hilo (ej. UrlImportWorker).
+// Qt SQL no permite compartir una QSqlDatabase entre hilos distintos.
+HelperDataBase_t::HelperDataBase_t(QSqlDatabase db) noexcept
+  : db_{std::move(db)},
+  qry_(db_),
+  encryptionKey_{SW::Helper_t::deriveEncryptionKey()}
+{
+}
+
 bool HelperDataBase_t::importUrlsBatch(uint32_t categoryId,
 									   const QList<UrlImportData>& items,
 									   DuplicateAction action,
 									   int* insertedCount,
-									   int* updatedCount) noexcept {
+									   int* updatedCount,
+									   const std::function<void(int done, int total)>& onProgress) noexcept {
   if (items.isEmpty()) return true;
 
   // Ahora db_.transaction() funcionará correctamente
@@ -65,50 +75,56 @@ bool HelperDataBase_t::importUrlsBatch(uint32_t categoryId,
 	}
   }
 
-  // 1. Inserción masiva mediante fn_save_url
-  if (!toInsert.isEmpty()) {
+  constexpr int kChunkSize = 200; // filas por execBatch — balance entre round-trips y progreso visible
+  const int totalToProcess = static_cast<int>(toInsert.size() + toUpdate.size());
+  int processedSoFar = 0;
+  // 1. Inserción masiva mediante fn_save_url, en lotes
+  for (int start = 0; start < toInsert.size(); start += kChunkSize) {
+	const int end = std::min(start + kChunkSize, static_cast<int>(toInsert.size()));
 	QVariantList urls, descs, catIds, keys;
-	for (const auto& item : std::as_const(toInsert)) {
+	for (int i = start; i < end; ++i) {
+	  const auto& item = toInsert[i];
 	  urls << item.url.trimmed();
 	  descs << item.description.trimmed();
 	  catIds << categoryId;
 	  keys << encryptionKey_;
 	}
-
 	qry_.prepare(QStringLiteral("SELECT public.fn_save_url(?, ?, ?, ?)"));
 	qry_.addBindValue(urls);
 	qry_.addBindValue(descs);
 	qry_.addBindValue(catIds);
 	qry_.addBindValue(keys);
-
 	if (!qry_.execBatch()) {
 	  errorMessage_ = qry_.lastError().text();
 	  db_.rollback();
 	  return false;
 	}
+	processedSoFar += (end - start);
+	if (onProgress) onProgress(processedSoFar, totalToProcess);
   }
-
-  // 2. Actualización masiva mediante fn_update_url_by_text
-  if (!toUpdate.isEmpty()) {
+  // 2. Actualización masiva mediante fn_update_url_by_text, en lotes
+  for (int start = 0; start < toUpdate.size(); start += kChunkSize) {
+	const int end = std::min(start + kChunkSize, static_cast<int>(toUpdate.size()));
 	QVariantList urls, descs, catIds, keys;
-	for (const auto& item : std::as_const(toUpdate)) {
+	for (int i = start; i < end; ++i) {
+	  const auto& item = toUpdate[i];
 	  urls << item.url.trimmed();
 	  descs << item.description.trimmed();
 	  catIds << categoryId;
 	  keys << encryptionKey_;
 	}
-
 	qry_.prepare(QStringLiteral("SELECT public.fn_update_url_by_text(?, ?, ?, ?)"));
 	qry_.addBindValue(urls);
 	qry_.addBindValue(descs);
 	qry_.addBindValue(catIds);
 	qry_.addBindValue(keys);
-
 	if (!qry_.execBatch()) {
 	  errorMessage_ = qry_.lastError().text();
 	  db_.rollback();
 	  return false;
 	}
+	processedSoFar += (end - start);
+	if (onProgress) onProgress(processedSoFar, totalToProcess);
   }
 
   db_.commit();
@@ -845,7 +861,7 @@ QList<QPair<uint32_t, QString>> HelperDataBase_t::loadList_Category(uint32_t use
   return categoryList;
 }
 
-uint32_t HelperDataBase_t::getUser_id(const QString& user, SW::User user_profile) noexcept {
+int HelperDataBase_t::getUser_id(const QString& user, SW::User user_profile) noexcept {
 
   qry_.prepare(R"(SELECT fn_get_user_id(?, ?))");
   qry_.addBindValue(user);

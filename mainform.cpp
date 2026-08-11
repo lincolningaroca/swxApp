@@ -481,13 +481,97 @@ void MainForm::exportData(SW::DataImporterExporter::ExportFormat format) {
   const QFileInfo fileInfo(filePath);
   SW::Helper_t::setLastOpenedDirectory(fileInfo.absolutePath());
 
-  if (!SW::DataImporterExporter::exportTableView(ui->tvUrl, filePath)) {
-	QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al exportar el archivo:\n%1").arg(SW::DataImporterExporter::lastError()));
+  QString exportError;
+  if (!SW::DataImporterExporter::exportTableView(ui->tvUrl, filePath, &exportError)) {
+	QMessageBox::warning(this, SW::Helper_t::appName(), tr("Error al exportar el archivo:\n%1").arg(exportError));
+
+
+	QMessageBox::information(this, SW::Helper_t::appName(), tr("El archivo fue guardado correctamente en:\n%1").arg(filePath));
+
+  }
+}
+
+int MainForm::resolveDuplicatesDialog(const QStringList &duplicates){
+
+  // Corre en el hilo PRINCIPAL — invocado de forma bloqueante desde el worker.
+  QMessageBox msgBox(this);
+  msgBox.setIcon(QMessageBox::Question);
+  msgBox.setWindowTitle(tr("URLs Duplicadas Detectadas"));
+  msgBox.setText(tr("Se encontraron <b>%1 URLs duplicadas</b> en la categoría actual.").arg(duplicates.size()));
+  msgBox.setInformativeText(tr("¿Deseas reemplazar la descripción de las URLs existentes o simplemente omitirlas?"));
+  msgBox.setDetailedText(duplicates.join(QStringLiteral("\n")));
+
+  QPushButton* btnReplace = msgBox.addButton(tr("Reemplazar"), QMessageBox::AcceptRole);
+  msgBox.addButton(tr("Omitir"), QMessageBox::RejectRole);
+  QPushButton* btnCancel  = msgBox.addButton(tr("Cancelar"), QMessageBox::DestructiveRole);
+
+  msgBox.exec();
+
+  if (msgBox.clickedButton() == btnCancel)  return -1;
+  if (msgBox.clickedButton() == btnReplace) return static_cast<int>(SW::DuplicateAction::Replace);
+  return static_cast<int>(SW::DuplicateAction::Omit);
+}
+
+void MainForm::startImportWorker(const QString& filePath) {
+
+  if (importThread_) {
+	QMessageBox::information(this, SW::Helper_t::appName(), tr("Ya hay una importación en curso."));
 	return;
   }
 
+  const auto catId = currentCategoryId();
 
-  QMessageBox::information(this, SW::Helper_t::appName(), tr("El archivo fue guardado correctamente en:\n%1").arg(filePath));
+  auto* worker = new SW::UrlImportWorker(this); // parent = MainForm → target del invokeMethod
+  importThread_ = new QThread(this);
+  worker->moveToThread(importThread_);
+
+  importProgressDialog_ = new QProgressDialog(tr("Preparando importación..."), tr("Cancelar"), 0, 0, this);
+  importProgressDialog_->setWindowModality(Qt::WindowModal);
+  importProgressDialog_->setMinimumDuration(300);
+  importProgressDialog_->setAutoClose(false);
+  importProgressDialog_->setAutoReset(false);
+
+  connect(importProgressDialog_, &QProgressDialog::canceled, worker, &SW::UrlImportWorker::cancel);
+
+  connect(worker, &SW::UrlImportWorker::progressChanged, this,
+		  [this](int value, int max, const QString& message) {
+			if (!importProgressDialog_) return;
+			importProgressDialog_->setLabelText(message);
+			importProgressDialog_->setRange(0, max);
+			importProgressDialog_->setValue(value);
+		  });
+
+  connect(worker, &SW::UrlImportWorker::finished, this,
+		  [this](bool ok, int inserted, int updated, int skipped, const QString& errorMsg) {
+			if (importProgressDialog_) {
+			  importProgressDialog_->close();
+			  importProgressDialog_->deleteLater();
+			}
+			if (ok) {
+			  QMessageBox::information(this, tr("Importación Exitosa"),
+									   tr("Proceso completado correctamente.\n\n"
+										  "• Insertados: %1\n• Actualizados: %2\n• Omitidos: %3")
+										 .arg(inserted).arg(updated).arg(skipped));
+			  setUpTable(currentCategoryId());
+			  hastvUrlData();
+			} else if (!errorMsg.isEmpty()) {
+			  QMessageBox::critical(this, tr("Error de Importación"), errorMsg);
+			}
+			importThread_->quit();
+		  });
+
+  connect(importThread_, &QThread::finished, worker, &QObject::deleteLater);
+  connect(importThread_, &QThread::finished, this, [this]() {
+	importThread_->deleteLater();
+	importThread_ = nullptr;
+  });
+
+  connect(importThread_, &QThread::started, worker,
+		  [worker, filePath, catId]() {
+			worker->doImport(filePath, catId);
+		  });
+
+  importThread_->start();
 
 }
 
@@ -599,7 +683,7 @@ void MainForm::on_editCategory(){
 
 	setUpTable(currentCategoryId());
 	setCboCategoryToolTip();
-  }  
+  }
 
 }
 
@@ -1123,6 +1207,10 @@ void MainForm::initFrm() noexcept{
 
   midleWidget->setPlacesHolders();
 
+  xxxModel_ = new SWTableModel(this);
+  ui->tvUrl->setModel(xxxModel_);
+
+
   ui->tvUrl->setAcceptDrops(true);
   ui->tvUrl->viewport()->setAcceptDrops(true);
   ui->tvUrl->viewport()->installEventFilter(this);
@@ -1163,7 +1251,7 @@ void MainForm::initFrm() noexcept{
 
 void MainForm::setUpTable(uint32_t categoryId) noexcept {
 
-  xxxModel_ = new SWTableModel(this);
+  // xxxModel_ = new SWTableModel(this);
 
   QSqlQuery qry(db_);
   qry.prepare(R"(SELECT * FROM fn_get_urls(?, ?))");
@@ -1192,7 +1280,7 @@ void MainForm::setUpTable(uint32_t categoryId) noexcept {
 
   qDebug() << "rowCount:" << xxxModel_->rowCount();
 
-  ui->tvUrl->setModel(xxxModel_);
+  // ui->tvUrl->setModel(xxxModel_);
   setUpTableHeaders();
   ui->tvUrl->setMouseTracking(true);
 }
@@ -1555,6 +1643,13 @@ void MainForm::on_showAboutDialog(){
 
 void MainForm::closeEvent(QCloseEvent *event){
 
+  if (importThread_ && importThread_->isRunning()) {
+	QMessageBox::warning(this, SW::Helper_t::appName(),
+						 QStringLiteral("Hay una importación en curso. Espere a que finalice antes de cerrar la aplicación."));
+	event->ignore();
+	return;
+  }
+
   if(SW::Helper_t::sessionStatus_ != SW::SessionStatus::Session_closed){
 	QMessageBox::warning(this, SW::Helper_t::appName(),
 						 QStringLiteral("<cite>Hay una sesión activa en este momento.<br>"
@@ -1589,7 +1684,6 @@ void MainForm::showEvent(QShowEvent *event){
 
 void MainForm::processImportFile(const QString& filePath) {
 
-  // 1. Validar extensión permitida
   if (!isSupportedImportFile(filePath)) {
 	QMessageBox::warning(
 	  this,
@@ -1600,106 +1694,7 @@ void MainForm::processImportFile(const QString& filePath) {
 	return;
   }
 
-  // 2. Leer registros crudos del archivo
-  QList<SW::UrlImportData> rawItems = SW::DataImporterExporter::importFromFile(filePath);
-
-  if (rawItems.isEmpty()) {
-	QMessageBox::warning(
-	  this,
-	  tr("Archivo vacío"),
-	  tr("El archivo seleccionado está vacío o no se pudieron extraer registros.")
-	  );
-	return;
-  }
-
-  // 3. Validar la estructura interna: filtrar y conservar solo filas con URLs válidas
-  QList<SW::UrlImportData> validItems;
-  for (const auto& item : std::as_const(rawItems)) {
-	const QString cleanedUrl = item.url.trimmed();
-	if (cleanedUrl.isEmpty()) continue;
-
-	// Verificar si el texto realmente tiene formato de URL (omite encabezados como "N°", "URL", etc.)
-	if (SW::Helper_t::urlValidate(cleanedUrl)) {
-	  validItems.append({cleanedUrl, item.description});
-	}
-  }
-
-  // Si ninguna fila del archivo contenía una URL válida, rechazar la importación
-  if (validItems.isEmpty()) {
-	QMessageBox::warning(
-	  this,
-	  tr("Estructura de archivo no válida"),
-	  tr("El archivo no contiene un formato de datos adecuado para la importación.\n\n"
-		 "Asegúrese de que la primera columna contenga direcciones URL válidas "
-		 "(ej. http://..., https://..., ftp://...).")
-	  );
-	return;
-  }
-
-  const auto catId = currentCategoryId();
-
-  // 4. Detectar duplicados únicamente sobre los registros válidos
-  QStringList duplicateUrls;
-  for (const auto& item : std::as_const(validItems)) {
-	if (helperdb_.urlExists(item.url, catId)) {
-	  duplicateUrls.append(item.url.trimmed());
-	}
-  }
-
-  SW::DuplicateAction action = SW::DuplicateAction::Omit;
-
-  if (!duplicateUrls.isEmpty()) {
-	QMessageBox msgBox(this);
-	msgBox.setIcon(QMessageBox::Question);
-	msgBox.setWindowTitle(tr("URLs Duplicadas Detectadas"));
-	msgBox.setText(tr("Se encontraron <b>%1 URLs duplicadas</b> en la categoría actual.").arg(duplicateUrls.size()));
-	msgBox.setInformativeText(tr("¿Deseas reemplazar la descripción de las URLs existentes o simplemente omitirlas?"));
-	msgBox.setDetailedText(duplicateUrls.join(QStringLiteral("\n")));
-
-	QPushButton *btnReplace = msgBox.addButton(tr("Reemplazar"), QMessageBox::AcceptRole);
-	msgBox.addButton(tr("Omitir"), QMessageBox::RejectRole);
-	QPushButton *btnCancel = msgBox.addButton(tr("Cancelar"), QMessageBox::DestructiveRole);
-
-	msgBox.exec();
-
-	if (msgBox.clickedButton() == btnCancel) {
-	  return;
-	} else if (msgBox.clickedButton() == btnReplace) {
-	  action = SW::DuplicateAction::Replace;
-	} else {
-	  action = SW::DuplicateAction::Omit;
-	}
-  }
-
-  // 5. Proceder a la inserción en BD con los elementos validados
-  int insertedCount = 0;
-  int updatedCount = 0;
-
-  if (helperdb_.importUrlsBatch(catId, validItems, action, &insertedCount, &updatedCount)) {
-	QMessageBox::information(
-	  this,
-	  tr("Importación Exitosa"),
-	  tr("Proceso completado correctamente.\n\n"
-		 "• Registros válidos procesados: %1\n"
-		 "• Insertados: %2\n"
-		 "• Actualizados: %3\n"
-		 "• Omitidos: %4")
-		.arg(validItems.size())
-		.arg(insertedCount)
-		.arg(updatedCount)
-		.arg(validItems.size() - (insertedCount + updatedCount))
-	  );
-
-	setUpTable(catId);
-	hastvUrlData();
-  } else {
-	QMessageBox::critical(
-	  this,
-	  tr("Error de Importación"),
-	  tr("No se pudieron guardar los datos en la base de datos.\n"
-		 "Verifique el contenido del archivo e inténtelo nuevamente.")
-	  );
-  }
+  startImportWorker(filePath);
 }
 
 
