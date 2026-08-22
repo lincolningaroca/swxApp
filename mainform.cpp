@@ -594,7 +594,7 @@ void MainForm::on_deleteCategory(){
 	QMessageBox::information(this, SW::Helper_t::appName(), QStringLiteral("Datos eliminados."));
 
 	midleWidget->clearInputs();
-	ui->btnAdd->setText(QStringLiteral("Agregar"));
+	ui->btnAdd->setText(openMode.value(SW::OpenMode::New));
 
 	loadListCategory(userId_);
 	setUpTable(currentCategoryId());
@@ -607,7 +607,9 @@ void MainForm::on_deleteCategory(){
 
 void MainForm::on_addNewUrl(){
 
-  if(ui->btnAdd->text().compare("Agregar") == 0){
+  auto opMode = openMode.value(SW::OpenMode::New);
+
+  if(ui->btnAdd->text().compare(opMode) == 0){
 	if(!SW::Helper_t::urlValidate(midleWidget->url())){
 	  QMessageBox::warning(this, SW::Helper_t::appName(), midleWidget->errorMessage());
 
@@ -659,7 +661,7 @@ void MainForm::on_addNewUrl(){
 
 	setUpTable(currentCategoryId());
 
-	ui->btnAdd->setText(QStringLiteral("Agregar"));
+	ui->btnAdd->setText(openMode.value(SW::OpenMode::New));
 	editAction(false);
 
 	midleWidget->clearInputs();
@@ -740,7 +742,7 @@ void MainForm::on_btnEdit(){
 
   editAction(true);
   midleWidget->selectAndFocus();
-  ui->btnAdd->setText(QStringLiteral("Actualizar"));
+  ui->btnAdd->setText(openMode.value(SW::OpenMode::Edit));
 }
 
 
@@ -918,7 +920,7 @@ void MainForm::on_cancelAction(){
   ui->btnCancel->setDisabled(true);
 
   editAction(false);
-  ui->btnAdd->setText(QStringLiteral("Agregar"));
+  ui->btnAdd->setText(openMode.value(SW::OpenMode::New));
 
 }
 
@@ -1216,9 +1218,10 @@ void MainForm::initFrm() noexcept{
   ui->tvUrl->viewport()->setAcceptDrops(true);
   ui->tvUrl->viewport()->installEventFilter(this);
 
-  ui->btnNewCategory->setToolTip(QStringLiteral("New Category!"));
-  ui->btnEditCategory->setToolTip(QStringLiteral("Edit Category Data!"));
+  ui->btnNewCategory->setToolTip(QStringLiteral("Nueva Categoría!"));
+  ui->btnEditCategory->setToolTip(QStringLiteral("Editar datos de categoría!"));
   //btnAdd disabled
+  ui->btnAdd->setText(openMode.value(SW::OpenMode::New));
   ui->btnAdd->setDisabled(true);
   ui->btnLogIn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_L));
   ui->btnLogOut->setDisabled(true);

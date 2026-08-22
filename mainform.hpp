@@ -39,6 +39,11 @@ private:
 
   MidleWidget *midleWidget{nullptr};
   QString defaultStyleName_{};
+
+  QHash<SW::OpenMode, QString> openMode{
+	{SW::OpenMode::New, "Agregar"},
+	{SW::OpenMode::Edit, "Actualizar"}
+  };
   //metodos privados de la aplicacion
 private:
 
@@ -118,9 +123,9 @@ private:
   QAction* exportToTxt_{nullptr};
 
   const QHash<Qt::ColorScheme, QString> themeType_{
-    {Qt::ColorScheme::Unknown, "Predeterminado del sistema"},
-    {Qt::ColorScheme::Light, "Modo Claro"},
-    {Qt::ColorScheme::Dark, "Modo Oscuro"}
+	{Qt::ColorScheme::Unknown, "Predeterminado del sistema"},
+	{Qt::ColorScheme::Light, "Modo Claro"},
+	{Qt::ColorScheme::Dark, "Modo Oscuro"}
   };
 
   SW::HelperDataBase_t helperdb_{};
